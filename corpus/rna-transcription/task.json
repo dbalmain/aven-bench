@@ -1,0 +1,142 @@
+{
+  "schemaVersion": 1,
+  "id": "rna-transcription",
+  "title": "RNA Transcription",
+  "blurb": "Given a DNA strand, return its RNA complement.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "introduction.md",
+    "instructions.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "toRna",
+      "argNames": [
+        "dna"
+      ],
+      "arity": 1,
+      "caseCount": 6,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "dna"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "b4631f82-c98c-4a2f-90b3-c5c2b6c6f661",
+      "name": "Empty RNA sequence",
+      "group": [],
+      "description": "Empty RNA sequence",
+      "property": "toRna",
+      "args": [
+        {
+          "name": "dna",
+          "value": ""
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": ""
+      }
+    },
+    {
+      "uuid": "a9558a3c-318c-4240-9256-5d5ed47005a6",
+      "name": "RNA complement of cytosine is guanine",
+      "group": [],
+      "description": "RNA complement of cytosine is guanine",
+      "property": "toRna",
+      "args": [
+        {
+          "name": "dna",
+          "value": "C"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "G"
+      }
+    },
+    {
+      "uuid": "6eedbb5c-12cb-4c8b-9f51-f8320b4dc2e7",
+      "name": "RNA complement of guanine is cytosine",
+      "group": [],
+      "description": "RNA complement of guanine is cytosine",
+      "property": "toRna",
+      "args": [
+        {
+          "name": "dna",
+          "value": "G"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "C"
+      }
+    },
+    {
+      "uuid": "870bd3ec-8487-471d-8d9a-a25046488d3e",
+      "name": "RNA complement of thymine is adenine",
+      "group": [],
+      "description": "RNA complement of thymine is adenine",
+      "property": "toRna",
+      "args": [
+        {
+          "name": "dna",
+          "value": "T"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "A"
+      }
+    },
+    {
+      "uuid": "aade8964-02e1-4073-872f-42d3ffd74c5f",
+      "name": "RNA complement of adenine is uracil",
+      "group": [],
+      "description": "RNA complement of adenine is uracil",
+      "property": "toRna",
+      "args": [
+        {
+          "name": "dna",
+          "value": "A"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "U"
+      }
+    },
+    {
+      "uuid": "79ed2757-f018-4f47-a1d7-34a559392dbf",
+      "name": "RNA complement",
+      "group": [],
+      "description": "RNA complement",
+      "property": "toRna",
+      "args": [
+        {
+          "name": "dna",
+          "value": "ACGTGGTCTTAA"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "UGCACCAGAAUU"
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 6,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "string"
+    ]
+  }
+}

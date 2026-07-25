@@ -1,0 +1,599 @@
+{
+  "schemaVersion": 1,
+  "id": "scale-generator",
+  "title": "Scale Generator",
+  "blurb": "Generate musical scales, given a starting note and a set of intervals.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "chromatic",
+      "argNames": [
+        "tonic"
+      ],
+      "arity": 1,
+      "caseCount": 2,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "tonic"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "interval",
+      "argNames": [
+        "tonic",
+        "intervals"
+      ],
+      "arity": 2,
+      "caseCount": 15,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "tonic",
+          "intervals"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "10ea7b14-8a49-40be-ac55-7c62b55f9b47",
+      "name": "Chromatic scales > Chromatic scale with sharps",
+      "group": [
+        "Chromatic scales"
+      ],
+      "description": "Chromatic scale with sharps",
+      "property": "chromatic",
+      "args": [
+        {
+          "name": "tonic",
+          "value": "C"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "C",
+          "C#",
+          "D",
+          "D#",
+          "E",
+          "F",
+          "F#",
+          "G",
+          "G#",
+          "A",
+          "A#",
+          "B"
+        ]
+      }
+    },
+    {
+      "uuid": "af8381de-9a72-4efd-823a-48374dbfe76f",
+      "name": "Chromatic scales > Chromatic scale with flats",
+      "group": [
+        "Chromatic scales"
+      ],
+      "description": "Chromatic scale with flats",
+      "property": "chromatic",
+      "args": [
+        {
+          "name": "tonic",
+          "value": "F"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "F",
+          "Gb",
+          "G",
+          "Ab",
+          "A",
+          "Bb",
+          "B",
+          "C",
+          "Db",
+          "D",
+          "Eb",
+          "E"
+        ]
+      }
+    },
+    {
+      "uuid": "7195998a-7be7-40c9-8877-a1d7949e061b",
+      "name": "Scales with specified intervals > Simple major scale",
+      "group": [
+        "Scales with specified intervals"
+      ],
+      "description": "Simple major scale",
+      "property": "interval",
+      "args": [
+        {
+          "name": "tonic",
+          "value": "C"
+        },
+        {
+          "name": "intervals",
+          "value": "MMmMMMm"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "C",
+          "D",
+          "E",
+          "F",
+          "G",
+          "A",
+          "B",
+          "C"
+        ]
+      }
+    },
+    {
+      "uuid": "fe853b97-1878-4090-b218-4029246abb91",
+      "name": "Scales with specified intervals > Major scale with sharps",
+      "group": [
+        "Scales with specified intervals"
+      ],
+      "description": "Major scale with sharps",
+      "property": "interval",
+      "args": [
+        {
+          "name": "tonic",
+          "value": "G"
+        },
+        {
+          "name": "intervals",
+          "value": "MMmMMMm"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "G",
+          "A",
+          "B",
+          "C",
+          "D",
+          "E",
+          "F#",
+          "G"
+        ]
+      }
+    },
+    {
+      "uuid": "d60cb414-cc02-4fcb-ad7a-fc7ef0a9eead",
+      "name": "Scales with specified intervals > Major scale with flats",
+      "group": [
+        "Scales with specified intervals"
+      ],
+      "description": "Major scale with flats",
+      "property": "interval",
+      "args": [
+        {
+          "name": "tonic",
+          "value": "F"
+        },
+        {
+          "name": "intervals",
+          "value": "MMmMMMm"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "F",
+          "G",
+          "A",
+          "Bb",
+          "C",
+          "D",
+          "E",
+          "F"
+        ]
+      }
+    },
+    {
+      "uuid": "77dab9b3-1bbc-4f9a-afd8-06da693bcc67",
+      "name": "Scales with specified intervals > Minor scale with sharps",
+      "group": [
+        "Scales with specified intervals"
+      ],
+      "description": "Minor scale with sharps",
+      "property": "interval",
+      "args": [
+        {
+          "name": "tonic",
+          "value": "f#"
+        },
+        {
+          "name": "intervals",
+          "value": "MmMMmMM"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "F#",
+          "G#",
+          "A",
+          "B",
+          "C#",
+          "D",
+          "E",
+          "F#"
+        ]
+      }
+    },
+    {
+      "uuid": "5fa1728f-5b66-4b43-9b7c-84359b7069d4",
+      "name": "Scales with specified intervals > Minor scale with flats",
+      "group": [
+        "Scales with specified intervals"
+      ],
+      "description": "Minor scale with flats",
+      "property": "interval",
+      "args": [
+        {
+          "name": "tonic",
+          "value": "bb"
+        },
+        {
+          "name": "intervals",
+          "value": "MmMMmMM"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "Bb",
+          "C",
+          "Db",
+          "Eb",
+          "F",
+          "Gb",
+          "Ab",
+          "Bb"
+        ]
+      }
+    },
+    {
+      "uuid": "f3f1c353-8f7b-4a85-a5b5-ae06c2645823",
+      "name": "Scales with specified intervals > Dorian mode",
+      "group": [
+        "Scales with specified intervals"
+      ],
+      "description": "Dorian mode",
+      "property": "interval",
+      "args": [
+        {
+          "name": "tonic",
+          "value": "d"
+        },
+        {
+          "name": "intervals",
+          "value": "MmMMMmM"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "D",
+          "E",
+          "F",
+          "G",
+          "A",
+          "B",
+          "C",
+          "D"
+        ]
+      }
+    },
+    {
+      "uuid": "5fe14e5a-3ddc-4202-a158-2c1158beb5d0",
+      "name": "Scales with specified intervals > Mixolydian mode",
+      "group": [
+        "Scales with specified intervals"
+      ],
+      "description": "Mixolydian mode",
+      "property": "interval",
+      "args": [
+        {
+          "name": "tonic",
+          "value": "Eb"
+        },
+        {
+          "name": "intervals",
+          "value": "MMmMMmM"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "Eb",
+          "F",
+          "G",
+          "Ab",
+          "Bb",
+          "C",
+          "Db",
+          "Eb"
+        ]
+      }
+    },
+    {
+      "uuid": "e6307799-b7f6-43fc-a6d8-a4834d6e2bdb",
+      "name": "Scales with specified intervals > Lydian mode",
+      "group": [
+        "Scales with specified intervals"
+      ],
+      "description": "Lydian mode",
+      "property": "interval",
+      "args": [
+        {
+          "name": "tonic",
+          "value": "a"
+        },
+        {
+          "name": "intervals",
+          "value": "MMMmMMm"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "A",
+          "B",
+          "C#",
+          "D#",
+          "E",
+          "F#",
+          "G#",
+          "A"
+        ]
+      }
+    },
+    {
+      "uuid": "7c4a95cd-ecf4-448d-99bc-dbbca51856e0",
+      "name": "Scales with specified intervals > Phrygian mode",
+      "group": [
+        "Scales with specified intervals"
+      ],
+      "description": "Phrygian mode",
+      "property": "interval",
+      "args": [
+        {
+          "name": "tonic",
+          "value": "e"
+        },
+        {
+          "name": "intervals",
+          "value": "mMMMmMM"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "E",
+          "F",
+          "G",
+          "A",
+          "B",
+          "C",
+          "D",
+          "E"
+        ]
+      }
+    },
+    {
+      "uuid": "f476f9c9-5a13-473d-bb6c-f884cf8fd9f2",
+      "name": "Scales with specified intervals > Locrian mode",
+      "group": [
+        "Scales with specified intervals"
+      ],
+      "description": "Locrian mode",
+      "property": "interval",
+      "args": [
+        {
+          "name": "tonic",
+          "value": "g"
+        },
+        {
+          "name": "intervals",
+          "value": "mMMmMMM"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "G",
+          "Ab",
+          "Bb",
+          "C",
+          "Db",
+          "Eb",
+          "F",
+          "G"
+        ]
+      }
+    },
+    {
+      "uuid": "87fdbcca-d3dd-46d5-9c56-ec79e25b19f4",
+      "name": "Scales with specified intervals > Harmonic minor",
+      "group": [
+        "Scales with specified intervals"
+      ],
+      "description": "Harmonic minor",
+      "property": "interval",
+      "args": [
+        {
+          "name": "tonic",
+          "value": "d"
+        },
+        {
+          "name": "intervals",
+          "value": "MmMMmAm"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "D",
+          "E",
+          "F",
+          "G",
+          "A",
+          "Bb",
+          "Db",
+          "D"
+        ]
+      }
+    },
+    {
+      "uuid": "b28ecc18-88db-4fd5-a973-cfe6361e2b24",
+      "name": "Scales with specified intervals > Octatonic",
+      "group": [
+        "Scales with specified intervals"
+      ],
+      "description": "Octatonic",
+      "property": "interval",
+      "args": [
+        {
+          "name": "tonic",
+          "value": "C"
+        },
+        {
+          "name": "intervals",
+          "value": "MmMmMmMm"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "C",
+          "D",
+          "D#",
+          "F",
+          "F#",
+          "G#",
+          "A",
+          "B",
+          "C"
+        ]
+      }
+    },
+    {
+      "uuid": "a1c7d333-6fb3-4f3b-9178-8a0cbe043134",
+      "name": "Scales with specified intervals > Hexatonic",
+      "group": [
+        "Scales with specified intervals"
+      ],
+      "description": "Hexatonic",
+      "property": "interval",
+      "args": [
+        {
+          "name": "tonic",
+          "value": "Db"
+        },
+        {
+          "name": "intervals",
+          "value": "MMMMMM"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "Db",
+          "Eb",
+          "F",
+          "G",
+          "A",
+          "B",
+          "Db"
+        ]
+      }
+    },
+    {
+      "uuid": "9acfd139-0781-4926-8273-66a478c3b287",
+      "name": "Scales with specified intervals > Pentatonic",
+      "group": [
+        "Scales with specified intervals"
+      ],
+      "description": "Pentatonic",
+      "property": "interval",
+      "args": [
+        {
+          "name": "tonic",
+          "value": "A"
+        },
+        {
+          "name": "intervals",
+          "value": "MMAMA"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "A",
+          "B",
+          "C#",
+          "E",
+          "F#",
+          "A"
+        ]
+      }
+    },
+    {
+      "uuid": "31c933ca-2251-4a5b-92dd-9d5831bc84ad",
+      "name": "Scales with specified intervals > Enigmatic",
+      "group": [
+        "Scales with specified intervals"
+      ],
+      "description": "Enigmatic",
+      "property": "interval",
+      "args": [
+        {
+          "name": "tonic",
+          "value": "G"
+        },
+        {
+          "name": "intervals",
+          "value": "mAMMMmm"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "G",
+          "G#",
+          "B",
+          "C#",
+          "D#",
+          "F",
+          "F#",
+          "G"
+        ]
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 17,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 15,
+    "valueKinds": [
+      "array",
+      "string"
+    ]
+  }
+}

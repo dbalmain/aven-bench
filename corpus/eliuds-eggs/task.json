@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "id": "eliuds-eggs",
+  "title": "Eliud's Eggs",
+  "blurb": "Help Eliud count the number of eggs in her chicken coop by counting the number of 1 bits in a binary representation.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "introduction.md",
+    "instructions.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "eggCount",
+      "argNames": [
+        "number"
+      ],
+      "arity": 1,
+      "caseCount": 4,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "number"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "559e789d-07d1-4422-9004-3b699f83bca3",
+      "name": "0 eggs",
+      "group": [],
+      "description": "0 eggs",
+      "property": "eggCount",
+      "args": [
+        {
+          "name": "number",
+          "value": 0
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "97223282-f71e-490c-92f0-b3ec9e275aba",
+      "name": "1 egg",
+      "group": [],
+      "description": "1 egg",
+      "property": "eggCount",
+      "args": [
+        {
+          "name": "number",
+          "value": 16
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 1
+      }
+    },
+    {
+      "uuid": "1f8fd18f-26e9-4144-9a0e-57cdfc4f4ff5",
+      "name": "4 eggs",
+      "group": [],
+      "description": "4 eggs",
+      "property": "eggCount",
+      "args": [
+        {
+          "name": "number",
+          "value": 89
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 4
+      }
+    },
+    {
+      "uuid": "0c18be92-a498-4ef2-bcbb-28ac4b06cb81",
+      "name": "13 eggs",
+      "group": [],
+      "description": "13 eggs",
+      "property": "eggCount",
+      "args": [
+        {
+          "name": "number",
+          "value": 2000000000
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 13
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 4,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "int"
+    ]
+  }
+}

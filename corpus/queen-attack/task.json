@@ -1,0 +1,456 @@
+{
+  "schemaVersion": 1,
+  "id": "queen-attack",
+  "title": "Queen Attack",
+  "blurb": "Given the position of two queens on a chess board, indicate whether or not they are positioned so that they can attack each other.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [
+    "Testing invalid positions will vary by language. The expected value of   ",
+    "'error' is there to indicate some sort of failure should occur, while a 0",
+    "means no failure.                                                        ",
+    "Some languages implement tests beyond this set, such as checking for two ",
+    "pieces being placed on the same position, representing the board         ",
+    "graphically, or using standard chess notation. Those tests can be offered",
+    "as extra credit.                                                         ",
+    "                                                                         ",
+    "All row and column positions are considered to be zero-indexed array     ",
+    "indices, where the first row - with index 0 - represents the top of the  ",
+    "board, and the first column - with index 0 - represents the left of the  ",
+    "board. In chess notation that is a8.                                     "
+  ],
+  "properties": [
+    {
+      "name": "create",
+      "argNames": [
+        "queen"
+      ],
+      "arity": 1,
+      "caseCount": 5,
+      "returnsResult": true,
+      "argOrderVariants": [
+        [
+          "queen"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "canAttack",
+      "argNames": [
+        "white_queen",
+        "black_queen"
+      ],
+      "arity": 2,
+      "caseCount": 8,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "white_queen",
+          "black_queen"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "3ac4f735-d36c-44c4-a3e2-316f79704203",
+      "name": "Test creation of Queens with valid and invalid positions > queen with a valid position",
+      "group": [
+        "Test creation of Queens with valid and invalid positions"
+      ],
+      "description": "queen with a valid position",
+      "property": "create",
+      "args": [
+        {
+          "name": "queen",
+          "value": {
+            "position": {
+              "row": 2,
+              "column": 2
+            }
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "4e812d5d-b974-4e38-9a6b-8e0492bfa7be",
+      "name": "Test creation of Queens with valid and invalid positions > queen must have positive row",
+      "group": [
+        "Test creation of Queens with valid and invalid positions"
+      ],
+      "description": "queen must have positive row",
+      "property": "create",
+      "args": [
+        {
+          "name": "queen",
+          "value": {
+            "position": {
+              "row": -2,
+              "column": 2
+            }
+          }
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "row not positive"
+      }
+    },
+    {
+      "uuid": "f07b7536-b66b-4f08-beb9-4d70d891d5c8",
+      "name": "Test creation of Queens with valid and invalid positions > queen must have row on board",
+      "group": [
+        "Test creation of Queens with valid and invalid positions"
+      ],
+      "description": "queen must have row on board",
+      "property": "create",
+      "args": [
+        {
+          "name": "queen",
+          "value": {
+            "position": {
+              "row": 8,
+              "column": 4
+            }
+          }
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "row not on board"
+      }
+    },
+    {
+      "uuid": "15a10794-36d9-4907-ae6b-e5a0d4c54ebe",
+      "name": "Test creation of Queens with valid and invalid positions > queen must have positive column",
+      "group": [
+        "Test creation of Queens with valid and invalid positions"
+      ],
+      "description": "queen must have positive column",
+      "property": "create",
+      "args": [
+        {
+          "name": "queen",
+          "value": {
+            "position": {
+              "row": 2,
+              "column": -2
+            }
+          }
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "column not positive"
+      }
+    },
+    {
+      "uuid": "6907762d-0e8a-4c38-87fb-12f2f65f0ce4",
+      "name": "Test creation of Queens with valid and invalid positions > queen must have column on board",
+      "group": [
+        "Test creation of Queens with valid and invalid positions"
+      ],
+      "description": "queen must have column on board",
+      "property": "create",
+      "args": [
+        {
+          "name": "queen",
+          "value": {
+            "position": {
+              "row": 4,
+              "column": 8
+            }
+          }
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "column not on board"
+      }
+    },
+    {
+      "uuid": "33ae4113-d237-42ee-bac1-e1e699c0c007",
+      "name": "Test the ability of one queen to attack another > cannot attack",
+      "group": [
+        "Test the ability of one queen to attack another"
+      ],
+      "description": "cannot attack",
+      "property": "canAttack",
+      "args": [
+        {
+          "name": "white_queen",
+          "value": {
+            "position": {
+              "row": 2,
+              "column": 4
+            }
+          }
+        },
+        {
+          "name": "black_queen",
+          "value": {
+            "position": {
+              "row": 6,
+              "column": 6
+            }
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "uuid": "eaa65540-ea7c-4152-8c21-003c7a68c914",
+      "name": "Test the ability of one queen to attack another > can attack on same row",
+      "group": [
+        "Test the ability of one queen to attack another"
+      ],
+      "description": "can attack on same row",
+      "property": "canAttack",
+      "args": [
+        {
+          "name": "white_queen",
+          "value": {
+            "position": {
+              "row": 2,
+              "column": 4
+            }
+          }
+        },
+        {
+          "name": "black_queen",
+          "value": {
+            "position": {
+              "row": 2,
+              "column": 6
+            }
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "bae6f609-2c0e-4154-af71-af82b7c31cea",
+      "name": "Test the ability of one queen to attack another > can attack on same column",
+      "group": [
+        "Test the ability of one queen to attack another"
+      ],
+      "description": "can attack on same column",
+      "property": "canAttack",
+      "args": [
+        {
+          "name": "white_queen",
+          "value": {
+            "position": {
+              "row": 4,
+              "column": 5
+            }
+          }
+        },
+        {
+          "name": "black_queen",
+          "value": {
+            "position": {
+              "row": 2,
+              "column": 5
+            }
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "0e1b4139-b90d-4562-bd58-dfa04f1746c7",
+      "name": "Test the ability of one queen to attack another > can attack on first diagonal",
+      "group": [
+        "Test the ability of one queen to attack another"
+      ],
+      "description": "can attack on first diagonal",
+      "property": "canAttack",
+      "args": [
+        {
+          "name": "white_queen",
+          "value": {
+            "position": {
+              "row": 2,
+              "column": 2
+            }
+          }
+        },
+        {
+          "name": "black_queen",
+          "value": {
+            "position": {
+              "row": 0,
+              "column": 4
+            }
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "ff9b7ed4-e4b6-401b-8d16-bc894d6d3dcd",
+      "name": "Test the ability of one queen to attack another > can attack on second diagonal",
+      "group": [
+        "Test the ability of one queen to attack another"
+      ],
+      "description": "can attack on second diagonal",
+      "property": "canAttack",
+      "args": [
+        {
+          "name": "white_queen",
+          "value": {
+            "position": {
+              "row": 2,
+              "column": 2
+            }
+          }
+        },
+        {
+          "name": "black_queen",
+          "value": {
+            "position": {
+              "row": 3,
+              "column": 1
+            }
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "0a71e605-6e28-4cc2-aa47-d20a2e71037a",
+      "name": "Test the ability of one queen to attack another > can attack on third diagonal",
+      "group": [
+        "Test the ability of one queen to attack another"
+      ],
+      "description": "can attack on third diagonal",
+      "property": "canAttack",
+      "args": [
+        {
+          "name": "white_queen",
+          "value": {
+            "position": {
+              "row": 2,
+              "column": 2
+            }
+          }
+        },
+        {
+          "name": "black_queen",
+          "value": {
+            "position": {
+              "row": 1,
+              "column": 1
+            }
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "0790b588-ae73-4f1f-a968-dd0b34f45f86",
+      "name": "Test the ability of one queen to attack another > can attack on fourth diagonal",
+      "group": [
+        "Test the ability of one queen to attack another"
+      ],
+      "description": "can attack on fourth diagonal",
+      "property": "canAttack",
+      "args": [
+        {
+          "name": "white_queen",
+          "value": {
+            "position": {
+              "row": 1,
+              "column": 7
+            }
+          }
+        },
+        {
+          "name": "black_queen",
+          "value": {
+            "position": {
+              "row": 0,
+              "column": 6
+            }
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "543f8fd4-2597-4aad-8d77-cbdab63619f8",
+      "name": "Test the ability of one queen to attack another > cannot attack if falling diagonals are only the same when reflected across the longest falling diagonal",
+      "group": [
+        "Test the ability of one queen to attack another"
+      ],
+      "description": "cannot attack if falling diagonals are only the same when reflected across the longest falling diagonal",
+      "property": "canAttack",
+      "args": [
+        {
+          "name": "white_queen",
+          "value": {
+            "position": {
+              "row": 4,
+              "column": 1
+            }
+          }
+        },
+        {
+          "name": "black_queen",
+          "value": {
+            "position": {
+              "row": 2,
+              "column": 5
+            }
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 13,
+    "errorCaseCount": 4,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "bool",
+      "error",
+      "int",
+      "record"
+    ]
+  }
+}

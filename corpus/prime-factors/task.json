@@ -1,0 +1,283 @@
+{
+  "schemaVersion": 1,
+  "id": "prime-factors",
+  "title": "Prime Factors",
+  "blurb": "Compute the prime factors of a given natural number.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "factors",
+      "argNames": [
+        "value"
+      ],
+      "arity": 1,
+      "caseCount": 12,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "value"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "924fc966-a8f5-4288-82f2-6b9224819ccd",
+      "name": "no factors",
+      "group": [],
+      "description": "no factors",
+      "property": "factors",
+      "args": [
+        {
+          "name": "value",
+          "value": 1
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": []
+      }
+    },
+    {
+      "uuid": "17e30670-b105-4305-af53-ddde182cb6ad",
+      "name": "prime number",
+      "group": [],
+      "description": "prime number",
+      "property": "factors",
+      "args": [
+        {
+          "name": "value",
+          "value": 2
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          2
+        ]
+      }
+    },
+    {
+      "uuid": "238d57c8-4c12-42ef-af34-ae4929f94789",
+      "name": "another prime number",
+      "group": [],
+      "description": "another prime number",
+      "property": "factors",
+      "args": [
+        {
+          "name": "value",
+          "value": 3
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          3
+        ]
+      }
+    },
+    {
+      "uuid": "f59b8350-a180-495a-8fb1-1712fbee1158",
+      "name": "square of a prime",
+      "group": [],
+      "description": "square of a prime",
+      "property": "factors",
+      "args": [
+        {
+          "name": "value",
+          "value": 9
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          3,
+          3
+        ]
+      }
+    },
+    {
+      "uuid": "756949d3-3158-4e3d-91f2-c4f9f043ee70",
+      "name": "product of first prime",
+      "group": [],
+      "description": "product of first prime",
+      "property": "factors",
+      "args": [
+        {
+          "name": "value",
+          "value": 4
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          2,
+          2
+        ]
+      }
+    },
+    {
+      "uuid": "bc8c113f-9580-4516-8669-c5fc29512ceb",
+      "name": "cube of a prime",
+      "group": [],
+      "description": "cube of a prime",
+      "property": "factors",
+      "args": [
+        {
+          "name": "value",
+          "value": 8
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          2,
+          2,
+          2
+        ]
+      }
+    },
+    {
+      "uuid": "7d6a3300-a4cb-4065-bd33-0ced1de6cb44",
+      "name": "product of second prime",
+      "group": [],
+      "description": "product of second prime",
+      "property": "factors",
+      "args": [
+        {
+          "name": "value",
+          "value": 27
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          3,
+          3,
+          3
+        ]
+      }
+    },
+    {
+      "uuid": "073ac0b2-c915-4362-929d-fc45f7b9a9e4",
+      "name": "product of third prime",
+      "group": [],
+      "description": "product of third prime",
+      "property": "factors",
+      "args": [
+        {
+          "name": "value",
+          "value": 625
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          5,
+          5,
+          5,
+          5
+        ]
+      }
+    },
+    {
+      "uuid": "6e0e4912-7fb6-47f3-a9ad-dbcd79340c75",
+      "name": "product of first and second prime",
+      "group": [],
+      "description": "product of first and second prime",
+      "property": "factors",
+      "args": [
+        {
+          "name": "value",
+          "value": 6
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "uuid": "00485cd3-a3fe-4fbe-a64a-a4308fc1f870",
+      "name": "product of primes and non-primes",
+      "group": [],
+      "description": "product of primes and non-primes",
+      "property": "factors",
+      "args": [
+        {
+          "name": "value",
+          "value": 12
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          2,
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "uuid": "02251d54-3ca1-4a9b-85e1-b38f4b0ccb91",
+      "name": "product of primes",
+      "group": [],
+      "description": "product of primes",
+      "property": "factors",
+      "args": [
+        {
+          "name": "value",
+          "value": 901255
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          5,
+          17,
+          23,
+          461
+        ]
+      }
+    },
+    {
+      "uuid": "070cf8dc-e202-4285-aa37-8d775c9cd473",
+      "name": "factors include a large prime",
+      "group": [],
+      "description": "factors include a large prime",
+      "property": "factors",
+      "args": [
+        {
+          "name": "value",
+          "value": 93819012551
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          11,
+          9539,
+          894119
+        ]
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 12,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "array",
+      "int"
+    ]
+  }
+}

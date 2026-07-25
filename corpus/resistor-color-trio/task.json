@@ -1,0 +1,283 @@
+{
+  "schemaVersion": 1,
+  "id": "resistor-color-trio",
+  "title": "Resistor Color Trio",
+  "blurb": "Convert color codes, as used on resistors, to a human-readable label.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "label",
+      "argNames": [
+        "colors"
+      ],
+      "arity": 1,
+      "caseCount": 10,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "colors"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "d6863355-15b7-40bb-abe0-bfb1a25512ed",
+      "name": "Orange and orange and black",
+      "group": [],
+      "description": "Orange and orange and black",
+      "property": "label",
+      "args": [
+        {
+          "name": "colors",
+          "value": [
+            "orange",
+            "orange",
+            "black"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "value": 33,
+          "unit": "ohms"
+        }
+      }
+    },
+    {
+      "uuid": "1224a3a9-8c8e-4032-843a-5224e04647d6",
+      "name": "Blue and grey and brown",
+      "group": [],
+      "description": "Blue and grey and brown",
+      "property": "label",
+      "args": [
+        {
+          "name": "colors",
+          "value": [
+            "blue",
+            "grey",
+            "brown"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "value": 680,
+          "unit": "ohms"
+        }
+      }
+    },
+    {
+      "uuid": "b8bda7dc-6b95-4539-abb2-2ad51d66a207",
+      "name": "Red and black and red",
+      "group": [],
+      "description": "Red and black and red",
+      "property": "label",
+      "args": [
+        {
+          "name": "colors",
+          "value": [
+            "red",
+            "black",
+            "red"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "value": 2,
+          "unit": "kiloohms"
+        }
+      }
+    },
+    {
+      "uuid": "5b1e74bc-d838-4eda-bbb3-eaba988e733b",
+      "name": "Green and brown and orange",
+      "group": [],
+      "description": "Green and brown and orange",
+      "property": "label",
+      "args": [
+        {
+          "name": "colors",
+          "value": [
+            "green",
+            "brown",
+            "orange"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "value": 51,
+          "unit": "kiloohms"
+        }
+      }
+    },
+    {
+      "uuid": "f5d37ef9-1919-4719-a90d-a33c5a6934c9",
+      "name": "Yellow and violet and yellow",
+      "group": [],
+      "description": "Yellow and violet and yellow",
+      "property": "label",
+      "args": [
+        {
+          "name": "colors",
+          "value": [
+            "yellow",
+            "violet",
+            "yellow"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "value": 470,
+          "unit": "kiloohms"
+        }
+      }
+    },
+    {
+      "uuid": "5f6404a7-5bb3-4283-877d-3d39bcc33854",
+      "name": "Blue and violet and blue",
+      "group": [],
+      "description": "Blue and violet and blue",
+      "property": "label",
+      "args": [
+        {
+          "name": "colors",
+          "value": [
+            "blue",
+            "violet",
+            "blue"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "value": 67,
+          "unit": "megaohms"
+        }
+      }
+    },
+    {
+      "uuid": "7d3a6ab8-e40e-46c3-98b1-91639fff2344",
+      "name": "Minimum possible value",
+      "group": [],
+      "description": "Minimum possible value",
+      "property": "label",
+      "args": [
+        {
+          "name": "colors",
+          "value": [
+            "black",
+            "black",
+            "black"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "value": 0,
+          "unit": "ohms"
+        }
+      }
+    },
+    {
+      "uuid": "ca0aa0ac-3825-42de-9f07-dac68cc580fd",
+      "name": "Maximum possible value",
+      "group": [],
+      "description": "Maximum possible value",
+      "property": "label",
+      "args": [
+        {
+          "name": "colors",
+          "value": [
+            "white",
+            "white",
+            "white"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "value": 99,
+          "unit": "gigaohms"
+        }
+      }
+    },
+    {
+      "uuid": "0061a76c-903a-4714-8ce2-f26ce23b0e09",
+      "name": "First two colors make an invalid octal number",
+      "group": [],
+      "description": "First two colors make an invalid octal number",
+      "property": "label",
+      "args": [
+        {
+          "name": "colors",
+          "value": [
+            "black",
+            "grey",
+            "black"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "value": 8,
+          "unit": "ohms"
+        }
+      }
+    },
+    {
+      "uuid": "30872c92-f567-4b69-a105-8455611c10c4",
+      "name": "Ignore extra colors",
+      "group": [],
+      "description": "Ignore extra colors",
+      "property": "label",
+      "args": [
+        {
+          "name": "colors",
+          "value": [
+            "blue",
+            "green",
+            "yellow",
+            "orange"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "value": 650,
+          "unit": "kiloohms"
+        }
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 10,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "array",
+      "int",
+      "record",
+      "string"
+    ]
+  }
+}

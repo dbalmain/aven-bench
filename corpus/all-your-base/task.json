@@ -1,0 +1,691 @@
+{
+  "schemaVersion": 1,
+  "id": "all-your-base",
+  "title": "All Your Base",
+  "blurb": "Convert a number, represented as a sequence of digits in one base, to any other base.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "introduction.md",
+    "instructions.md"
+  ],
+  "comments": [
+    "This canonical data makes the following choices:",
+    "1. Zero is always represented in outputs as [0] instead of [].",
+    "2. In no other instances are leading zeroes present in any outputs.",
+    "3. Leading zeroes are accepted in inputs.",
+    "4. An empty sequence of input digits is considered zero, rather than an error.",
+    "",
+    "Tracks that wish to make different decisions for these choices may translate appropriately.",
+    "",
+    "All your numeric-base are belong to [2..]. :)"
+  ],
+  "properties": [
+    {
+      "name": "rebase",
+      "argNames": [
+        "inputBase",
+        "digits",
+        "outputBase"
+      ],
+      "arity": 3,
+      "caseCount": 21,
+      "returnsResult": true,
+      "argOrderVariants": [
+        [
+          "inputBase",
+          "digits",
+          "outputBase"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "5ce422f9-7a4b-4f44-ad29-49c67cb32d2c",
+      "name": "single bit one to decimal",
+      "group": [],
+      "description": "single bit one to decimal",
+      "property": "rebase",
+      "args": [
+        {
+          "name": "inputBase",
+          "value": 2
+        },
+        {
+          "name": "digits",
+          "value": [
+            1
+          ]
+        },
+        {
+          "name": "outputBase",
+          "value": 10
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1
+        ]
+      }
+    },
+    {
+      "uuid": "0cc3fea8-bb79-46ac-a2ab-5a2c93051033",
+      "name": "binary to single decimal",
+      "group": [],
+      "description": "binary to single decimal",
+      "property": "rebase",
+      "args": [
+        {
+          "name": "inputBase",
+          "value": 2
+        },
+        {
+          "name": "digits",
+          "value": [
+            1,
+            0,
+            1
+          ]
+        },
+        {
+          "name": "outputBase",
+          "value": 10
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          5
+        ]
+      }
+    },
+    {
+      "uuid": "f12db0f9-0d3d-42c2-b3ba-e38cb375a2b8",
+      "name": "single decimal to binary",
+      "group": [],
+      "description": "single decimal to binary",
+      "property": "rebase",
+      "args": [
+        {
+          "name": "inputBase",
+          "value": 10
+        },
+        {
+          "name": "digits",
+          "value": [
+            5
+          ]
+        },
+        {
+          "name": "outputBase",
+          "value": 2
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1,
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "uuid": "2c45cf54-6da3-4748-9733-5a3c765d925b",
+      "name": "binary to multiple decimal",
+      "group": [],
+      "description": "binary to multiple decimal",
+      "property": "rebase",
+      "args": [
+        {
+          "name": "inputBase",
+          "value": 2
+        },
+        {
+          "name": "digits",
+          "value": [
+            1,
+            0,
+            1,
+            0,
+            1,
+            0
+          ]
+        },
+        {
+          "name": "outputBase",
+          "value": 10
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          4,
+          2
+        ]
+      }
+    },
+    {
+      "uuid": "65ddb8b4-8899-4fcc-8618-181b2cf0002d",
+      "name": "decimal to binary",
+      "group": [],
+      "description": "decimal to binary",
+      "property": "rebase",
+      "args": [
+        {
+          "name": "inputBase",
+          "value": 10
+        },
+        {
+          "name": "digits",
+          "value": [
+            4,
+            2
+          ]
+        },
+        {
+          "name": "outputBase",
+          "value": 2
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1,
+          0,
+          1,
+          0,
+          1,
+          0
+        ]
+      }
+    },
+    {
+      "uuid": "8d418419-02a7-4824-8b7a-352d33c6987e",
+      "name": "trinary to hexadecimal",
+      "group": [],
+      "description": "trinary to hexadecimal",
+      "property": "rebase",
+      "args": [
+        {
+          "name": "inputBase",
+          "value": 3
+        },
+        {
+          "name": "digits",
+          "value": [
+            1,
+            1,
+            2,
+            0
+          ]
+        },
+        {
+          "name": "outputBase",
+          "value": 16
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          2,
+          10
+        ]
+      }
+    },
+    {
+      "uuid": "d3901c80-8190-41b9-bd86-38d988efa956",
+      "name": "hexadecimal to trinary",
+      "group": [],
+      "description": "hexadecimal to trinary",
+      "property": "rebase",
+      "args": [
+        {
+          "name": "inputBase",
+          "value": 16
+        },
+        {
+          "name": "digits",
+          "value": [
+            2,
+            10
+          ]
+        },
+        {
+          "name": "outputBase",
+          "value": 3
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1,
+          1,
+          2,
+          0
+        ]
+      }
+    },
+    {
+      "uuid": "5d42f85e-21ad-41bd-b9be-a3e8e4258bbf",
+      "name": "15-bit integer",
+      "group": [],
+      "description": "15-bit integer",
+      "property": "rebase",
+      "args": [
+        {
+          "name": "inputBase",
+          "value": 97
+        },
+        {
+          "name": "digits",
+          "value": [
+            3,
+            46,
+            60
+          ]
+        },
+        {
+          "name": "outputBase",
+          "value": 73
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          6,
+          10,
+          45
+        ]
+      }
+    },
+    {
+      "uuid": "d68788f7-66dd-43f8-a543-f15b6d233f83",
+      "name": "empty list",
+      "group": [],
+      "description": "empty list",
+      "property": "rebase",
+      "args": [
+        {
+          "name": "inputBase",
+          "value": 2
+        },
+        {
+          "name": "digits",
+          "value": []
+        },
+        {
+          "name": "outputBase",
+          "value": 10
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          0
+        ]
+      }
+    },
+    {
+      "uuid": "5e27e8da-5862-4c5f-b2a9-26c0382b6be7",
+      "name": "single zero",
+      "group": [],
+      "description": "single zero",
+      "property": "rebase",
+      "args": [
+        {
+          "name": "inputBase",
+          "value": 10
+        },
+        {
+          "name": "digits",
+          "value": [
+            0
+          ]
+        },
+        {
+          "name": "outputBase",
+          "value": 2
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          0
+        ]
+      }
+    },
+    {
+      "uuid": "2e1c2573-77e4-4b9c-8517-6c56c5bcfdf2",
+      "name": "multiple zeros",
+      "group": [],
+      "description": "multiple zeros",
+      "property": "rebase",
+      "args": [
+        {
+          "name": "inputBase",
+          "value": 10
+        },
+        {
+          "name": "digits",
+          "value": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "outputBase",
+          "value": 2
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          0
+        ]
+      }
+    },
+    {
+      "uuid": "3530cd9f-8d6d-43f5-bc6e-b30b1db9629b",
+      "name": "leading zeros",
+      "group": [],
+      "description": "leading zeros",
+      "property": "rebase",
+      "args": [
+        {
+          "name": "inputBase",
+          "value": 7
+        },
+        {
+          "name": "digits",
+          "value": [
+            0,
+            6,
+            0
+          ]
+        },
+        {
+          "name": "outputBase",
+          "value": 10
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          4,
+          2
+        ]
+      }
+    },
+    {
+      "uuid": "a6b476a1-1901-4f2a-92c4-4d91917ae023",
+      "name": "input base is one",
+      "group": [],
+      "description": "input base is one",
+      "property": "rebase",
+      "args": [
+        {
+          "name": "inputBase",
+          "value": 1
+        },
+        {
+          "name": "digits",
+          "value": [
+            0
+          ]
+        },
+        {
+          "name": "outputBase",
+          "value": 10
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "input base must be >= 2"
+      }
+    },
+    {
+      "uuid": "e21a693a-7a69-450b-b393-27415c26a016",
+      "name": "input base is zero",
+      "group": [],
+      "description": "input base is zero",
+      "property": "rebase",
+      "args": [
+        {
+          "name": "inputBase",
+          "value": 0
+        },
+        {
+          "name": "digits",
+          "value": []
+        },
+        {
+          "name": "outputBase",
+          "value": 10
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "input base must be >= 2"
+      }
+    },
+    {
+      "uuid": "54a23be5-d99e-41cc-88e0-a650ffe5fcc2",
+      "name": "input base is negative",
+      "group": [],
+      "description": "input base is negative",
+      "property": "rebase",
+      "args": [
+        {
+          "name": "inputBase",
+          "value": -2
+        },
+        {
+          "name": "digits",
+          "value": [
+            1
+          ]
+        },
+        {
+          "name": "outputBase",
+          "value": 10
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "input base must be >= 2"
+      }
+    },
+    {
+      "uuid": "9eccf60c-dcc9-407b-95d8-c37b8be56bb6",
+      "name": "negative digit",
+      "group": [],
+      "description": "negative digit",
+      "property": "rebase",
+      "args": [
+        {
+          "name": "inputBase",
+          "value": 2
+        },
+        {
+          "name": "digits",
+          "value": [
+            1,
+            -1,
+            1,
+            0,
+            1,
+            0
+          ]
+        },
+        {
+          "name": "outputBase",
+          "value": 10
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "all digits must satisfy 0 <= d < input base"
+      }
+    },
+    {
+      "uuid": "232fa4a5-e761-4939-ba0c-ed046cd0676a",
+      "name": "invalid positive digit",
+      "group": [],
+      "description": "invalid positive digit",
+      "property": "rebase",
+      "args": [
+        {
+          "name": "inputBase",
+          "value": 2
+        },
+        {
+          "name": "digits",
+          "value": [
+            1,
+            2,
+            1,
+            0,
+            1,
+            0
+          ]
+        },
+        {
+          "name": "outputBase",
+          "value": 10
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "all digits must satisfy 0 <= d < input base"
+      }
+    },
+    {
+      "uuid": "14238f95-45da-41dc-95ce-18f860b30ad3",
+      "name": "output base is one",
+      "group": [],
+      "description": "output base is one",
+      "property": "rebase",
+      "args": [
+        {
+          "name": "inputBase",
+          "value": 2
+        },
+        {
+          "name": "digits",
+          "value": [
+            1,
+            0,
+            1,
+            0,
+            1,
+            0
+          ]
+        },
+        {
+          "name": "outputBase",
+          "value": 1
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "output base must be >= 2"
+      }
+    },
+    {
+      "uuid": "73dac367-da5c-4a37-95fe-c87fad0a4047",
+      "name": "output base is zero",
+      "group": [],
+      "description": "output base is zero",
+      "property": "rebase",
+      "args": [
+        {
+          "name": "inputBase",
+          "value": 10
+        },
+        {
+          "name": "digits",
+          "value": [
+            7
+          ]
+        },
+        {
+          "name": "outputBase",
+          "value": 0
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "output base must be >= 2"
+      }
+    },
+    {
+      "uuid": "13f81f42-ff53-4e24-89d9-37603a48ebd9",
+      "name": "output base is negative",
+      "group": [],
+      "description": "output base is negative",
+      "property": "rebase",
+      "args": [
+        {
+          "name": "inputBase",
+          "value": 2
+        },
+        {
+          "name": "digits",
+          "value": [
+            1
+          ]
+        },
+        {
+          "name": "outputBase",
+          "value": -7
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "output base must be >= 2"
+      }
+    },
+    {
+      "uuid": "0e6c895d-8a5d-4868-a345-309d094cfe8d",
+      "name": "both bases are negative",
+      "group": [],
+      "description": "both bases are negative",
+      "property": "rebase",
+      "args": [
+        {
+          "name": "inputBase",
+          "value": -2
+        },
+        {
+          "name": "digits",
+          "value": [
+            1
+          ]
+        },
+        {
+          "name": "outputBase",
+          "value": -7
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "input base must be >= 2"
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 21,
+    "errorCaseCount": 9,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "array",
+      "error",
+      "int"
+    ]
+  }
+}

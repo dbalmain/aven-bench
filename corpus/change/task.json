@@ -1,0 +1,434 @@
+{
+  "schemaVersion": 1,
+  "id": "change",
+  "title": "Change",
+  "blurb": "Correctly determine change to be given using the least number of coins.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "introduction.md",
+    "instructions.md"
+  ],
+  "comments": [
+    "Given an infinite supply of coins with different values, ",
+    "find the smallest number of coins needed to make a desired ",
+    "amount of change."
+  ],
+  "properties": [
+    {
+      "name": "findFewestCoins",
+      "argNames": [
+        "coins",
+        "target"
+      ],
+      "arity": 2,
+      "caseCount": 13,
+      "returnsResult": true,
+      "argOrderVariants": [
+        [
+          "coins",
+          "target"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "d0ebd0e1-9d27-4609-a654-df5c0ba1d83a",
+      "name": "change for 1 cent",
+      "group": [],
+      "description": "change for 1 cent",
+      "property": "findFewestCoins",
+      "args": [
+        {
+          "name": "coins",
+          "value": [
+            1,
+            5,
+            10,
+            25
+          ]
+        },
+        {
+          "name": "target",
+          "value": 1
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1
+        ]
+      }
+    },
+    {
+      "uuid": "36887bea-7f92-4a9c-b0cc-c0e886b3ecc8",
+      "name": "single coin change",
+      "group": [],
+      "description": "single coin change",
+      "property": "findFewestCoins",
+      "args": [
+        {
+          "name": "coins",
+          "value": [
+            1,
+            5,
+            10,
+            25,
+            100
+          ]
+        },
+        {
+          "name": "target",
+          "value": 25
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          25
+        ]
+      }
+    },
+    {
+      "uuid": "cef21ccc-0811-4e6e-af44-f011e7eab6c6",
+      "name": "multiple coin change",
+      "group": [],
+      "description": "multiple coin change",
+      "property": "findFewestCoins",
+      "args": [
+        {
+          "name": "coins",
+          "value": [
+            1,
+            5,
+            10,
+            25,
+            100
+          ]
+        },
+        {
+          "name": "target",
+          "value": 15
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          5,
+          10
+        ]
+      }
+    },
+    {
+      "uuid": "d60952bc-0c1a-4571-bf0c-41be72690cb3",
+      "name": "change with Lilliputian Coins",
+      "group": [],
+      "description": "change with Lilliputian Coins",
+      "property": "findFewestCoins",
+      "args": [
+        {
+          "name": "coins",
+          "value": [
+            1,
+            4,
+            15,
+            20,
+            50
+          ]
+        },
+        {
+          "name": "target",
+          "value": 23
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          4,
+          4,
+          15
+        ]
+      }
+    },
+    {
+      "uuid": "408390b9-fafa-4bb9-b608-ffe6036edb6c",
+      "name": "change with Lower Elbonia Coins",
+      "group": [],
+      "description": "change with Lower Elbonia Coins",
+      "property": "findFewestCoins",
+      "args": [
+        {
+          "name": "coins",
+          "value": [
+            1,
+            5,
+            10,
+            21,
+            25
+          ]
+        },
+        {
+          "name": "target",
+          "value": 63
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          21,
+          21,
+          21
+        ]
+      }
+    },
+    {
+      "uuid": "7421a4cb-1c48-4bf9-99c7-7f049689132f",
+      "name": "large target values",
+      "group": [],
+      "description": "large target values",
+      "property": "findFewestCoins",
+      "args": [
+        {
+          "name": "coins",
+          "value": [
+            1,
+            2,
+            5,
+            10,
+            20,
+            50,
+            100
+          ]
+        },
+        {
+          "name": "target",
+          "value": 999
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          2,
+          2,
+          5,
+          20,
+          20,
+          50,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100
+        ]
+      }
+    },
+    {
+      "uuid": "f79d2e9b-0ae3-4d6a-bb58-dc978b0dba28",
+      "name": "possible change without unit coins available",
+      "group": [],
+      "description": "possible change without unit coins available",
+      "property": "findFewestCoins",
+      "args": [
+        {
+          "name": "coins",
+          "value": [
+            2,
+            5,
+            10,
+            20,
+            50
+          ]
+        },
+        {
+          "name": "target",
+          "value": 21
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          2,
+          2,
+          2,
+          5,
+          10
+        ]
+      }
+    },
+    {
+      "uuid": "9a166411-d35d-4f7f-a007-6724ac266178",
+      "name": "another possible change without unit coins available",
+      "group": [],
+      "description": "another possible change without unit coins available",
+      "property": "findFewestCoins",
+      "args": [
+        {
+          "name": "coins",
+          "value": [
+            4,
+            5
+          ]
+        },
+        {
+          "name": "target",
+          "value": 27
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          4,
+          4,
+          4,
+          5,
+          5,
+          5
+        ]
+      }
+    },
+    {
+      "uuid": "ce0f80d5-51c3-469d-818c-3e69dbd25f75",
+      "name": "a greedy approach is not optimal",
+      "group": [],
+      "description": "a greedy approach is not optimal",
+      "property": "findFewestCoins",
+      "args": [
+        {
+          "name": "coins",
+          "value": [
+            1,
+            10,
+            11
+          ]
+        },
+        {
+          "name": "target",
+          "value": 20
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          10,
+          10
+        ]
+      }
+    },
+    {
+      "uuid": "bbbcc154-e9e9-4209-a4db-dd6d81ec26bb",
+      "name": "no coins make 0 change",
+      "group": [],
+      "description": "no coins make 0 change",
+      "property": "findFewestCoins",
+      "args": [
+        {
+          "name": "coins",
+          "value": [
+            1,
+            5,
+            10,
+            21,
+            25
+          ]
+        },
+        {
+          "name": "target",
+          "value": 0
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": []
+      }
+    },
+    {
+      "uuid": "c8b81d5a-49bd-4b61-af73-8ee5383a2ce1",
+      "name": "error testing for change smaller than the smallest of coins",
+      "group": [],
+      "description": "error testing for change smaller than the smallest of coins",
+      "property": "findFewestCoins",
+      "args": [
+        {
+          "name": "coins",
+          "value": [
+            5,
+            10
+          ]
+        },
+        {
+          "name": "target",
+          "value": 3
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "can't make target with given coins"
+      }
+    },
+    {
+      "uuid": "3c43e3e4-63f9-46ac-9476-a67516e98f68",
+      "name": "error if no combination can add up to target",
+      "group": [],
+      "description": "error if no combination can add up to target",
+      "property": "findFewestCoins",
+      "args": [
+        {
+          "name": "coins",
+          "value": [
+            5,
+            10
+          ]
+        },
+        {
+          "name": "target",
+          "value": 94
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "can't make target with given coins"
+      }
+    },
+    {
+      "uuid": "8fe1f076-9b2d-4f44-89fe-8a6ccd63c8f3",
+      "name": "cannot find negative change values",
+      "group": [],
+      "description": "cannot find negative change values",
+      "property": "findFewestCoins",
+      "args": [
+        {
+          "name": "coins",
+          "value": [
+            1,
+            2,
+            5
+          ]
+        },
+        {
+          "name": "target",
+          "value": -5
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "target can't be negative"
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 13,
+    "errorCaseCount": 3,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "array",
+      "error",
+      "int"
+    ]
+  }
+}

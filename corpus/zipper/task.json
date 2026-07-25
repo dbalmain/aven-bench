@@ -1,0 +1,965 @@
+{
+  "schemaVersion": 1,
+  "id": "zipper",
+  "title": "Zipper",
+  "blurb": "Creating a zipper for a binary tree.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [
+    " The test cases for this exercise include an initial tree and a     ",
+    " series of operations to perform on the initial tree.               ",
+    "                                                                    ",
+    " Trees are encoded as nested objects. Each node in the tree has     ",
+    " three members: 'value', 'left', and 'right'. Each value is a       ",
+    " number (for simplicity). Left and right are trees. An empty node   ",
+    " is encoded as null.                                                ",
+    "                                                                    ",
+    " Each operation in the operations list is an object. The function   ",
+    " name is listed under 'operation'. If the function requires         ",
+    " arguments, the argument is listed under 'item'. Some functions     ",
+    " require values (i.e.  numbers), while others require trees.        ",
+    " Comments are always optional and can be used almost anywhere.      "
+  ],
+  "properties": [
+    {
+      "name": "expectedValue",
+      "argNames": [
+        "initialTree",
+        "operations"
+      ],
+      "arity": 2,
+      "caseCount": 13,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "initialTree",
+          "operations"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "sameResultFromOperations",
+      "argNames": [
+        "initialTree",
+        "operations"
+      ],
+      "arity": 2,
+      "caseCount": 1,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "initialTree",
+          "operations"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "771c652e-0754-4ef0-945c-0675d12ef1f5",
+      "name": "data is retained",
+      "group": [],
+      "description": "data is retained",
+      "property": "expectedValue",
+      "args": [
+        {
+          "name": "initialTree",
+          "value": {
+            "value": 1,
+            "left": {
+              "value": 2,
+              "left": null,
+              "right": {
+                "value": 3,
+                "left": null,
+                "right": null
+              }
+            },
+            "right": {
+              "value": 4,
+              "left": null,
+              "right": null
+            }
+          }
+        },
+        {
+          "name": "operations",
+          "value": [
+            {
+              "operation": "to_tree"
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "type": "tree",
+          "value": {
+            "value": 1,
+            "left": {
+              "value": 2,
+              "left": null,
+              "right": {
+                "value": 3,
+                "left": null,
+                "right": null
+              }
+            },
+            "right": {
+              "value": 4,
+              "left": null,
+              "right": null
+            }
+          }
+        }
+      }
+    },
+    {
+      "uuid": "d7dcbb92-47fc-4d01-b81a-df3353bc09ff",
+      "name": "left, right and value",
+      "group": [],
+      "description": "left, right and value",
+      "property": "expectedValue",
+      "args": [
+        {
+          "name": "initialTree",
+          "value": {
+            "value": 1,
+            "left": {
+              "value": 2,
+              "left": null,
+              "right": {
+                "value": 3,
+                "left": null,
+                "right": null
+              }
+            },
+            "right": {
+              "value": 4,
+              "left": null,
+              "right": null
+            }
+          }
+        },
+        {
+          "name": "operations",
+          "value": [
+            {
+              "operation": "left"
+            },
+            {
+              "operation": "right"
+            },
+            {
+              "operation": "value"
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "type": "int",
+          "value": 3
+        }
+      }
+    },
+    {
+      "uuid": "613d8286-b05c-4453-b205-e6f9c5966339",
+      "name": "dead end",
+      "group": [],
+      "description": "dead end",
+      "property": "expectedValue",
+      "args": [
+        {
+          "name": "initialTree",
+          "value": {
+            "value": 1,
+            "left": {
+              "value": 2,
+              "left": null,
+              "right": {
+                "value": 3,
+                "left": null,
+                "right": null
+              }
+            },
+            "right": {
+              "value": 4,
+              "left": null,
+              "right": null
+            }
+          }
+        },
+        {
+          "name": "operations",
+          "value": [
+            {
+              "operation": "left"
+            },
+            {
+              "operation": "left"
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "type": "zipper",
+          "value": null
+        }
+      }
+    },
+    {
+      "uuid": "dda31af7-1c68-4e29-933a-c9d198d94284",
+      "name": "tree from deep focus",
+      "group": [],
+      "description": "tree from deep focus",
+      "property": "expectedValue",
+      "args": [
+        {
+          "name": "initialTree",
+          "value": {
+            "value": 1,
+            "left": {
+              "value": 2,
+              "left": null,
+              "right": {
+                "value": 3,
+                "left": null,
+                "right": null
+              }
+            },
+            "right": {
+              "value": 4,
+              "left": null,
+              "right": null
+            }
+          }
+        },
+        {
+          "name": "operations",
+          "value": [
+            {
+              "operation": "left"
+            },
+            {
+              "operation": "right"
+            },
+            {
+              "operation": "to_tree"
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "type": "tree",
+          "value": {
+            "value": 1,
+            "left": {
+              "value": 2,
+              "left": null,
+              "right": {
+                "value": 3,
+                "left": null,
+                "right": null
+              }
+            },
+            "right": {
+              "value": 4,
+              "left": null,
+              "right": null
+            }
+          }
+        }
+      }
+    },
+    {
+      "uuid": "1e3072a6-f85b-430b-b014-cdb4087e3577",
+      "name": "traversing up from top",
+      "group": [],
+      "description": "traversing up from top",
+      "property": "expectedValue",
+      "args": [
+        {
+          "name": "initialTree",
+          "value": {
+            "value": 1,
+            "left": {
+              "value": 2,
+              "left": null,
+              "right": {
+                "value": 3,
+                "left": null,
+                "right": null
+              }
+            },
+            "right": {
+              "value": 4,
+              "left": null,
+              "right": null
+            }
+          }
+        },
+        {
+          "name": "operations",
+          "value": [
+            {
+              "operation": "up"
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "type": "zipper",
+          "value": null
+        }
+      }
+    },
+    {
+      "uuid": "b8505f6a-aed4-4c2e-824f-a0ed8570d74b",
+      "name": "left, right, and up",
+      "group": [],
+      "description": "left, right, and up",
+      "property": "expectedValue",
+      "args": [
+        {
+          "name": "initialTree",
+          "value": {
+            "value": 1,
+            "left": {
+              "value": 2,
+              "left": null,
+              "right": {
+                "value": 3,
+                "left": null,
+                "right": null
+              }
+            },
+            "right": {
+              "value": 4,
+              "left": null,
+              "right": null
+            }
+          }
+        },
+        {
+          "name": "operations",
+          "value": [
+            {
+              "operation": "left"
+            },
+            {
+              "operation": "up"
+            },
+            {
+              "operation": "right"
+            },
+            {
+              "operation": "up"
+            },
+            {
+              "operation": "left"
+            },
+            {
+              "operation": "right"
+            },
+            {
+              "operation": "value"
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "type": "int",
+          "value": 3
+        }
+      }
+    },
+    {
+      "uuid": "b9aa8d54-07b7-4bfd-ab6b-7ff7f35930b6",
+      "name": "test ability to descend multiple levels and return",
+      "group": [],
+      "description": "test ability to descend multiple levels and return",
+      "property": "expectedValue",
+      "args": [
+        {
+          "name": "initialTree",
+          "value": {
+            "value": 1,
+            "left": {
+              "value": 2,
+              "left": null,
+              "right": {
+                "value": 3,
+                "left": null,
+                "right": null
+              }
+            },
+            "right": {
+              "value": 4,
+              "left": null,
+              "right": null
+            }
+          }
+        },
+        {
+          "name": "operations",
+          "value": [
+            {
+              "operation": "left"
+            },
+            {
+              "operation": "right"
+            },
+            {
+              "operation": "up"
+            },
+            {
+              "operation": "up"
+            },
+            {
+              "operation": "value"
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "type": "int",
+          "value": 1
+        }
+      }
+    },
+    {
+      "uuid": "47df1a27-b709-496e-b381-63a03b82ea5f",
+      "name": "set_value",
+      "group": [],
+      "description": "set_value",
+      "property": "expectedValue",
+      "args": [
+        {
+          "name": "initialTree",
+          "value": {
+            "value": 1,
+            "left": {
+              "value": 2,
+              "left": null,
+              "right": {
+                "value": 3,
+                "left": null,
+                "right": null
+              }
+            },
+            "right": {
+              "value": 4,
+              "left": null,
+              "right": null
+            }
+          }
+        },
+        {
+          "name": "operations",
+          "value": [
+            {
+              "operation": "left"
+            },
+            {
+              "operation": "set_value",
+              "item": 5
+            },
+            {
+              "operation": "to_tree"
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "type": "tree",
+          "value": {
+            "value": 1,
+            "left": {
+              "value": 5,
+              "left": null,
+              "right": {
+                "value": 3,
+                "left": null,
+                "right": null
+              }
+            },
+            "right": {
+              "value": 4,
+              "left": null,
+              "right": null
+            }
+          }
+        }
+      }
+    },
+    {
+      "uuid": "16a1f1a8-dbed-456d-95ac-1cbb6093e0ab",
+      "name": "set_value after traversing up",
+      "group": [],
+      "description": "set_value after traversing up",
+      "property": "expectedValue",
+      "args": [
+        {
+          "name": "initialTree",
+          "value": {
+            "value": 1,
+            "left": {
+              "value": 2,
+              "left": null,
+              "right": {
+                "value": 3,
+                "left": null,
+                "right": null
+              }
+            },
+            "right": {
+              "value": 4,
+              "left": null,
+              "right": null
+            }
+          }
+        },
+        {
+          "name": "operations",
+          "value": [
+            {
+              "operation": "left"
+            },
+            {
+              "operation": "right"
+            },
+            {
+              "operation": "up"
+            },
+            {
+              "operation": "set_value",
+              "item": 5
+            },
+            {
+              "operation": "to_tree"
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "type": "tree",
+          "value": {
+            "value": 1,
+            "left": {
+              "value": 5,
+              "left": null,
+              "right": {
+                "value": 3,
+                "left": null,
+                "right": null
+              }
+            },
+            "right": {
+              "value": 4,
+              "left": null,
+              "right": null
+            }
+          }
+        }
+      }
+    },
+    {
+      "uuid": "535a91af-a02e-49cd-8d2c-ecb6e4647174",
+      "name": "set_left with leaf",
+      "group": [],
+      "description": "set_left with leaf",
+      "property": "expectedValue",
+      "args": [
+        {
+          "name": "initialTree",
+          "value": {
+            "value": 1,
+            "left": {
+              "value": 2,
+              "left": null,
+              "right": {
+                "value": 3,
+                "left": null,
+                "right": null
+              }
+            },
+            "right": {
+              "value": 4,
+              "left": null,
+              "right": null
+            }
+          }
+        },
+        {
+          "name": "operations",
+          "value": [
+            {
+              "operation": "left"
+            },
+            {
+              "operation": "set_left",
+              "item": {
+                "value": 5,
+                "left": null,
+                "right": null
+              }
+            },
+            {
+              "operation": "to_tree"
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "type": "tree",
+          "value": {
+            "value": 1,
+            "left": {
+              "value": 2,
+              "left": {
+                "value": 5,
+                "left": null,
+                "right": null
+              },
+              "right": {
+                "value": 3,
+                "left": null,
+                "right": null
+              }
+            },
+            "right": {
+              "value": 4,
+              "left": null,
+              "right": null
+            }
+          }
+        }
+      }
+    },
+    {
+      "uuid": "b3f60c4b-a788-4ffd-be5d-1e69aee61de3",
+      "name": "set_right with null",
+      "group": [],
+      "description": "set_right with null",
+      "property": "expectedValue",
+      "args": [
+        {
+          "name": "initialTree",
+          "value": {
+            "value": 1,
+            "left": {
+              "value": 2,
+              "left": null,
+              "right": {
+                "value": 3,
+                "left": null,
+                "right": null
+              }
+            },
+            "right": {
+              "value": 4,
+              "left": null,
+              "right": null
+            }
+          }
+        },
+        {
+          "name": "operations",
+          "value": [
+            {
+              "operation": "left"
+            },
+            {
+              "operation": "set_right",
+              "item": null
+            },
+            {
+              "operation": "to_tree"
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "type": "tree",
+          "value": {
+            "value": 1,
+            "left": {
+              "value": 2,
+              "left": null,
+              "right": null
+            },
+            "right": {
+              "value": 4,
+              "left": null,
+              "right": null
+            }
+          }
+        }
+      }
+    },
+    {
+      "uuid": "e91c221d-7b90-4604-b4ec-46638a673a12",
+      "name": "set_right with subtree",
+      "group": [],
+      "description": "set_right with subtree",
+      "property": "expectedValue",
+      "args": [
+        {
+          "name": "initialTree",
+          "value": {
+            "value": 1,
+            "left": {
+              "value": 2,
+              "left": null,
+              "right": {
+                "value": 3,
+                "left": null,
+                "right": null
+              }
+            },
+            "right": {
+              "value": 4,
+              "left": null,
+              "right": null
+            }
+          }
+        },
+        {
+          "name": "operations",
+          "value": [
+            {
+              "operation": "set_right",
+              "item": {
+                "value": 6,
+                "left": {
+                  "value": 7,
+                  "left": null,
+                  "right": null
+                },
+                "right": {
+                  "value": 8,
+                  "left": null,
+                  "right": null
+                }
+              }
+            },
+            {
+              "operation": "to_tree"
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "type": "tree",
+          "value": {
+            "value": 1,
+            "left": {
+              "value": 2,
+              "left": null,
+              "right": {
+                "value": 3,
+                "left": null,
+                "right": null
+              }
+            },
+            "right": {
+              "value": 6,
+              "left": {
+                "value": 7,
+                "left": null,
+                "right": null
+              },
+              "right": {
+                "value": 8,
+                "left": null,
+                "right": null
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "uuid": "c246be85-6648-4e9c-866f-b08cd495149a",
+      "name": "set_value on deep focus",
+      "group": [],
+      "description": "set_value on deep focus",
+      "property": "expectedValue",
+      "args": [
+        {
+          "name": "initialTree",
+          "value": {
+            "value": 1,
+            "left": {
+              "value": 2,
+              "left": null,
+              "right": {
+                "value": 3,
+                "left": null,
+                "right": null
+              }
+            },
+            "right": {
+              "value": 4,
+              "left": null,
+              "right": null
+            }
+          }
+        },
+        {
+          "name": "operations",
+          "value": [
+            {
+              "operation": "left"
+            },
+            {
+              "operation": "right"
+            },
+            {
+              "operation": "set_value",
+              "item": 5
+            },
+            {
+              "operation": "to_tree"
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "type": "tree",
+          "value": {
+            "value": 1,
+            "left": {
+              "value": 2,
+              "left": null,
+              "right": {
+                "value": 5,
+                "left": null,
+                "right": null
+              }
+            },
+            "right": {
+              "value": 4,
+              "left": null,
+              "right": null
+            }
+          }
+        }
+      }
+    },
+    {
+      "uuid": "47aa85a0-5240-48a4-9f42-e2ac636710ea",
+      "name": "different paths to same zipper",
+      "group": [],
+      "description": "different paths to same zipper",
+      "property": "sameResultFromOperations",
+      "args": [
+        {
+          "name": "initialTree",
+          "value": {
+            "value": 1,
+            "left": {
+              "value": 2,
+              "left": null,
+              "right": {
+                "value": 3,
+                "left": null,
+                "right": null
+              }
+            },
+            "right": {
+              "value": 4,
+              "left": null,
+              "right": null
+            }
+          }
+        },
+        {
+          "name": "operations",
+          "value": [
+            {
+              "operation": "left"
+            },
+            {
+              "operation": "up"
+            },
+            {
+              "operation": "right"
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "type": "zipper",
+          "initialTree": {
+            "value": 1,
+            "left": {
+              "value": 2,
+              "left": null,
+              "right": {
+                "value": 3,
+                "left": null,
+                "right": null
+              }
+            },
+            "right": {
+              "value": 4,
+              "left": null,
+              "right": null
+            }
+          },
+          "operations": [
+            {
+              "operation": "right"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 14,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "array",
+      "array-of-record",
+      "int",
+      "null",
+      "record",
+      "string"
+    ]
+  }
+}

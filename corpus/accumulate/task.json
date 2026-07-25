@@ -1,0 +1,201 @@
+{
+  "schemaVersion": 1,
+  "id": "accumulate",
+  "title": "Accumulate",
+  "blurb": "Implement the `accumulate` operation, which, given a collection and an operation to perform on each element of the collection, returns a new collection containing the result of applying that operation to each element of the input collection.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [
+    " JSON doesn't allow for functions, and this exercise ",
+    " passes in a function as one of the inputs. These    ",
+    " inputs are represented using pseudocode (string).   ",
+    " It's up to the test generator to turn that string   ",
+    " into a function declaration.                        "
+  ],
+  "properties": [
+    {
+      "name": "accumulate",
+      "argNames": [
+        "list",
+        "accumulator"
+      ],
+      "arity": 2,
+      "caseCount": 5,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "list",
+          "accumulator"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "64d97c14-36dd-44a8-9621-2cecebd6ed23",
+      "name": "accumulate empty",
+      "group": [],
+      "description": "accumulate empty",
+      "property": "accumulate",
+      "args": [
+        {
+          "name": "list",
+          "value": []
+        },
+        {
+          "name": "accumulator",
+          "value": "(x) => x * x"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": []
+      }
+    },
+    {
+      "uuid": "00008ed2-4651-4929-8c08-8b4dbd70872e",
+      "name": "accumulate squares",
+      "group": [],
+      "description": "accumulate squares",
+      "property": "accumulate",
+      "args": [
+        {
+          "name": "list",
+          "value": [
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "name": "accumulator",
+          "value": "(x) => x * x"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1,
+          4,
+          9
+        ]
+      }
+    },
+    {
+      "uuid": "551016da-4396-4cae-b0ec-4c3a1a264125",
+      "name": "accumulate upcases",
+      "group": [],
+      "description": "accumulate upcases",
+      "property": "accumulate",
+      "args": [
+        {
+          "name": "list",
+          "value": [
+            "Hello",
+            "world"
+          ]
+        },
+        {
+          "name": "accumulator",
+          "value": "(x) => upcase(x)"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "HELLO",
+          "WORLD"
+        ]
+      }
+    },
+    {
+      "uuid": "cdf95597-b6ec-4eac-a838-3480d13d0d05",
+      "name": "accumulate reversed strings",
+      "group": [],
+      "description": "accumulate reversed strings",
+      "property": "accumulate",
+      "args": [
+        {
+          "name": "list",
+          "value": [
+            "the",
+            "quick",
+            "brown",
+            "fox",
+            "etc"
+          ]
+        },
+        {
+          "name": "accumulator",
+          "value": "(x) => reverse(x)"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "eht",
+          "kciuq",
+          "nworb",
+          "xof",
+          "cte"
+        ]
+      }
+    },
+    {
+      "uuid": "0b357334-4cad-49e1-a741-425202edfc7c",
+      "name": "accumulate recursively",
+      "group": [],
+      "description": "accumulate recursively",
+      "property": "accumulate",
+      "args": [
+        {
+          "name": "list",
+          "value": [
+            "a",
+            "b",
+            "c"
+          ]
+        },
+        {
+          "name": "accumulator",
+          "value": "(x) => accumulate([\"1\", \"2\", \"3\"], (y) => x + y)"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            "a1",
+            "a2",
+            "a3"
+          ],
+          [
+            "b1",
+            "b2",
+            "b3"
+          ],
+          [
+            "c1",
+            "c2",
+            "c3"
+          ]
+        ]
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 5,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 1,
+    "valueKinds": [
+      "array",
+      "int",
+      "nested-array",
+      "string"
+    ]
+  }
+}

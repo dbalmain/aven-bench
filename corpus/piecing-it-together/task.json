@@ -1,0 +1,278 @@
+{
+  "schemaVersion": 1,
+  "id": "piecing-it-together",
+  "title": "Piecing It Together",
+  "blurb": "Fill in missing jigsaw puzzle details from partial data",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "introduction.md",
+    "instructions.md"
+  ],
+  "comments": [
+    "For the aspect ratio, rational numbers can be used for languages without",
+    "IEEE-754 support. Their representation depends on the track (e.g., a tuple like",
+    "[numerator, denominator], a string like '3/4', or a custom rational type).",
+    "The represented fractions should be reduced to lowest terms to avoid ambiguity."
+  ],
+  "properties": [
+    {
+      "name": "jigsawData",
+      "argNames": [
+        "pieces",
+        "aspectRatio"
+      ],
+      "arity": 2,
+      "caseCount": 7,
+      "returnsResult": true,
+      "argOrderVariants": [
+        [
+          "pieces",
+          "aspectRatio"
+        ],
+        [
+          "rows",
+          "format"
+        ],
+        [
+          "inside",
+          "aspectRatio"
+        ],
+        [
+          "rows",
+          "aspectRatio"
+        ],
+        [
+          "pieces",
+          "border",
+          "format"
+        ],
+        [
+          "pieces",
+          "format"
+        ],
+        [
+          "rows",
+          "columns",
+          "format"
+        ]
+      ],
+      "ambiguousArgOrder": true
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "ad626f23-09a2-4f5f-ba22-eec0671fa2a9",
+      "name": "1000 pieces puzzle with 1.6 aspect ratio",
+      "group": [],
+      "description": "1000 pieces puzzle with 1.6 aspect ratio",
+      "property": "jigsawData",
+      "args": [
+        {
+          "name": "pieces",
+          "value": 1000
+        },
+        {
+          "name": "aspectRatio",
+          "value": 1.6
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "pieces": 1000,
+          "border": 126,
+          "inside": 874,
+          "rows": 25,
+          "columns": 40,
+          "aspectRatio": 1.6,
+          "format": "landscape"
+        }
+      }
+    },
+    {
+      "uuid": "3e0c5919-3561-42f5-b9ed-26d70c20214e",
+      "name": "square puzzle with 32 rows",
+      "group": [],
+      "description": "square puzzle with 32 rows",
+      "property": "jigsawData",
+      "args": [
+        {
+          "name": "rows",
+          "value": 32
+        },
+        {
+          "name": "format",
+          "value": "square"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "pieces": 1024,
+          "border": 124,
+          "inside": 900,
+          "rows": 32,
+          "columns": 32,
+          "aspectRatio": {
+            "$n": "1.0"
+          },
+          "format": "square"
+        }
+      }
+    },
+    {
+      "uuid": "1126f160-b094-4dc2-bf37-13e36e394867",
+      "name": "400 pieces square puzzle with only inside pieces and aspect ratio",
+      "group": [],
+      "description": "400 pieces square puzzle with only inside pieces and aspect ratio",
+      "property": "jigsawData",
+      "args": [
+        {
+          "name": "inside",
+          "value": 324
+        },
+        {
+          "name": "aspectRatio",
+          "value": {
+            "$n": "1.0"
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "pieces": 400,
+          "border": 76,
+          "inside": 324,
+          "rows": 20,
+          "columns": 20,
+          "aspectRatio": {
+            "$n": "1.0"
+          },
+          "format": "square"
+        }
+      }
+    },
+    {
+      "uuid": "a9743178-5642-4cc0-8fdb-00d6b031c3a0",
+      "name": "1500 pieces landscape puzzle with 30 rows and 1.6 aspect ratio",
+      "group": [],
+      "description": "1500 pieces landscape puzzle with 30 rows and 1.6 aspect ratio",
+      "property": "jigsawData",
+      "args": [
+        {
+          "name": "rows",
+          "value": 30
+        },
+        {
+          "name": "aspectRatio",
+          "value": 1.6666666666666667
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "pieces": 1500,
+          "border": 156,
+          "inside": 1344,
+          "rows": 30,
+          "columns": 50,
+          "aspectRatio": 1.6666666666666667,
+          "format": "landscape"
+        }
+      }
+    },
+    {
+      "uuid": "f6378369-989c-497f-a6e2-f30b1fa76cba",
+      "name": "300 pieces portrait puzzle with 70 border pieces",
+      "group": [],
+      "description": "300 pieces portrait puzzle with 70 border pieces",
+      "property": "jigsawData",
+      "args": [
+        {
+          "name": "pieces",
+          "value": 300
+        },
+        {
+          "name": "border",
+          "value": 70
+        },
+        {
+          "name": "format",
+          "value": "portrait"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "pieces": 300,
+          "border": 70,
+          "inside": 230,
+          "rows": 25,
+          "columns": 12,
+          "aspectRatio": 0.48,
+          "format": "portrait"
+        }
+      }
+    },
+    {
+      "uuid": "f53f82ba-5663-4c7e-9e86-57fdbb3e53d2",
+      "name": "puzzle with insufficient data",
+      "group": [],
+      "description": "puzzle with insufficient data",
+      "property": "jigsawData",
+      "args": [
+        {
+          "name": "pieces",
+          "value": 1500
+        },
+        {
+          "name": "format",
+          "value": "landscape"
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "Insufficient data"
+      }
+    },
+    {
+      "uuid": "a3d5c31a-cc74-44bf-b4fc-9e4d65f1ac1a",
+      "name": "puzzle with contradictory data",
+      "group": [],
+      "description": "puzzle with contradictory data",
+      "property": "jigsawData",
+      "args": [
+        {
+          "name": "rows",
+          "value": 100
+        },
+        {
+          "name": "columns",
+          "value": 1000
+        },
+        {
+          "name": "format",
+          "value": "square"
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "Contradictory data"
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 7,
+    "errorCaseCount": 2,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "error",
+      "float",
+      "int",
+      "record",
+      "string"
+    ]
+  }
+}

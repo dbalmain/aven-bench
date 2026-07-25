@@ -1,0 +1,1366 @@
+{
+  "schemaVersion": 1,
+  "id": "forth",
+  "title": "Forth",
+  "blurb": "Implement an evaluator for a very simple subset of Forth.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [
+    "The cases are split into multiple sections, all with the same structure.",
+    "In all cases, the `expected` key is the resulting stack",
+    "after executing the Forth program contained in the `input` key, unless an 'error' exists."
+  ],
+  "properties": [
+    {
+      "name": "evaluate",
+      "argNames": [
+        "instructions"
+      ],
+      "arity": 1,
+      "caseCount": 54,
+      "returnsResult": true,
+      "argOrderVariants": [
+        [
+          "instructions"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "evaluateBoth",
+      "argNames": [
+        "instructionsFirst",
+        "instructionsSecond"
+      ],
+      "arity": 2,
+      "caseCount": 1,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "instructionsFirst",
+          "instructionsSecond"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "9962203f-f00a-4a85-b404-8a8ecbcec09d",
+      "name": "parsing and numbers > numbers just get pushed onto the stack",
+      "group": [
+        "parsing and numbers"
+      ],
+      "description": "numbers just get pushed onto the stack",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "1 2 3 4 5"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      }
+    },
+    {
+      "uuid": "fd7a8da2-6818-4203-a866-fed0714e7aa0",
+      "name": "parsing and numbers > pushes negative numbers onto the stack",
+      "group": [
+        "parsing and numbers"
+      ],
+      "description": "pushes negative numbers onto the stack",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "-1 -2 -3 -4 -5"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          -1,
+          -2,
+          -3,
+          -4,
+          -5
+        ]
+      }
+    },
+    {
+      "uuid": "9e69588e-a3d8-41a3-a371-ea02206c1e6e",
+      "name": "addition > can add two numbers",
+      "group": [
+        "addition"
+      ],
+      "description": "can add two numbers",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "1 2 +"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          3
+        ]
+      }
+    },
+    {
+      "uuid": "52336dd3-30da-4e5c-8523-bdf9a3427657",
+      "name": "addition > errors if there is nothing on the stack",
+      "group": [
+        "addition"
+      ],
+      "description": "errors if there is nothing on the stack",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "+"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "empty stack"
+      }
+    },
+    {
+      "uuid": "06efb9a4-817a-435e-b509-06166993c1b8",
+      "name": "addition > errors if there is only one value on the stack",
+      "group": [
+        "addition"
+      ],
+      "description": "errors if there is only one value on the stack",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "1 +"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "only one value on the stack"
+      }
+    },
+    {
+      "uuid": "1e07a098-c5fa-4c66-97b2-3c81205dbc2f",
+      "name": "addition > more than two values on the stack",
+      "group": [
+        "addition"
+      ],
+      "description": "more than two values on the stack",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "1 2 3 +"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1,
+          5
+        ]
+      }
+    },
+    {
+      "uuid": "09687c99-7bbc-44af-8526-e402f997ccbf",
+      "name": "subtraction > can subtract two numbers",
+      "group": [
+        "subtraction"
+      ],
+      "description": "can subtract two numbers",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "3 4 -"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          -1
+        ]
+      }
+    },
+    {
+      "uuid": "5d63eee2-1f7d-4538-b475-e27682ab8032",
+      "name": "subtraction > errors if there is nothing on the stack",
+      "group": [
+        "subtraction"
+      ],
+      "description": "errors if there is nothing on the stack",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "-"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "empty stack"
+      }
+    },
+    {
+      "uuid": "b3cee1b2-9159-418a-b00d-a1bb3765c23b",
+      "name": "subtraction > errors if there is only one value on the stack",
+      "group": [
+        "subtraction"
+      ],
+      "description": "errors if there is only one value on the stack",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "1 -"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "only one value on the stack"
+      }
+    },
+    {
+      "uuid": "2c8cc5ed-da97-4cb1-8b98-fa7b526644f4",
+      "name": "subtraction > more than two values on the stack",
+      "group": [
+        "subtraction"
+      ],
+      "description": "more than two values on the stack",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "1 12 3 -"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1,
+          9
+        ]
+      }
+    },
+    {
+      "uuid": "5df0ceb5-922e-401f-974d-8287427dbf21",
+      "name": "multiplication > can multiply two numbers",
+      "group": [
+        "multiplication"
+      ],
+      "description": "can multiply two numbers",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "2 4 *"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          8
+        ]
+      }
+    },
+    {
+      "uuid": "9e004339-15ac-4063-8ec1-5720f4e75046",
+      "name": "multiplication > errors if there is nothing on the stack",
+      "group": [
+        "multiplication"
+      ],
+      "description": "errors if there is nothing on the stack",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "*"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "empty stack"
+      }
+    },
+    {
+      "uuid": "8ba4b432-9f94-41e0-8fae-3b3712bd51b3",
+      "name": "multiplication > errors if there is only one value on the stack",
+      "group": [
+        "multiplication"
+      ],
+      "description": "errors if there is only one value on the stack",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "1 *"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "only one value on the stack"
+      }
+    },
+    {
+      "uuid": "5cd085b5-deb1-43cc-9c17-6b1c38bc9970",
+      "name": "multiplication > more than two values on the stack",
+      "group": [
+        "multiplication"
+      ],
+      "description": "more than two values on the stack",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "1 2 3 *"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1,
+          6
+        ]
+      }
+    },
+    {
+      "uuid": "e74c2204-b057-4cff-9aa9-31c7c97a93f5",
+      "name": "division > can divide two numbers",
+      "group": [
+        "division"
+      ],
+      "description": "can divide two numbers",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "12 3 /"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          4
+        ]
+      }
+    },
+    {
+      "uuid": "54f6711c-4b14-4bb0-98ad-d974a22c4620",
+      "name": "division > performs integer division",
+      "group": [
+        "division"
+      ],
+      "description": "performs integer division",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "8 3 /"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          2
+        ]
+      }
+    },
+    {
+      "uuid": "a5df3219-29b4-4d2f-b427-81f82f42a3f1",
+      "name": "division > errors if dividing by zero",
+      "group": [
+        "division"
+      ],
+      "description": "errors if dividing by zero",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "4 0 /"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "divide by zero"
+      }
+    },
+    {
+      "uuid": "1d5bb6b3-6749-4e02-8a79-b5d4d334cb8a",
+      "name": "division > errors if there is nothing on the stack",
+      "group": [
+        "division"
+      ],
+      "description": "errors if there is nothing on the stack",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "/"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "empty stack"
+      }
+    },
+    {
+      "uuid": "d5547f43-c2ff-4d5c-9cb0-2a4f6684c20d",
+      "name": "division > errors if there is only one value on the stack",
+      "group": [
+        "division"
+      ],
+      "description": "errors if there is only one value on the stack",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "1 /"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "only one value on the stack"
+      }
+    },
+    {
+      "uuid": "f224f3e0-b6b6-4864-81de-9769ecefa03f",
+      "name": "division > more than two values on the stack",
+      "group": [
+        "division"
+      ],
+      "description": "more than two values on the stack",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "1 12 3 /"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1,
+          4
+        ]
+      }
+    },
+    {
+      "uuid": "ee28d729-6692-4a30-b9be-0d830c52a68c",
+      "name": "combined arithmetic > addition and subtraction",
+      "group": [
+        "combined arithmetic"
+      ],
+      "description": "addition and subtraction",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "1 2 + 4 -"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          -1
+        ]
+      }
+    },
+    {
+      "uuid": "40b197da-fa4b-4aca-a50b-f000d19422c1",
+      "name": "combined arithmetic > multiplication and division",
+      "group": [
+        "combined arithmetic"
+      ],
+      "description": "multiplication and division",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "2 4 * 3 /"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          2
+        ]
+      }
+    },
+    {
+      "uuid": "f749b540-53aa-458e-87ec-a70797eddbcb",
+      "name": "combined arithmetic > multiplication and addition",
+      "group": [
+        "combined arithmetic"
+      ],
+      "description": "multiplication and addition",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "1 3 4 * +"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          13
+        ]
+      }
+    },
+    {
+      "uuid": "c8e5a4c2-f9bf-4805-9a35-3c3314e4989a",
+      "name": "combined arithmetic > addition and multiplication",
+      "group": [
+        "combined arithmetic"
+      ],
+      "description": "addition and multiplication",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "1 3 4 + *"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          7
+        ]
+      }
+    },
+    {
+      "uuid": "c5758235-6eef-4bf6-ab62-c878e50b9957",
+      "name": "dup > copies a value on the stack",
+      "group": [
+        "dup"
+      ],
+      "description": "copies a value on the stack",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "1 dup"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "uuid": "f6889006-5a40-41e7-beb3-43b09e5a22f4",
+      "name": "dup > copies the top value on the stack",
+      "group": [
+        "dup"
+      ],
+      "description": "copies the top value on the stack",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "1 2 dup"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1,
+          2,
+          2
+        ]
+      }
+    },
+    {
+      "uuid": "40b7569c-8401-4bd4-a30d-9adf70d11bc4",
+      "name": "dup > errors if there is nothing on the stack",
+      "group": [
+        "dup"
+      ],
+      "description": "errors if there is nothing on the stack",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "dup"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "empty stack"
+      }
+    },
+    {
+      "uuid": "1971da68-1df2-4569-927a-72bf5bb7263c",
+      "name": "drop > removes the top value on the stack if it is the only one",
+      "group": [
+        "drop"
+      ],
+      "description": "removes the top value on the stack if it is the only one",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "1 drop"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": []
+      }
+    },
+    {
+      "uuid": "8929d9f2-4a78-4e0f-90ad-be1a0f313fd9",
+      "name": "drop > removes the top value on the stack if it is not the only one",
+      "group": [
+        "drop"
+      ],
+      "description": "removes the top value on the stack if it is not the only one",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "1 2 drop"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1
+        ]
+      }
+    },
+    {
+      "uuid": "6dd31873-6dd7-4cb8-9e90-7daa33ba045c",
+      "name": "drop > errors if there is nothing on the stack",
+      "group": [
+        "drop"
+      ],
+      "description": "errors if there is nothing on the stack",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "drop"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "empty stack"
+      }
+    },
+    {
+      "uuid": "3ee68e62-f98a-4cce-9e6c-8aae6c65a4e3",
+      "name": "swap > swaps the top two values on the stack if they are the only ones",
+      "group": [
+        "swap"
+      ],
+      "description": "swaps the top two values on the stack if they are the only ones",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "1 2 swap"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          2,
+          1
+        ]
+      }
+    },
+    {
+      "uuid": "8ce869d5-a503-44e4-ab55-1da36816ff1c",
+      "name": "swap > swaps the top two values on the stack if they are not the only ones",
+      "group": [
+        "swap"
+      ],
+      "description": "swaps the top two values on the stack if they are not the only ones",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "1 2 3 swap"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1,
+          3,
+          2
+        ]
+      }
+    },
+    {
+      "uuid": "74ba5b2a-b028-4759-9176-c5c0e7b2b154",
+      "name": "swap > errors if there is nothing on the stack",
+      "group": [
+        "swap"
+      ],
+      "description": "errors if there is nothing on the stack",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "swap"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "empty stack"
+      }
+    },
+    {
+      "uuid": "dd52e154-5d0d-4a5c-9e5d-73eb36052bc8",
+      "name": "swap > errors if there is only one value on the stack",
+      "group": [
+        "swap"
+      ],
+      "description": "errors if there is only one value on the stack",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "1 swap"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "only one value on the stack"
+      }
+    },
+    {
+      "uuid": "a2654074-ba68-4f93-b014-6b12693a8b50",
+      "name": "over > copies the second element if there are only two",
+      "group": [
+        "over"
+      ],
+      "description": "copies the second element if there are only two",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "1 2 over"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1,
+          2,
+          1
+        ]
+      }
+    },
+    {
+      "uuid": "c5b51097-741a-4da7-8736-5c93fa856339",
+      "name": "over > copies the second element if there are more than two",
+      "group": [
+        "over"
+      ],
+      "description": "copies the second element if there are more than two",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "1 2 3 over"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1,
+          2,
+          3,
+          2
+        ]
+      }
+    },
+    {
+      "uuid": "6e1703a6-5963-4a03-abba-02e77e3181fd",
+      "name": "over > errors if there is nothing on the stack",
+      "group": [
+        "over"
+      ],
+      "description": "errors if there is nothing on the stack",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "over"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "empty stack"
+      }
+    },
+    {
+      "uuid": "ee574dc4-ef71-46f6-8c6a-b4af3a10c45f",
+      "name": "over > errors if there is only one value on the stack",
+      "group": [
+        "over"
+      ],
+      "description": "errors if there is only one value on the stack",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "1 over"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "only one value on the stack"
+      }
+    },
+    {
+      "uuid": "ed45cbbf-4dbf-4901-825b-54b20dbee53b",
+      "name": "user-defined words > can consist of built-in words",
+      "group": [
+        "user-defined words"
+      ],
+      "description": "can consist of built-in words",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            ": dup-twice dup dup ;",
+            "1 dup-twice"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "uuid": "2726ea44-73e4-436b-bc2b-5ff0c6aa014b",
+      "name": "user-defined words > execute in the right order",
+      "group": [
+        "user-defined words"
+      ],
+      "description": "execute in the right order",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            ": countup 1 2 3 ;",
+            "countup"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1,
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "uuid": "9e53c2d0-b8ef-4ad8-b2c9-a559b421eb33",
+      "name": "user-defined words > can override other user-defined words",
+      "group": [
+        "user-defined words"
+      ],
+      "description": "can override other user-defined words",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            ": foo dup ;",
+            ": foo dup dup ;",
+            "1 foo"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "uuid": "669db3f3-5bd6-4be0-83d1-618cd6e4984b",
+      "name": "user-defined words > can override built-in words",
+      "group": [
+        "user-defined words"
+      ],
+      "description": "can override built-in words",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            ": swap dup ;",
+            "1 swap"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "uuid": "588de2f0-c56e-4c68-be0b-0bb1e603c500",
+      "name": "user-defined words > can override built-in operators",
+      "group": [
+        "user-defined words"
+      ],
+      "description": "can override built-in operators",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            ": + * ;",
+            "3 4 +"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          12
+        ]
+      }
+    },
+    {
+      "uuid": "ac12aaaf-26c6-4a10-8b3c-1c958fa2914c",
+      "name": "user-defined words > can use different words with the same name",
+      "group": [
+        "user-defined words"
+      ],
+      "description": "can use different words with the same name",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            ": foo 5 ;",
+            ": bar foo ;",
+            ": foo 6 ;",
+            "bar foo"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          5,
+          6
+        ]
+      }
+    },
+    {
+      "uuid": "53f82ef0-2750-4ccb-ac04-5d8c1aefabb1",
+      "name": "user-defined words > can define word that uses word with the same name",
+      "group": [
+        "user-defined words"
+      ],
+      "description": "can define word that uses word with the same name",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            ": foo 10 ;",
+            ": foo foo 1 + ;",
+            "foo"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          11
+        ]
+      }
+    },
+    {
+      "uuid": "35958cee-a976-4a0f-9378-f678518fa322",
+      "name": "user-defined words > cannot redefine non-negative numbers",
+      "group": [
+        "user-defined words"
+      ],
+      "description": "cannot redefine non-negative numbers",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            ": 1 2 ;"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "illegal operation"
+      }
+    },
+    {
+      "uuid": "df5b2815-3843-4f55-b16c-c3ed507292a7",
+      "name": "user-defined words > cannot redefine negative numbers",
+      "group": [
+        "user-defined words"
+      ],
+      "description": "cannot redefine negative numbers",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            ": -1 2 ;"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "illegal operation"
+      }
+    },
+    {
+      "uuid": "5180f261-89dd-491e-b230-62737e09806f",
+      "name": "user-defined words > errors if executing a non-existent word",
+      "group": [
+        "user-defined words"
+      ],
+      "description": "errors if executing a non-existent word",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "foo"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "undefined operation"
+      }
+    },
+    {
+      "uuid": "3c8bfef3-edbb-49c1-9993-21d4030043cb",
+      "name": "user-defined words > only defines locally",
+      "group": [
+        "user-defined words"
+      ],
+      "description": "only defines locally",
+      "property": "evaluateBoth",
+      "args": [
+        {
+          "name": "instructionsFirst",
+          "value": [
+            ": + - ;",
+            "1 1 +"
+          ]
+        },
+        {
+          "name": "instructionsSecond",
+          "value": [
+            "1 1 +"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            0
+          ],
+          [
+            2
+          ]
+        ]
+      },
+      "scenarios": [
+        "local-scope"
+      ]
+    },
+    {
+      "uuid": "7b83bb2e-b0e8-461f-ad3b-96ee2e111ed6",
+      "name": "case-insensitivity > DUP is case-insensitive",
+      "group": [
+        "case-insensitivity"
+      ],
+      "description": "DUP is case-insensitive",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "1 DUP Dup dup"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "uuid": "339ed30b-f5b4-47ff-ab1c-67591a9cd336",
+      "name": "case-insensitivity > DROP is case-insensitive",
+      "group": [
+        "case-insensitivity"
+      ],
+      "description": "DROP is case-insensitive",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "1 2 3 4 DROP Drop drop"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1
+        ]
+      }
+    },
+    {
+      "uuid": "ee1af31e-1355-4b1b-bb95-f9d0b2961b87",
+      "name": "case-insensitivity > SWAP is case-insensitive",
+      "group": [
+        "case-insensitivity"
+      ],
+      "description": "SWAP is case-insensitive",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "1 2 SWAP 3 Swap 4 swap"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          2,
+          3,
+          4,
+          1
+        ]
+      }
+    },
+    {
+      "uuid": "acdc3a49-14c8-4cc2-945d-11edee6408fa",
+      "name": "case-insensitivity > OVER is case-insensitive",
+      "group": [
+        "case-insensitivity"
+      ],
+      "description": "OVER is case-insensitive",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            "1 2 OVER Over over"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1,
+          2,
+          1,
+          2,
+          1
+        ]
+      }
+    },
+    {
+      "uuid": "5934454f-a24f-4efc-9fdd-5794e5f0c23c",
+      "name": "case-insensitivity > user-defined words are case-insensitive",
+      "group": [
+        "case-insensitivity"
+      ],
+      "description": "user-defined words are case-insensitive",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            ": foo dup ;",
+            "1 FOO Foo foo"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "uuid": "037d4299-195f-4be7-a46d-f07ca6280a06",
+      "name": "case-insensitivity > definitions are case-insensitive",
+      "group": [
+        "case-insensitivity"
+      ],
+      "description": "definitions are case-insensitive",
+      "property": "evaluate",
+      "args": [
+        {
+          "name": "instructions",
+          "value": [
+            ": SWAP DUP Dup dup ;",
+            "1 swap"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 55,
+    "errorCaseCount": 18,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "array",
+      "error",
+      "int",
+      "nested-array",
+      "string"
+    ]
+  }
+}

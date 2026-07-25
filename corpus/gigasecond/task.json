@@ -1,0 +1,188 @@
+{
+  "schemaVersion": 1,
+  "id": "gigasecond",
+  "title": "Gigasecond",
+  "blurb": "Given a moment, determine the moment that would be after a gigasecond has passed.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "introduction.md",
+    "instructions.md"
+  ],
+  "comments": [
+    "The basic test is to add one gigasecond to a few ordinary dates.",
+    "Most test programs currently check only the date and ignore the time.",
+    "For languages with a native date-time type though, expected times",
+    "here show the correct seconds, ignoring leap seconds.",
+    "The date and time formats here are per",
+    "https://www.ecma-international.org/ecma-262/5.1/#sec-15.9.1.15.",
+    "",
+    "Finally, as a demonstration but not really a test,",
+    "some languages demonstrate the add function by inviting the",
+    "solver to include their birthdate in either the solution code",
+    "or test program.  The test program then shows or tests their",
+    "gigasecond anniversary."
+  ],
+  "properties": [
+    {
+      "name": "add",
+      "argNames": [
+        "moment"
+      ],
+      "arity": 1,
+      "caseCount": 5,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "moment"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "isEqual",
+      "argNames": [
+        "moment"
+      ],
+      "arity": 1,
+      "caseCount": 1,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "moment"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "92fbe71c-ea52-4fac-bd77-be38023cacf7",
+      "name": "date only specification of time",
+      "group": [],
+      "description": "date only specification of time",
+      "property": "add",
+      "args": [
+        {
+          "name": "moment",
+          "value": "2011-04-25"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "2043-01-01T01:46:40"
+      },
+      "scenarios": [
+        "date"
+      ]
+    },
+    {
+      "uuid": "6d86dd16-6f7a-47be-9e58-bb9fb2ae1433",
+      "name": "second test for date only specification of time",
+      "group": [],
+      "description": "second test for date only specification of time",
+      "property": "add",
+      "args": [
+        {
+          "name": "moment",
+          "value": "1977-06-13"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "2009-02-19T01:46:40"
+      },
+      "scenarios": [
+        "date"
+      ]
+    },
+    {
+      "uuid": "77eb8502-2bca-4d92-89d9-7b39ace28dd5",
+      "name": "third test for date only specification of time",
+      "group": [],
+      "description": "third test for date only specification of time",
+      "property": "add",
+      "args": [
+        {
+          "name": "moment",
+          "value": "1959-07-19"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "1991-03-27T01:46:40"
+      },
+      "scenarios": [
+        "date"
+      ]
+    },
+    {
+      "uuid": "c9d89a7d-06f8-4e28-a305-64f1b2abc693",
+      "name": "full time specified",
+      "group": [],
+      "description": "full time specified",
+      "property": "add",
+      "args": [
+        {
+          "name": "moment",
+          "value": "2015-01-24T22:00:00"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "2046-10-02T23:46:40"
+      },
+      "scenarios": [
+        "datetime"
+      ]
+    },
+    {
+      "uuid": "09d4e30e-728a-4b52-9005-be44a58d9eba",
+      "name": "full time with day roll-over",
+      "group": [],
+      "description": "full time with day roll-over",
+      "property": "add",
+      "args": [
+        {
+          "name": "moment",
+          "value": "2015-01-24T23:59:59"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "2046-10-03T01:46:39"
+      },
+      "scenarios": [
+        "datetime"
+      ]
+    },
+    {
+      "uuid": "fcec307c-7529-49ab-b0fe-20309197618a",
+      "name": "does not mutate the input",
+      "group": [],
+      "description": "does not mutate the input",
+      "property": "isEqual",
+      "args": [
+        {
+          "name": "moment",
+          "value": "2015-01-24T23:59:59"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "moment === moment"
+      },
+      "scenarios": [
+        "immutable"
+      ]
+    }
+  ],
+  "stats": {
+    "caseCount": 6,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "string"
+    ]
+  }
+}

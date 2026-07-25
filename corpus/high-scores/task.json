@@ -1,0 +1,480 @@
+{
+  "schemaVersion": 1,
+  "id": "high-scores",
+  "title": "High Scores",
+  "blurb": "Manage a player's High Score list.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [
+    "Consider adding a track specific recommendation in the track's hint.md.",
+    "Consider linking to a explanatory blogpost or beginner level tutorials for both topics.",
+    "See Ruby Track hint.md for an example."
+  ],
+  "properties": [
+    {
+      "name": "scores",
+      "argNames": [
+        "scores"
+      ],
+      "arity": 1,
+      "caseCount": 1,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "scores"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "latest",
+      "argNames": [
+        "scores"
+      ],
+      "arity": 1,
+      "caseCount": 1,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "scores"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "personalBest",
+      "argNames": [
+        "scores"
+      ],
+      "arity": 1,
+      "caseCount": 1,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "scores"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "personalTopThree",
+      "argNames": [
+        "scores"
+      ],
+      "arity": 1,
+      "caseCount": 5,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "scores"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "latestAfterTopThree",
+      "argNames": [
+        "scores"
+      ],
+      "arity": 1,
+      "caseCount": 1,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "scores"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "scoresAfterTopThree",
+      "argNames": [
+        "scores"
+      ],
+      "arity": 1,
+      "caseCount": 1,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "scores"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "latestAfterBest",
+      "argNames": [
+        "scores"
+      ],
+      "arity": 1,
+      "caseCount": 1,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "scores"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "scoresAfterBest",
+      "argNames": [
+        "scores"
+      ],
+      "arity": 1,
+      "caseCount": 1,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "scores"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "1035eb93-2208-4c22-bab8-fef06769a73c",
+      "name": "List of scores",
+      "group": [],
+      "description": "List of scores",
+      "property": "scores",
+      "args": [
+        {
+          "name": "scores",
+          "value": [
+            30,
+            50,
+            20,
+            70
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          30,
+          50,
+          20,
+          70
+        ]
+      }
+    },
+    {
+      "uuid": "6aa5dbf5-78fa-4375-b22c-ffaa989732d2",
+      "name": "Latest score",
+      "group": [],
+      "description": "Latest score",
+      "property": "latest",
+      "args": [
+        {
+          "name": "scores",
+          "value": [
+            100,
+            0,
+            90,
+            30
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 30
+      }
+    },
+    {
+      "uuid": "b661a2e1-aebf-4f50-9139-0fb817dd12c6",
+      "name": "Personal best",
+      "group": [],
+      "description": "Personal best",
+      "property": "personalBest",
+      "args": [
+        {
+          "name": "scores",
+          "value": [
+            40,
+            100,
+            70
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 100
+      }
+    },
+    {
+      "uuid": "3d996a97-c81c-4642-9afc-80b80dc14015",
+      "name": "Top 3 scores > Personal top three from a list of scores",
+      "group": [
+        "Top 3 scores"
+      ],
+      "description": "Personal top three from a list of scores",
+      "property": "personalTopThree",
+      "args": [
+        {
+          "name": "scores",
+          "value": [
+            10,
+            30,
+            90,
+            30,
+            100,
+            20,
+            10,
+            0,
+            30,
+            40,
+            40,
+            70,
+            70
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          100,
+          90,
+          70
+        ]
+      }
+    },
+    {
+      "uuid": "1084ecb5-3eb4-46fe-a816-e40331a4e83a",
+      "name": "Top 3 scores > Personal top highest to lowest",
+      "group": [
+        "Top 3 scores"
+      ],
+      "description": "Personal top highest to lowest",
+      "property": "personalTopThree",
+      "args": [
+        {
+          "name": "scores",
+          "value": [
+            20,
+            10,
+            30
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          30,
+          20,
+          10
+        ]
+      }
+    },
+    {
+      "uuid": "e6465b6b-5a11-4936-bfe3-35241c4f4f16",
+      "name": "Top 3 scores > Personal top when there is a tie",
+      "group": [
+        "Top 3 scores"
+      ],
+      "description": "Personal top when there is a tie",
+      "property": "personalTopThree",
+      "args": [
+        {
+          "name": "scores",
+          "value": [
+            40,
+            20,
+            40,
+            30
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          40,
+          40,
+          30
+        ]
+      }
+    },
+    {
+      "uuid": "f73b02af-c8fd-41c9-91b9-c86eaa86bce2",
+      "name": "Top 3 scores > Personal top when there are less than 3",
+      "group": [
+        "Top 3 scores"
+      ],
+      "description": "Personal top when there are less than 3",
+      "property": "personalTopThree",
+      "args": [
+        {
+          "name": "scores",
+          "value": [
+            30,
+            70
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          70,
+          30
+        ]
+      }
+    },
+    {
+      "uuid": "16608eae-f60f-4a88-800e-aabce5df2865",
+      "name": "Top 3 scores > Personal top when there is only one",
+      "group": [
+        "Top 3 scores"
+      ],
+      "description": "Personal top when there is only one",
+      "property": "personalTopThree",
+      "args": [
+        {
+          "name": "scores",
+          "value": [
+            40
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          40
+        ]
+      }
+    },
+    {
+      "uuid": "2df075f9-fec9-4756-8f40-98c52a11504f",
+      "name": "Top 3 scores > Latest score after personal top scores",
+      "group": [
+        "Top 3 scores"
+      ],
+      "description": "Latest score after personal top scores",
+      "property": "latestAfterTopThree",
+      "args": [
+        {
+          "name": "scores",
+          "value": [
+            70,
+            50,
+            20,
+            30
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 30
+      },
+      "scenarios": [
+        "immutable"
+      ]
+    },
+    {
+      "uuid": "809c4058-7eb1-4206-b01e-79238b9b71bc",
+      "name": "Top 3 scores > Scores after personal top scores",
+      "group": [
+        "Top 3 scores"
+      ],
+      "description": "Scores after personal top scores",
+      "property": "scoresAfterTopThree",
+      "args": [
+        {
+          "name": "scores",
+          "value": [
+            30,
+            50,
+            20,
+            70
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          30,
+          50,
+          20,
+          70
+        ]
+      },
+      "scenarios": [
+        "immutable"
+      ]
+    },
+    {
+      "uuid": "ddb0efc0-9a86-4f82-bc30-21ae0bdc6418",
+      "name": "Top 3 scores > Latest score after personal best",
+      "group": [
+        "Top 3 scores"
+      ],
+      "description": "Latest score after personal best",
+      "property": "latestAfterBest",
+      "args": [
+        {
+          "name": "scores",
+          "value": [
+            20,
+            70,
+            15,
+            25,
+            30
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 30
+      },
+      "scenarios": [
+        "immutable"
+      ]
+    },
+    {
+      "uuid": "6a0fd2d1-4cc4-46b9-a5bb-2fb667ca2364",
+      "name": "Top 3 scores > Scores after personal best",
+      "group": [
+        "Top 3 scores"
+      ],
+      "description": "Scores after personal best",
+      "property": "scoresAfterBest",
+      "args": [
+        {
+          "name": "scores",
+          "value": [
+            20,
+            70,
+            15,
+            25,
+            30
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          20,
+          70,
+          15,
+          25,
+          30
+        ]
+      },
+      "scenarios": [
+        "immutable"
+      ]
+    }
+  ],
+  "stats": {
+    "caseCount": 12,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "array",
+      "int"
+    ]
+  }
+}

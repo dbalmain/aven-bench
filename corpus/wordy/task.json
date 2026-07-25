@@ -1,0 +1,504 @@
+{
+  "schemaVersion": 1,
+  "id": "wordy",
+  "title": "Wordy",
+  "blurb": "Parse and evaluate simple math word problems returning the answer as an integer.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [
+    "The tests that expect an 'error' should be implemented to raise",
+    "an error, or indicate a failure. Implement this in a way that",
+    "makes sense for your language."
+  ],
+  "properties": [
+    {
+      "name": "answer",
+      "argNames": [
+        "question"
+      ],
+      "arity": 1,
+      "caseCount": 27,
+      "returnsResult": true,
+      "argOrderVariants": [
+        [
+          "question"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "88bf4b28-0de3-4883-93c7-db1b14aa806e",
+      "name": "just a number",
+      "group": [],
+      "description": "just a number",
+      "property": "answer",
+      "args": [
+        {
+          "name": "question",
+          "value": "What is 5?"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 5
+      }
+    },
+    {
+      "uuid": "18983214-1dfc-4ebd-ac77-c110dde699ce",
+      "name": "just a zero",
+      "group": [],
+      "description": "just a zero",
+      "property": "answer",
+      "args": [
+        {
+          "name": "question",
+          "value": "What is 0?"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "607c08ee-2241-4288-916d-dae5455c87e6",
+      "name": "just a negative number",
+      "group": [],
+      "description": "just a negative number",
+      "property": "answer",
+      "args": [
+        {
+          "name": "question",
+          "value": "What is -123?"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": -123
+      }
+    },
+    {
+      "uuid": "bb8c655c-cf42-4dfc-90e0-152fcfd8d4e0",
+      "name": "addition",
+      "group": [],
+      "description": "addition",
+      "property": "answer",
+      "args": [
+        {
+          "name": "question",
+          "value": "What is 1 plus 1?"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 2
+      }
+    },
+    {
+      "uuid": "bb9f2082-171c-46ad-ad4e-c3f72087c1b5",
+      "name": "addition with a left hand zero",
+      "group": [],
+      "description": "addition with a left hand zero",
+      "property": "answer",
+      "args": [
+        {
+          "name": "question",
+          "value": "What is 0 plus 2?"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 2
+      }
+    },
+    {
+      "uuid": "6fa05f17-405a-4742-80ae-5d1a8edb0d5d",
+      "name": "addition with a right hand zero",
+      "group": [],
+      "description": "addition with a right hand zero",
+      "property": "answer",
+      "args": [
+        {
+          "name": "question",
+          "value": "What is 3 plus 0?"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 3
+      }
+    },
+    {
+      "uuid": "79e49e06-c5ae-40aa-a352-7a3a01f70015",
+      "name": "more addition",
+      "group": [],
+      "description": "more addition",
+      "property": "answer",
+      "args": [
+        {
+          "name": "question",
+          "value": "What is 53 plus 2?"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 55
+      }
+    },
+    {
+      "uuid": "b345dbe0-f733-44e1-863c-5ae3568f3803",
+      "name": "addition with negative numbers",
+      "group": [],
+      "description": "addition with negative numbers",
+      "property": "answer",
+      "args": [
+        {
+          "name": "question",
+          "value": "What is -1 plus -10?"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": -11
+      }
+    },
+    {
+      "uuid": "cd070f39-c4cc-45c4-97fb-1be5e5846f87",
+      "name": "large addition",
+      "group": [],
+      "description": "large addition",
+      "property": "answer",
+      "args": [
+        {
+          "name": "question",
+          "value": "What is 123 plus 45678?"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 45801
+      }
+    },
+    {
+      "uuid": "0d86474a-cd93-4649-a4fa-f6109a011191",
+      "name": "subtraction",
+      "group": [],
+      "description": "subtraction",
+      "property": "answer",
+      "args": [
+        {
+          "name": "question",
+          "value": "What is 4 minus -12?"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 16
+      }
+    },
+    {
+      "uuid": "30bc8395-5500-4712-a0cf-1d788a529be5",
+      "name": "multiplication",
+      "group": [],
+      "description": "multiplication",
+      "property": "answer",
+      "args": [
+        {
+          "name": "question",
+          "value": "What is -3 multiplied by 25?"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": -75
+      }
+    },
+    {
+      "uuid": "34c36b08-8605-4217-bb57-9a01472c427f",
+      "name": "division",
+      "group": [],
+      "description": "division",
+      "property": "answer",
+      "args": [
+        {
+          "name": "question",
+          "value": "What is 33 divided by -3?"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": -11
+      }
+    },
+    {
+      "uuid": "da6d2ce4-fb94-4d26-8f5f-b078adad0596",
+      "name": "multiple additions",
+      "group": [],
+      "description": "multiple additions",
+      "property": "answer",
+      "args": [
+        {
+          "name": "question",
+          "value": "What is 1 plus 1 plus 1?"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 3
+      }
+    },
+    {
+      "uuid": "7fd74c50-9911-4597-be09-8de7f2fea2bb",
+      "name": "addition and subtraction",
+      "group": [],
+      "description": "addition and subtraction",
+      "property": "answer",
+      "args": [
+        {
+          "name": "question",
+          "value": "What is 1 plus 5 minus -2?"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 8
+      }
+    },
+    {
+      "uuid": "b120ffd5-bad6-4e22-81c8-5512e8faf905",
+      "name": "multiple subtraction",
+      "group": [],
+      "description": "multiple subtraction",
+      "property": "answer",
+      "args": [
+        {
+          "name": "question",
+          "value": "What is 20 minus 4 minus 13?"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 3
+      }
+    },
+    {
+      "uuid": "4f4a5749-ef0c-4f60-841f-abcfaf05d2ae",
+      "name": "subtraction then addition",
+      "group": [],
+      "description": "subtraction then addition",
+      "property": "answer",
+      "args": [
+        {
+          "name": "question",
+          "value": "What is 17 minus 6 plus 3?"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 14
+      }
+    },
+    {
+      "uuid": "312d908c-f68f-42c9-aa75-961623cc033f",
+      "name": "multiple multiplication",
+      "group": [],
+      "description": "multiple multiplication",
+      "property": "answer",
+      "args": [
+        {
+          "name": "question",
+          "value": "What is 2 multiplied by -2 multiplied by 3?"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": -12
+      }
+    },
+    {
+      "uuid": "38e33587-8940-4cc1-bc28-bfd7e3966276",
+      "name": "addition and multiplication",
+      "group": [],
+      "description": "addition and multiplication",
+      "property": "answer",
+      "args": [
+        {
+          "name": "question",
+          "value": "What is -3 plus 7 multiplied by -2?"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": -8
+      }
+    },
+    {
+      "uuid": "3c854f97-9311-46e8-b574-92b60d17d394",
+      "name": "multiple division",
+      "group": [],
+      "description": "multiple division",
+      "property": "answer",
+      "args": [
+        {
+          "name": "question",
+          "value": "What is -12 divided by 2 divided by -3?"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 2
+      }
+    },
+    {
+      "uuid": "3ad3e433-8af7-41ec-aa9b-97b42ab49357",
+      "name": "unknown operation",
+      "group": [],
+      "description": "unknown operation",
+      "property": "answer",
+      "args": [
+        {
+          "name": "question",
+          "value": "What is 52 cubed?"
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "unknown operation"
+      }
+    },
+    {
+      "uuid": "8a7e85a8-9e7b-4d46-868f-6d759f4648f8",
+      "name": "Non math question",
+      "group": [],
+      "description": "Non math question",
+      "property": "answer",
+      "args": [
+        {
+          "name": "question",
+          "value": "Who is the President of the United States?"
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "unknown operation"
+      }
+    },
+    {
+      "uuid": "42d78b5f-dbd7-4cdb-8b30-00f794bb24cf",
+      "name": "reject problem missing an operand",
+      "group": [],
+      "description": "reject problem missing an operand",
+      "property": "answer",
+      "args": [
+        {
+          "name": "question",
+          "value": "What is 1 plus?"
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "syntax error"
+      }
+    },
+    {
+      "uuid": "c2c3cbfc-1a72-42f2-b597-246e617e66f5",
+      "name": "reject problem with no operands or operators",
+      "group": [],
+      "description": "reject problem with no operands or operators",
+      "property": "answer",
+      "args": [
+        {
+          "name": "question",
+          "value": "What is?"
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "syntax error"
+      }
+    },
+    {
+      "uuid": "4b3df66d-6ed5-4c95-a0a1-d38891fbdab6",
+      "name": "reject two operations in a row",
+      "group": [],
+      "description": "reject two operations in a row",
+      "property": "answer",
+      "args": [
+        {
+          "name": "question",
+          "value": "What is 1 plus plus 2?"
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "syntax error"
+      }
+    },
+    {
+      "uuid": "6abd7a50-75b4-4665-aa33-2030fd08bab1",
+      "name": "reject two numbers in a row",
+      "group": [],
+      "description": "reject two numbers in a row",
+      "property": "answer",
+      "args": [
+        {
+          "name": "question",
+          "value": "What is 1 plus 2 1?"
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "syntax error"
+      }
+    },
+    {
+      "uuid": "10a56c22-e0aa-405f-b1d2-c642d9c4c9de",
+      "name": "reject postfix notation",
+      "group": [],
+      "description": "reject postfix notation",
+      "property": "answer",
+      "args": [
+        {
+          "name": "question",
+          "value": "What is 1 2 plus?"
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "syntax error"
+      }
+    },
+    {
+      "uuid": "0035bc63-ac43-4bb5-ad6d-e8651b7d954e",
+      "name": "reject prefix notation",
+      "group": [],
+      "description": "reject prefix notation",
+      "property": "answer",
+      "args": [
+        {
+          "name": "question",
+          "value": "What is plus 1 2?"
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "syntax error"
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 27,
+    "errorCaseCount": 8,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "error",
+      "int",
+      "string"
+    ]
+  }
+}

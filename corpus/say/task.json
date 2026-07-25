@@ -1,0 +1,368 @@
+{
+  "schemaVersion": 1,
+  "id": "say",
+  "title": "Say",
+  "blurb": "Given a number from 0 to 999,999,999,999, spell out that number in English.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "introduction.md",
+    "instructions.md"
+  ],
+  "comments": [
+    "An 'error' object is used as expected value to indicate that the",
+    "input value is out of the range described in the exercise."
+  ],
+  "properties": [
+    {
+      "name": "say",
+      "argNames": [
+        "number"
+      ],
+      "arity": 1,
+      "caseCount": 19,
+      "returnsResult": true,
+      "argOrderVariants": [
+        [
+          "number"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "5d22a120-ba0c-428c-bd25-8682235d83e8",
+      "name": "zero",
+      "group": [],
+      "description": "zero",
+      "property": "say",
+      "args": [
+        {
+          "name": "number",
+          "value": 0
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "zero"
+      }
+    },
+    {
+      "uuid": "9b5eed77-dbf6-439d-b920-3f7eb58928f6",
+      "name": "one",
+      "group": [],
+      "description": "one",
+      "property": "say",
+      "args": [
+        {
+          "name": "number",
+          "value": 1
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "one"
+      }
+    },
+    {
+      "uuid": "7c499be1-612e-4096-a5e1-43b2f719406d",
+      "name": "fourteen",
+      "group": [],
+      "description": "fourteen",
+      "property": "say",
+      "args": [
+        {
+          "name": "number",
+          "value": 14
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "fourteen"
+      }
+    },
+    {
+      "uuid": "f541dd8e-f070-4329-92b4-b7ce2fcf06b4",
+      "name": "twenty",
+      "group": [],
+      "description": "twenty",
+      "property": "say",
+      "args": [
+        {
+          "name": "number",
+          "value": 20
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "twenty"
+      }
+    },
+    {
+      "uuid": "d78601eb-4a84-4bfa-bf0e-665aeb8abe94",
+      "name": "twenty-two",
+      "group": [],
+      "description": "twenty-two",
+      "property": "say",
+      "args": [
+        {
+          "name": "number",
+          "value": 22
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "twenty-two"
+      }
+    },
+    {
+      "uuid": "f010d4ca-12c9-44e9-803a-27789841adb1",
+      "name": "thirty",
+      "group": [],
+      "description": "thirty",
+      "property": "say",
+      "args": [
+        {
+          "name": "number",
+          "value": 30
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "thirty"
+      }
+    },
+    {
+      "uuid": "738ce12d-ee5c-4dfb-ad26-534753a98327",
+      "name": "ninety-nine",
+      "group": [],
+      "description": "ninety-nine",
+      "property": "say",
+      "args": [
+        {
+          "name": "number",
+          "value": 99
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "ninety-nine"
+      }
+    },
+    {
+      "uuid": "e417d452-129e-4056-bd5b-6eb1df334dce",
+      "name": "one hundred",
+      "group": [],
+      "description": "one hundred",
+      "property": "say",
+      "args": [
+        {
+          "name": "number",
+          "value": 100
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "one hundred"
+      }
+    },
+    {
+      "uuid": "d6924f30-80ba-4597-acf6-ea3f16269da8",
+      "name": "one hundred twenty-three",
+      "group": [],
+      "description": "one hundred twenty-three",
+      "property": "say",
+      "args": [
+        {
+          "name": "number",
+          "value": 123
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "one hundred twenty-three"
+      }
+    },
+    {
+      "uuid": "2f061132-54bc-4fd4-b5df-0a3b778959b9",
+      "name": "two hundred",
+      "group": [],
+      "description": "two hundred",
+      "property": "say",
+      "args": [
+        {
+          "name": "number",
+          "value": 200
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "two hundred"
+      }
+    },
+    {
+      "uuid": "feed6627-5387-4d38-9692-87c0dbc55c33",
+      "name": "nine hundred ninety-nine",
+      "group": [],
+      "description": "nine hundred ninety-nine",
+      "property": "say",
+      "args": [
+        {
+          "name": "number",
+          "value": 999
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "nine hundred ninety-nine"
+      }
+    },
+    {
+      "uuid": "3d83da89-a372-46d3-b10d-de0c792432b3",
+      "name": "one thousand",
+      "group": [],
+      "description": "one thousand",
+      "property": "say",
+      "args": [
+        {
+          "name": "number",
+          "value": 1000
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "one thousand"
+      }
+    },
+    {
+      "uuid": "865af898-1d5b-495f-8ff0-2f06d3c73709",
+      "name": "one thousand two hundred thirty-four",
+      "group": [],
+      "description": "one thousand two hundred thirty-four",
+      "property": "say",
+      "args": [
+        {
+          "name": "number",
+          "value": 1234
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "one thousand two hundred thirty-four"
+      }
+    },
+    {
+      "uuid": "b6a3f442-266e-47a3-835d-7f8a35f6cf7f",
+      "name": "one million",
+      "group": [],
+      "description": "one million",
+      "property": "say",
+      "args": [
+        {
+          "name": "number",
+          "value": 1000000
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "one million"
+      }
+    },
+    {
+      "uuid": "2cea9303-e77e-4212-b8ff-c39f1978fc70",
+      "name": "one million two thousand three hundred forty-five",
+      "group": [],
+      "description": "one million two thousand three hundred forty-five",
+      "property": "say",
+      "args": [
+        {
+          "name": "number",
+          "value": 1002345
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "one million two thousand three hundred forty-five"
+      }
+    },
+    {
+      "uuid": "3e240eeb-f564-4b80-9421-db123f66a38f",
+      "name": "one billion",
+      "group": [],
+      "description": "one billion",
+      "property": "say",
+      "args": [
+        {
+          "name": "number",
+          "value": 1000000000
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "one billion"
+      }
+    },
+    {
+      "uuid": "9a43fed1-c875-4710-8286-5065d73b8a9e",
+      "name": "a big number",
+      "group": [],
+      "description": "a big number",
+      "property": "say",
+      "args": [
+        {
+          "name": "number",
+          "value": 987654321123
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "nine hundred eighty-seven billion six hundred fifty-four million three hundred twenty-one thousand one hundred twenty-three"
+      }
+    },
+    {
+      "uuid": "49a6a17b-084e-423e-994d-a87c0ecc05ef",
+      "name": "numbers below zero are out of range",
+      "group": [],
+      "description": "numbers below zero are out of range",
+      "property": "say",
+      "args": [
+        {
+          "name": "number",
+          "value": -1
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "input out of range"
+      }
+    },
+    {
+      "uuid": "4d6492eb-5853-4d16-9d34-b0f61b261fd9",
+      "name": "numbers above 999,999,999,999 are out of range",
+      "group": [],
+      "description": "numbers above 999,999,999,999 are out of range",
+      "property": "say",
+      "args": [
+        {
+          "name": "number",
+          "value": 1000000000000
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "input out of range"
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 19,
+    "errorCaseCount": 2,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "error",
+      "int",
+      "string"
+    ]
+  }
+}

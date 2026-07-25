@@ -1,0 +1,447 @@
+{
+  "schemaVersion": 1,
+  "id": "line-up",
+  "title": "Line Up",
+  "blurb": "Help lining up customers at Yaʻqūb's Deli.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "introduction.md",
+    "instructions.md"
+  ],
+  "comments": [
+    "Names are chosen without Unicode characters to keep the exercise simple.",
+    "",
+    "The tests are ordered starting with small regular cases and coming to",
+    "bigger and irregular cases later on."
+  ],
+  "properties": [
+    {
+      "name": "format",
+      "argNames": [
+        "name",
+        "number"
+      ],
+      "arity": 2,
+      "caseCount": 19,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "name",
+          "number"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "7760d1b8-4864-4db4-953b-0fa7c047dbc0",
+      "name": "format smallest non-exceptional ordinal numeral 4",
+      "group": [],
+      "description": "format smallest non-exceptional ordinal numeral 4",
+      "property": "format",
+      "args": [
+        {
+          "name": "name",
+          "value": "Gianna"
+        },
+        {
+          "name": "number",
+          "value": 4
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Gianna, you are the 4th customer we serve today. Thank you!"
+      }
+    },
+    {
+      "uuid": "e8b7c715-6baa-4f7b-8fb3-2fa48044ab7a",
+      "name": "format greatest single digit non-exceptional ordinal numeral 9",
+      "group": [],
+      "description": "format greatest single digit non-exceptional ordinal numeral 9",
+      "property": "format",
+      "args": [
+        {
+          "name": "name",
+          "value": "Maarten"
+        },
+        {
+          "name": "number",
+          "value": 9
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Maarten, you are the 9th customer we serve today. Thank you!"
+      }
+    },
+    {
+      "uuid": "f370aae9-7ae7-4247-90ce-e8ff8c6934df",
+      "name": "format non-exceptional ordinal numeral 5",
+      "group": [],
+      "description": "format non-exceptional ordinal numeral 5",
+      "property": "format",
+      "args": [
+        {
+          "name": "name",
+          "value": "Petronila"
+        },
+        {
+          "name": "number",
+          "value": 5
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Petronila, you are the 5th customer we serve today. Thank you!"
+      }
+    },
+    {
+      "uuid": "37f10dea-42a2-49de-bb92-0b690b677908",
+      "name": "format non-exceptional ordinal numeral 6",
+      "group": [],
+      "description": "format non-exceptional ordinal numeral 6",
+      "property": "format",
+      "args": [
+        {
+          "name": "name",
+          "value": "Attakullakulla"
+        },
+        {
+          "name": "number",
+          "value": 6
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Attakullakulla, you are the 6th customer we serve today. Thank you!"
+      }
+    },
+    {
+      "uuid": "d8dfb9a2-3a1f-4fee-9dae-01af3600054e",
+      "name": "format non-exceptional ordinal numeral 7",
+      "group": [],
+      "description": "format non-exceptional ordinal numeral 7",
+      "property": "format",
+      "args": [
+        {
+          "name": "name",
+          "value": "Kate"
+        },
+        {
+          "name": "number",
+          "value": 7
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Kate, you are the 7th customer we serve today. Thank you!"
+      }
+    },
+    {
+      "uuid": "505ec372-1803-42b1-9377-6934890fd055",
+      "name": "format non-exceptional ordinal numeral 8",
+      "group": [],
+      "description": "format non-exceptional ordinal numeral 8",
+      "property": "format",
+      "args": [
+        {
+          "name": "name",
+          "value": "Maximiliano"
+        },
+        {
+          "name": "number",
+          "value": 8
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Maximiliano, you are the 8th customer we serve today. Thank you!"
+      }
+    },
+    {
+      "uuid": "8267072d-be1f-4f70-b34a-76b7557a47b9",
+      "name": "format exceptional ordinal numeral 1",
+      "group": [],
+      "description": "format exceptional ordinal numeral 1",
+      "property": "format",
+      "args": [
+        {
+          "name": "name",
+          "value": "Mary"
+        },
+        {
+          "name": "number",
+          "value": 1
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Mary, you are the 1st customer we serve today. Thank you!"
+      }
+    },
+    {
+      "uuid": "4d8753cb-0364-4b29-84b8-4374a4fa2e3f",
+      "name": "format exceptional ordinal numeral 2",
+      "group": [],
+      "description": "format exceptional ordinal numeral 2",
+      "property": "format",
+      "args": [
+        {
+          "name": "name",
+          "value": "Haruto"
+        },
+        {
+          "name": "number",
+          "value": 2
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Haruto, you are the 2nd customer we serve today. Thank you!"
+      }
+    },
+    {
+      "uuid": "8d44c223-3a7e-4f48-a0ca-78e67bf98aa7",
+      "name": "format exceptional ordinal numeral 3",
+      "group": [],
+      "description": "format exceptional ordinal numeral 3",
+      "property": "format",
+      "args": [
+        {
+          "name": "name",
+          "value": "Henriette"
+        },
+        {
+          "name": "number",
+          "value": 3
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Henriette, you are the 3rd customer we serve today. Thank you!"
+      }
+    },
+    {
+      "uuid": "6c4f6c88-b306-4f40-bc78-97cdd583c21a",
+      "name": "format smallest two digit non-exceptional ordinal numeral 10",
+      "group": [],
+      "description": "format smallest two digit non-exceptional ordinal numeral 10",
+      "property": "format",
+      "args": [
+        {
+          "name": "name",
+          "value": "Alvarez"
+        },
+        {
+          "name": "number",
+          "value": 10
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Alvarez, you are the 10th customer we serve today. Thank you!"
+      }
+    },
+    {
+      "uuid": "e257a43f-d2b1-457a-97df-25f0923fc62a",
+      "name": "format non-exceptional ordinal numeral 11",
+      "group": [],
+      "description": "format non-exceptional ordinal numeral 11",
+      "property": "format",
+      "args": [
+        {
+          "name": "name",
+          "value": "Jacqueline"
+        },
+        {
+          "name": "number",
+          "value": 11
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Jacqueline, you are the 11th customer we serve today. Thank you!"
+      }
+    },
+    {
+      "uuid": "bb1db695-4d64-457f-81b8-4f5a2107e3f4",
+      "name": "format non-exceptional ordinal numeral 12",
+      "group": [],
+      "description": "format non-exceptional ordinal numeral 12",
+      "property": "format",
+      "args": [
+        {
+          "name": "name",
+          "value": "Juan"
+        },
+        {
+          "name": "number",
+          "value": 12
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Juan, you are the 12th customer we serve today. Thank you!"
+      }
+    },
+    {
+      "uuid": "60a3187c-9403-4835-97de-4f10ebfd63e2",
+      "name": "format non-exceptional ordinal numeral 13",
+      "group": [],
+      "description": "format non-exceptional ordinal numeral 13",
+      "property": "format",
+      "args": [
+        {
+          "name": "name",
+          "value": "Patricia"
+        },
+        {
+          "name": "number",
+          "value": 13
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Patricia, you are the 13th customer we serve today. Thank you!"
+      }
+    },
+    {
+      "uuid": "2bdcebc5-c029-4874-b6cc-e9bec80d603a",
+      "name": "format exceptional ordinal numeral 21",
+      "group": [],
+      "description": "format exceptional ordinal numeral 21",
+      "property": "format",
+      "args": [
+        {
+          "name": "name",
+          "value": "Washi"
+        },
+        {
+          "name": "number",
+          "value": 21
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Washi, you are the 21st customer we serve today. Thank you!"
+      }
+    },
+    {
+      "uuid": "74ee2317-0295-49d2-baf0-d56bcefa14e3",
+      "name": "format exceptional ordinal numeral 62",
+      "group": [],
+      "description": "format exceptional ordinal numeral 62",
+      "property": "format",
+      "args": [
+        {
+          "name": "name",
+          "value": "Nayra"
+        },
+        {
+          "name": "number",
+          "value": 62
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Nayra, you are the 62nd customer we serve today. Thank you!"
+      }
+    },
+    {
+      "uuid": "b37c332d-7f68-40e3-8503-e43cbd67a0c4",
+      "name": "format exceptional ordinal numeral 100",
+      "group": [],
+      "description": "format exceptional ordinal numeral 100",
+      "property": "format",
+      "args": [
+        {
+          "name": "name",
+          "value": "John"
+        },
+        {
+          "name": "number",
+          "value": 100
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "John, you are the 100th customer we serve today. Thank you!"
+      }
+    },
+    {
+      "uuid": "0375f250-ce92-4195-9555-00e28ccc4d99",
+      "name": "format exceptional ordinal numeral 101",
+      "group": [],
+      "description": "format exceptional ordinal numeral 101",
+      "property": "format",
+      "args": [
+        {
+          "name": "name",
+          "value": "Zeinab"
+        },
+        {
+          "name": "number",
+          "value": 101
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Zeinab, you are the 101st customer we serve today. Thank you!"
+      }
+    },
+    {
+      "uuid": "0d8a4974-9a8a-45a4-aca7-a9fb473c9836",
+      "name": "format non-exceptional ordinal numeral 112",
+      "group": [],
+      "description": "format non-exceptional ordinal numeral 112",
+      "property": "format",
+      "args": [
+        {
+          "name": "name",
+          "value": "Knud"
+        },
+        {
+          "name": "number",
+          "value": 112
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Knud, you are the 112th customer we serve today. Thank you!"
+      }
+    },
+    {
+      "uuid": "06b62efe-199e-4ce7-970d-4bf73945713f",
+      "name": "format exceptional ordinal numeral 123",
+      "group": [],
+      "description": "format exceptional ordinal numeral 123",
+      "property": "format",
+      "args": [
+        {
+          "name": "name",
+          "value": "Yma"
+        },
+        {
+          "name": "number",
+          "value": 123
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Yma, you are the 123rd customer we serve today. Thank you!"
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 19,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "int",
+      "string"
+    ]
+  }
+}

@@ -1,0 +1,426 @@
+{
+  "schemaVersion": 1,
+  "id": "sum-of-multiples",
+  "title": "Sum of Multiples",
+  "blurb": "Given a number, find the sum of all the multiples of particular numbers up to but not including that number.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "introduction.md",
+    "instructions.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "sum",
+      "argNames": [
+        "factors",
+        "limit"
+      ],
+      "arity": 2,
+      "caseCount": 16,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "factors",
+          "limit"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "54aaab5a-ce86-4edc-8b40-d3ab2400a279",
+      "name": "no multiples within limit",
+      "group": [],
+      "description": "no multiples within limit",
+      "property": "sum",
+      "args": [
+        {
+          "name": "factors",
+          "value": [
+            3,
+            5
+          ]
+        },
+        {
+          "name": "limit",
+          "value": 1
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "361e4e50-c89b-4f60-95ef-5bc5c595490a",
+      "name": "one factor has multiples within limit",
+      "group": [],
+      "description": "one factor has multiples within limit",
+      "property": "sum",
+      "args": [
+        {
+          "name": "factors",
+          "value": [
+            3,
+            5
+          ]
+        },
+        {
+          "name": "limit",
+          "value": 4
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 3
+      }
+    },
+    {
+      "uuid": "e644e070-040e-4ae0-9910-93c69fc3f7ce",
+      "name": "more than one multiple within limit",
+      "group": [],
+      "description": "more than one multiple within limit",
+      "property": "sum",
+      "args": [
+        {
+          "name": "factors",
+          "value": [
+            3
+          ]
+        },
+        {
+          "name": "limit",
+          "value": 7
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 9
+      }
+    },
+    {
+      "uuid": "607d6eb9-535c-41ce-91b5-3a61da3fa57f",
+      "name": "more than one factor with multiples within limit",
+      "group": [],
+      "description": "more than one factor with multiples within limit",
+      "property": "sum",
+      "args": [
+        {
+          "name": "factors",
+          "value": [
+            3,
+            5
+          ]
+        },
+        {
+          "name": "limit",
+          "value": 10
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 23
+      }
+    },
+    {
+      "uuid": "f47e8209-c0c5-4786-b07b-dc273bf86b9b",
+      "name": "each multiple is only counted once",
+      "group": [],
+      "description": "each multiple is only counted once",
+      "property": "sum",
+      "args": [
+        {
+          "name": "factors",
+          "value": [
+            3,
+            5
+          ]
+        },
+        {
+          "name": "limit",
+          "value": 100
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 2318
+      }
+    },
+    {
+      "uuid": "28c4b267-c980-4054-93e9-07723db615ac",
+      "name": "a much larger limit",
+      "group": [],
+      "description": "a much larger limit",
+      "property": "sum",
+      "args": [
+        {
+          "name": "factors",
+          "value": [
+            3,
+            5
+          ]
+        },
+        {
+          "name": "limit",
+          "value": 1000
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 233168
+      }
+    },
+    {
+      "uuid": "09c4494d-ff2d-4e0f-8421-f5532821ee12",
+      "name": "three factors",
+      "group": [],
+      "description": "three factors",
+      "property": "sum",
+      "args": [
+        {
+          "name": "factors",
+          "value": [
+            7,
+            13,
+            17
+          ]
+        },
+        {
+          "name": "limit",
+          "value": 20
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 51
+      }
+    },
+    {
+      "uuid": "2d0d5faa-f177-4ad6-bde9-ebb865083751",
+      "name": "factors not relatively prime",
+      "group": [],
+      "description": "factors not relatively prime",
+      "property": "sum",
+      "args": [
+        {
+          "name": "factors",
+          "value": [
+            4,
+            6
+          ]
+        },
+        {
+          "name": "limit",
+          "value": 15
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 30
+      }
+    },
+    {
+      "uuid": "ece8f2e8-96aa-4166-bbb7-6ce71261e354",
+      "name": "some pairs of factors relatively prime and some not",
+      "group": [],
+      "description": "some pairs of factors relatively prime and some not",
+      "property": "sum",
+      "args": [
+        {
+          "name": "factors",
+          "value": [
+            5,
+            6,
+            8
+          ]
+        },
+        {
+          "name": "limit",
+          "value": 150
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 4419
+      }
+    },
+    {
+      "uuid": "624fdade-6ffb-400e-8472-456a38c171c0",
+      "name": "one factor is a multiple of another",
+      "group": [],
+      "description": "one factor is a multiple of another",
+      "property": "sum",
+      "args": [
+        {
+          "name": "factors",
+          "value": [
+            5,
+            25
+          ]
+        },
+        {
+          "name": "limit",
+          "value": 51
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 275
+      }
+    },
+    {
+      "uuid": "949ee7eb-db51-479c-b5cb-4a22b40ac057",
+      "name": "much larger factors",
+      "group": [],
+      "description": "much larger factors",
+      "property": "sum",
+      "args": [
+        {
+          "name": "factors",
+          "value": [
+            43,
+            47
+          ]
+        },
+        {
+          "name": "limit",
+          "value": 10000
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 2203160
+      }
+    },
+    {
+      "uuid": "41093673-acbd-482c-ab80-d00a0cbedecd",
+      "name": "all numbers are multiples of 1",
+      "group": [],
+      "description": "all numbers are multiples of 1",
+      "property": "sum",
+      "args": [
+        {
+          "name": "factors",
+          "value": [
+            1
+          ]
+        },
+        {
+          "name": "limit",
+          "value": 100
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 4950
+      }
+    },
+    {
+      "uuid": "1730453b-baaa-438e-a9c2-d754497b2a76",
+      "name": "no factors means an empty sum",
+      "group": [],
+      "description": "no factors means an empty sum",
+      "property": "sum",
+      "args": [
+        {
+          "name": "factors",
+          "value": []
+        },
+        {
+          "name": "limit",
+          "value": 10000
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "214a01e9-f4bf-45bb-80f1-1dce9fbb0310",
+      "name": "the only multiple of 0 is 0",
+      "group": [],
+      "description": "the only multiple of 0 is 0",
+      "property": "sum",
+      "args": [
+        {
+          "name": "factors",
+          "value": [
+            0
+          ]
+        },
+        {
+          "name": "limit",
+          "value": 1
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "c423ae21-a0cb-4ec7-aeb1-32971af5b510",
+      "name": "the factor 0 does not affect the sum of multiples of other factors",
+      "group": [],
+      "description": "the factor 0 does not affect the sum of multiples of other factors",
+      "property": "sum",
+      "args": [
+        {
+          "name": "factors",
+          "value": [
+            3,
+            0
+          ]
+        },
+        {
+          "name": "limit",
+          "value": 4
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 3
+      }
+    },
+    {
+      "uuid": "17053ba9-112f-4ac0-aadb-0519dd836342",
+      "name": "solutions using include-exclude must extend to cardinality greater than 3",
+      "group": [],
+      "description": "solutions using include-exclude must extend to cardinality greater than 3",
+      "property": "sum",
+      "args": [
+        {
+          "name": "factors",
+          "value": [
+            2,
+            3,
+            5,
+            7,
+            11
+          ]
+        },
+        {
+          "name": "limit",
+          "value": 10000
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 39614537
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 16,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "array",
+      "int"
+    ]
+  }
+}

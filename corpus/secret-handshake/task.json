@@ -1,0 +1,267 @@
+{
+  "schemaVersion": 1,
+  "id": "secret-handshake",
+  "title": "Secret Handshake",
+  "blurb": "Given a decimal number, convert it to the appropriate sequence of events for a secret handshake.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "introduction.md",
+    "instructions.md"
+  ],
+  "comments": [
+    " In a discussion in https://github.com/exercism/problem-specifications/pull/794 and    ",
+    " https://github.com/exercism/problem-specifications/issues/335 it has been decided to  ",
+    " only include numbers between 0 and 31 (00000 to 11111) in the canonical ",
+    " test data.                                                              ",
+    "                                                                         ",
+    " This is to allow for different implementations in different tracks and  ",
+    " not restrict solutions to bitwise or modulo-based algorithms.           ",
+    "                                                                         ",
+    " Tracks may include additional tests for numbers > 31 in their test      ",
+    " suites. In this case, 32 (100000) should yield the same result as 0,    ",
+    " 33 (100001) should yield the same result as 1, and so on.               "
+  ],
+  "properties": [
+    {
+      "name": "commands",
+      "argNames": [
+        "number"
+      ],
+      "arity": 1,
+      "caseCount": 11,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "number"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "b8496fbd-6778-468c-8054-648d03c4bb23",
+      "name": "wink for 1",
+      "group": [],
+      "description": "wink for 1",
+      "property": "commands",
+      "args": [
+        {
+          "name": "number",
+          "value": 1
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "wink"
+        ]
+      }
+    },
+    {
+      "uuid": "83ec6c58-81a9-4fd1-bfaf-0160514fc0e3",
+      "name": "double blink for 10",
+      "group": [],
+      "description": "double blink for 10",
+      "property": "commands",
+      "args": [
+        {
+          "name": "number",
+          "value": 2
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "double blink"
+        ]
+      }
+    },
+    {
+      "uuid": "0e20e466-3519-4134-8082-5639d85fef71",
+      "name": "close your eyes for 100",
+      "group": [],
+      "description": "close your eyes for 100",
+      "property": "commands",
+      "args": [
+        {
+          "name": "number",
+          "value": 4
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "close your eyes"
+        ]
+      }
+    },
+    {
+      "uuid": "b339ddbb-88b7-4b7d-9b19-4134030d9ac0",
+      "name": "jump for 1000",
+      "group": [],
+      "description": "jump for 1000",
+      "property": "commands",
+      "args": [
+        {
+          "name": "number",
+          "value": 8
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "jump"
+        ]
+      }
+    },
+    {
+      "uuid": "40499fb4-e60c-43d7-8b98-0de3ca44e0eb",
+      "name": "combine two actions",
+      "group": [],
+      "description": "combine two actions",
+      "property": "commands",
+      "args": [
+        {
+          "name": "number",
+          "value": 3
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "wink",
+          "double blink"
+        ]
+      }
+    },
+    {
+      "uuid": "9730cdd5-ef27-494b-afd3-5c91ad6c3d9d",
+      "name": "reverse two actions",
+      "group": [],
+      "description": "reverse two actions",
+      "property": "commands",
+      "args": [
+        {
+          "name": "number",
+          "value": 19
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "double blink",
+          "wink"
+        ]
+      }
+    },
+    {
+      "uuid": "0b828205-51ca-45cd-90d5-f2506013f25f",
+      "name": "reversing one action gives the same action",
+      "group": [],
+      "description": "reversing one action gives the same action",
+      "property": "commands",
+      "args": [
+        {
+          "name": "number",
+          "value": 24
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "jump"
+        ]
+      }
+    },
+    {
+      "uuid": "9949e2ac-6c9c-4330-b685-2089ab28b05f",
+      "name": "reversing no actions still gives no actions",
+      "group": [],
+      "description": "reversing no actions still gives no actions",
+      "property": "commands",
+      "args": [
+        {
+          "name": "number",
+          "value": 16
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": []
+      }
+    },
+    {
+      "uuid": "23fdca98-676b-4848-970d-cfed7be39f81",
+      "name": "all possible actions",
+      "group": [],
+      "description": "all possible actions",
+      "property": "commands",
+      "args": [
+        {
+          "name": "number",
+          "value": 15
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "wink",
+          "double blink",
+          "close your eyes",
+          "jump"
+        ]
+      }
+    },
+    {
+      "uuid": "ae8fe006-d910-4d6f-be00-54b7c3799e79",
+      "name": "reverse all possible actions",
+      "group": [],
+      "description": "reverse all possible actions",
+      "property": "commands",
+      "args": [
+        {
+          "name": "number",
+          "value": 31
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "jump",
+          "close your eyes",
+          "double blink",
+          "wink"
+        ]
+      }
+    },
+    {
+      "uuid": "3d36da37-b31f-4cdb-a396-d93a2ee1c4a5",
+      "name": "do nothing for zero",
+      "group": [],
+      "description": "do nothing for zero",
+      "property": "commands",
+      "args": [
+        {
+          "name": "number",
+          "value": 0
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": []
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 11,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "array",
+      "int",
+      "string"
+    ]
+  }
+}

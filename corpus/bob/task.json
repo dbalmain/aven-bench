@@ -1,0 +1,482 @@
+{
+  "schemaVersion": 1,
+  "id": "bob",
+  "title": "Bob",
+  "blurb": "Bob is a lackadaisical teenager. In conversation, his responses are very limited.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "introduction.md",
+    "instructions.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "response",
+      "argNames": [
+        "heyBob"
+      ],
+      "arity": 1,
+      "caseCount": 26,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "heyBob"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "8a2e771d-d6f1-4e3f-b6c6-b41495556e37",
+      "name": "asking a question",
+      "group": [],
+      "description": "asking a question",
+      "property": "response",
+      "args": [
+        {
+          "name": "heyBob",
+          "value": "Does this cryogenic chamber make me look fat?"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Sure."
+      }
+    },
+    {
+      "uuid": "73a966dc-8017-47d6-bb32-cf07d1a5fcd9",
+      "name": "shouting",
+      "group": [],
+      "description": "shouting",
+      "property": "response",
+      "args": [
+        {
+          "name": "heyBob",
+          "value": "WATCH OUT!"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Whoa, chill out!"
+      }
+    },
+    {
+      "uuid": "a5193c61-4a92-4f68-93e2-f554eb385ec6",
+      "name": "forceful question",
+      "group": [],
+      "description": "forceful question",
+      "property": "response",
+      "args": [
+        {
+          "name": "heyBob",
+          "value": "WHAT'S GOING ON?"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Calm down, I know what I'm doing!"
+      }
+    },
+    {
+      "uuid": "bc39f7c6-f543-41be-9a43-fd1c2f753fc0",
+      "name": "silence",
+      "group": [],
+      "description": "silence",
+      "property": "response",
+      "args": [
+        {
+          "name": "heyBob",
+          "value": ""
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Fine. Be that way!"
+      }
+    },
+    {
+      "uuid": "e162fead-606f-437a-a166-d051915cea8e",
+      "name": "stating something",
+      "group": [],
+      "description": "stating something",
+      "property": "response",
+      "args": [
+        {
+          "name": "heyBob",
+          "value": "Tom-ay-to, tom-aaaah-to."
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Whatever."
+      }
+    },
+    {
+      "uuid": "81080c62-4e4d-4066-b30a-48d8d76920d9",
+      "name": "asking a numeric question",
+      "group": [],
+      "description": "asking a numeric question",
+      "property": "response",
+      "args": [
+        {
+          "name": "heyBob",
+          "value": "You are, what, like 15?"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Sure."
+      }
+    },
+    {
+      "uuid": "2a02716d-685b-4e2e-a804-2adaf281c01e",
+      "name": "asking gibberish",
+      "group": [],
+      "description": "asking gibberish",
+      "property": "response",
+      "args": [
+        {
+          "name": "heyBob",
+          "value": "fffbbcbeab?"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Sure."
+      }
+    },
+    {
+      "uuid": "bb0011c5-cd52-4a5b-8bfb-a87b6283b0e2",
+      "name": "question with no letters",
+      "group": [],
+      "description": "question with no letters",
+      "property": "response",
+      "args": [
+        {
+          "name": "heyBob",
+          "value": "4?"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Sure."
+      }
+    },
+    {
+      "uuid": "9bfc677d-ea3a-45f2-be44-35bc8fa3753e",
+      "name": "non-letters with question",
+      "group": [],
+      "description": "non-letters with question",
+      "property": "response",
+      "args": [
+        {
+          "name": "heyBob",
+          "value": ":) ?"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Sure."
+      }
+    },
+    {
+      "uuid": "8608c508-f7de-4b17-985b-811878b3cf45",
+      "name": "prattling on",
+      "group": [],
+      "description": "prattling on",
+      "property": "response",
+      "args": [
+        {
+          "name": "heyBob",
+          "value": "Wait! Hang on. Are you going to be OK?"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Sure."
+      }
+    },
+    {
+      "uuid": "05b304d6-f83b-46e7-81e0-4cd3ca647900",
+      "name": "ending with whitespace",
+      "group": [],
+      "description": "ending with whitespace",
+      "property": "response",
+      "args": [
+        {
+          "name": "heyBob",
+          "value": "Okay if like my  spacebar  quite a bit?   "
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Sure."
+      }
+    },
+    {
+      "uuid": "2c7278ac-f955-4eb4-bf8f-e33eb4116a15",
+      "name": "multiple line question",
+      "group": [],
+      "description": "multiple line question",
+      "property": "response",
+      "args": [
+        {
+          "name": "heyBob",
+          "value": "\nDoes this cryogenic chamber make\n me look fat?"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Sure."
+      }
+    },
+    {
+      "uuid": "d6c98afd-df35-4806-b55e-2c457c3ab748",
+      "name": "shouting gibberish",
+      "group": [],
+      "description": "shouting gibberish",
+      "property": "response",
+      "args": [
+        {
+          "name": "heyBob",
+          "value": "FCECDFCAAB"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Whoa, chill out!"
+      }
+    },
+    {
+      "uuid": "3c954328-86fb-4c71-8961-e18d6a5e2517",
+      "name": "shouting a statement containing a question mark",
+      "group": [],
+      "description": "shouting a statement containing a question mark",
+      "property": "response",
+      "args": [
+        {
+          "name": "heyBob",
+          "value": "DO LIONS EAT PEOPLE? AHHHHH."
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Whoa, chill out!"
+      }
+    },
+    {
+      "uuid": "a20e0c54-2224-4dde-8b10-bd2cdd4f61bc",
+      "name": "shouting numbers",
+      "group": [],
+      "description": "shouting numbers",
+      "property": "response",
+      "args": [
+        {
+          "name": "heyBob",
+          "value": "1, 2, 3 GO!"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Whoa, chill out!"
+      }
+    },
+    {
+      "uuid": "496143c8-1c31-4c01-8a08-88427af85c66",
+      "name": "shouting with special characters",
+      "group": [],
+      "description": "shouting with special characters",
+      "property": "response",
+      "args": [
+        {
+          "name": "heyBob",
+          "value": "ZOMG THE %^*@#$(*^ ZOMBIES ARE COMING!!11!!1!"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Whoa, chill out!"
+      }
+    },
+    {
+      "uuid": "e6793c1c-43bd-4b8d-bc11-499aea73925f",
+      "name": "shouting with no exclamation mark",
+      "group": [],
+      "description": "shouting with no exclamation mark",
+      "property": "response",
+      "args": [
+        {
+          "name": "heyBob",
+          "value": "I HATE THE DENTIST"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Whoa, chill out!"
+      }
+    },
+    {
+      "uuid": "d6c47565-372b-4b09-b1dd-c40552b8378b",
+      "name": "prolonged silence",
+      "group": [],
+      "description": "prolonged silence",
+      "property": "response",
+      "args": [
+        {
+          "name": "heyBob",
+          "value": "          "
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Fine. Be that way!"
+      }
+    },
+    {
+      "uuid": "4428f28d-4100-4d85-a902-e5a78cb0ecd3",
+      "name": "alternate silence",
+      "group": [],
+      "description": "alternate silence",
+      "property": "response",
+      "args": [
+        {
+          "name": "heyBob",
+          "value": "\t\t\t\t\t\t\t\t\t\t"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Fine. Be that way!"
+      }
+    },
+    {
+      "uuid": "72bd5ad3-9b2f-4931-a988-dce1f5771de2",
+      "name": "other whitespace",
+      "group": [],
+      "description": "other whitespace",
+      "property": "response",
+      "args": [
+        {
+          "name": "heyBob",
+          "value": "\n\r \t"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Fine. Be that way!"
+      }
+    },
+    {
+      "uuid": "c02f9179-ab16-4aa7-a8dc-940145c385f7",
+      "name": "talking forcefully",
+      "group": [],
+      "description": "talking forcefully",
+      "property": "response",
+      "args": [
+        {
+          "name": "heyBob",
+          "value": "Hi there!"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Whatever."
+      }
+    },
+    {
+      "uuid": "153c0e25-9bb5-4ec5-966e-598463658bcd",
+      "name": "using acronyms in regular speech",
+      "group": [],
+      "description": "using acronyms in regular speech",
+      "property": "response",
+      "args": [
+        {
+          "name": "heyBob",
+          "value": "It's OK if you don't want to go work for NASA."
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Whatever."
+      }
+    },
+    {
+      "uuid": "f7bc4b92-bdff-421e-a238-ae97f230ccac",
+      "name": "no letters",
+      "group": [],
+      "description": "no letters",
+      "property": "response",
+      "args": [
+        {
+          "name": "heyBob",
+          "value": "1, 2, 3"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Whatever."
+      }
+    },
+    {
+      "uuid": "aa8097cc-c548-4951-8856-14a404dd236a",
+      "name": "statement containing question mark",
+      "group": [],
+      "description": "statement containing question mark",
+      "property": "response",
+      "args": [
+        {
+          "name": "heyBob",
+          "value": "Ending with ? means a question."
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Whatever."
+      }
+    },
+    {
+      "uuid": "5371ef75-d9ea-4103-bcfa-2da973ddec1b",
+      "name": "starting with whitespace",
+      "group": [],
+      "description": "starting with whitespace",
+      "property": "response",
+      "args": [
+        {
+          "name": "heyBob",
+          "value": "         hmmmmmmm..."
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Whatever."
+      }
+    },
+    {
+      "uuid": "12983553-8601-46a8-92fa-fcaa3bc4a2a0",
+      "name": "non-question ending with whitespace",
+      "group": [],
+      "description": "non-question ending with whitespace",
+      "property": "response",
+      "args": [
+        {
+          "name": "heyBob",
+          "value": "This is a statement ending with whitespace      "
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "Whatever."
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 26,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 1,
+    "valueKinds": [
+      "string"
+    ]
+  }
+}

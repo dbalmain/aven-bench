@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 1,
+  "id": "nucleotide-count",
+  "title": "Nucleotide Count",
+  "blurb": "Given a DNA string, compute how many times each nucleotide occurs in the string.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "nucleotideCounts",
+      "argNames": [
+        "strand"
+      ],
+      "arity": 1,
+      "caseCount": 5,
+      "returnsResult": true,
+      "argOrderVariants": [
+        [
+          "strand"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "3e5c30a8-87e2-4845-a815-a49671ade970",
+      "name": "empty strand",
+      "group": [],
+      "description": "empty strand",
+      "property": "nucleotideCounts",
+      "args": [
+        {
+          "name": "strand",
+          "value": ""
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "A": 0,
+          "C": 0,
+          "G": 0,
+          "T": 0
+        }
+      }
+    },
+    {
+      "uuid": "a0ea42a6-06d9-4ac6-828c-7ccaccf98fec",
+      "name": "can count one nucleotide in single-character input",
+      "group": [],
+      "description": "can count one nucleotide in single-character input",
+      "property": "nucleotideCounts",
+      "args": [
+        {
+          "name": "strand",
+          "value": "G"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "A": 0,
+          "C": 0,
+          "G": 1,
+          "T": 0
+        }
+      }
+    },
+    {
+      "uuid": "eca0d565-ed8c-43e7-9033-6cefbf5115b5",
+      "name": "strand with repeated nucleotide",
+      "group": [],
+      "description": "strand with repeated nucleotide",
+      "property": "nucleotideCounts",
+      "args": [
+        {
+          "name": "strand",
+          "value": "GGGGGGG"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "A": 0,
+          "C": 0,
+          "G": 7,
+          "T": 0
+        }
+      }
+    },
+    {
+      "uuid": "40a45eac-c83f-4740-901a-20b22d15a39f",
+      "name": "strand with multiple nucleotides",
+      "group": [],
+      "description": "strand with multiple nucleotides",
+      "property": "nucleotideCounts",
+      "args": [
+        {
+          "name": "strand",
+          "value": "AGCTTTTCATTCTGACTGCAACGGGCAATATGTCTCTGTGTGGATTAAAAAAAGAGTGTCTGATAGCAGC"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "A": 20,
+          "C": 12,
+          "G": 17,
+          "T": 21
+        }
+      }
+    },
+    {
+      "uuid": "b4c47851-ee9e-4b0a-be70-a86e343bd851",
+      "name": "strand with invalid nucleotides",
+      "group": [],
+      "description": "strand with invalid nucleotides",
+      "property": "nucleotideCounts",
+      "args": [
+        {
+          "name": "strand",
+          "value": "AGXXACT"
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "Invalid nucleotide in strand"
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 5,
+    "errorCaseCount": 1,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "error",
+      "int",
+      "record",
+      "string"
+    ]
+  }
+}

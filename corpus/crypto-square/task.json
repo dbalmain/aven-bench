@@ -1,0 +1,175 @@
+{
+  "schemaVersion": 1,
+  "id": "crypto-square",
+  "title": "Crypto Square",
+  "blurb": "Implement the classic method for composing secret messages called a square code.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "ciphertext",
+      "argNames": [
+        "plaintext"
+      ],
+      "arity": 1,
+      "caseCount": 8,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "plaintext"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "407c3837-9aa7-4111-ab63-ec54b58e8e9f",
+      "name": "empty plaintext results in an empty ciphertext",
+      "group": [],
+      "description": "empty plaintext results in an empty ciphertext",
+      "property": "ciphertext",
+      "args": [
+        {
+          "name": "plaintext",
+          "value": ""
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": ""
+      }
+    },
+    {
+      "uuid": "aad04a25-b8bb-4304-888b-581bea8e0040",
+      "name": "normalization results in empty plaintext",
+      "group": [],
+      "description": "normalization results in empty plaintext",
+      "property": "ciphertext",
+      "args": [
+        {
+          "name": "plaintext",
+          "value": "... --- ..."
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": ""
+      }
+    },
+    {
+      "uuid": "64131d65-6fd9-4f58-bdd8-4a2370fb481d",
+      "name": "Lowercase",
+      "group": [],
+      "description": "Lowercase",
+      "property": "ciphertext",
+      "args": [
+        {
+          "name": "plaintext",
+          "value": "A"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "a"
+      }
+    },
+    {
+      "uuid": "63a4b0ed-1e3c-41ea-a999-f6f26ba447d6",
+      "name": "Remove spaces",
+      "group": [],
+      "description": "Remove spaces",
+      "property": "ciphertext",
+      "args": [
+        {
+          "name": "plaintext",
+          "value": "  b "
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "b"
+      }
+    },
+    {
+      "uuid": "1b5348a1-7893-44c1-8197-42d48d18756c",
+      "name": "Remove punctuation",
+      "group": [],
+      "description": "Remove punctuation",
+      "property": "ciphertext",
+      "args": [
+        {
+          "name": "plaintext",
+          "value": "@1,%!"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "1"
+      }
+    },
+    {
+      "uuid": "8574a1d3-4a08-4cec-a7c7-de93a164f41a",
+      "name": "9 character plaintext results in 3 chunks of 3 characters",
+      "group": [],
+      "description": "9 character plaintext results in 3 chunks of 3 characters",
+      "property": "ciphertext",
+      "args": [
+        {
+          "name": "plaintext",
+          "value": "This is fun!"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "tsf hiu isn"
+      }
+    },
+    {
+      "uuid": "a65d3fa1-9e09-43f9-bcec-7a672aec3eae",
+      "name": "8 character plaintext results in 3 chunks, the last one with a trailing space",
+      "group": [],
+      "description": "8 character plaintext results in 3 chunks, the last one with a trailing space",
+      "property": "ciphertext",
+      "args": [
+        {
+          "name": "plaintext",
+          "value": "Chill out."
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "clu hlt io "
+      }
+    },
+    {
+      "uuid": "33fd914e-fa44-445b-8f38-ff8fbc9fe6e6",
+      "name": "54 character plaintext results in 8 chunks, the last two with trailing spaces",
+      "group": [],
+      "description": "54 character plaintext results in 8 chunks, the last two with trailing spaces",
+      "property": "ciphertext",
+      "args": [
+        {
+          "name": "plaintext",
+          "value": "If man was meant to stay on the ground, god would have given us roots."
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "imtgdvs fearwer mayoogo anouuio ntnnlvt wttddes aohghn  sseoau "
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 8,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 1,
+    "valueKinds": [
+      "string"
+    ]
+  }
+}

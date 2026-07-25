@@ -1,0 +1,451 @@
+{
+  "schemaVersion": 1,
+  "id": "baffling-birthdays",
+  "title": "Baffling Birthdays",
+  "blurb": "Estimate the birthday paradox's probabilities.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "introduction.md",
+    "instructions.md"
+  ],
+  "comments": [
+    "Dates are formatted as 'YYYY-MM-DD'.",
+    "",
+    "To increase the likelihood of consistent result, the tests should run the code returning random results many times.",
+    "",
+    "The expected probability values should be compared using some tolerance to allow for small deviations."
+  ],
+  "properties": [
+    {
+      "name": "sharedBirthday",
+      "argNames": [
+        "birthdates"
+      ],
+      "arity": 1,
+      "caseCount": 9,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "birthdates"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "randomBirthdates",
+      "argNames": [],
+      "arity": 0,
+      "caseCount": 4,
+      "returnsResult": false,
+      "argOrderVariants": [
+        []
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "estimatedProbabilityOfSharedBirthday",
+      "argNames": [
+        "groupSize"
+      ],
+      "arity": 1,
+      "caseCount": 4,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "groupSize"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "716dcc2b-8fe4-4fc9-8c48-cbe70d8e6b67",
+      "name": "shared birthday > one birthdate",
+      "group": [
+        "shared birthday"
+      ],
+      "description": "one birthdate",
+      "property": "sharedBirthday",
+      "args": [
+        {
+          "name": "birthdates",
+          "value": [
+            "2000-01-01"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "uuid": "f7b3eb26-bcfc-4c1e-a2de-af07afc33f45",
+      "name": "shared birthday > two birthdates with same year, month, and day",
+      "group": [
+        "shared birthday"
+      ],
+      "description": "two birthdates with same year, month, and day",
+      "property": "sharedBirthday",
+      "args": [
+        {
+          "name": "birthdates",
+          "value": [
+            "2000-01-01",
+            "2000-01-01"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "7193409a-6e16-4bcb-b4cc-9ffe55f79b25",
+      "name": "shared birthday > two birthdates with same year and month, but different day",
+      "group": [
+        "shared birthday"
+      ],
+      "description": "two birthdates with same year and month, but different day",
+      "property": "sharedBirthday",
+      "args": [
+        {
+          "name": "birthdates",
+          "value": [
+            "2012-05-09",
+            "2012-05-17"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "uuid": "d04db648-121b-4b72-93e8-d7d2dced4495",
+      "name": "shared birthday > two birthdates with same month and day, but different year",
+      "group": [
+        "shared birthday"
+      ],
+      "description": "two birthdates with same month and day, but different year",
+      "property": "sharedBirthday",
+      "args": [
+        {
+          "name": "birthdates",
+          "value": [
+            "1999-10-23",
+            "1988-10-23"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "3c8bd0f0-14c6-4d4c-975a-4c636bfdc233",
+      "name": "shared birthday > two birthdates with same year, but different month and day",
+      "group": [
+        "shared birthday"
+      ],
+      "description": "two birthdates with same year, but different month and day",
+      "property": "sharedBirthday",
+      "args": [
+        {
+          "name": "birthdates",
+          "value": [
+            "2007-12-19",
+            "2007-04-27"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "uuid": "df5daba6-0879-4480-883c-e855c99cdaa3",
+      "name": "shared birthday > two birthdates with different year, month, and day",
+      "group": [
+        "shared birthday"
+      ],
+      "description": "two birthdates with different year, month, and day",
+      "property": "sharedBirthday",
+      "args": [
+        {
+          "name": "birthdates",
+          "value": [
+            "1997-08-04",
+            "1963-11-23"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "uuid": "0c17b220-cbb9-4bd7-872f-373044c7b406",
+      "name": "shared birthday > multiple birthdates without shared birthday",
+      "group": [
+        "shared birthday"
+      ],
+      "description": "multiple birthdates without shared birthday",
+      "property": "sharedBirthday",
+      "args": [
+        {
+          "name": "birthdates",
+          "value": [
+            "1966-07-29",
+            "1977-02-12",
+            "2001-12-25",
+            "1980-11-10"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "uuid": "966d6b0b-5c0a-4b8c-bc2d-64939ada49f8",
+      "name": "shared birthday > multiple birthdates with one shared birthday",
+      "group": [
+        "shared birthday"
+      ],
+      "description": "multiple birthdates with one shared birthday",
+      "property": "sharedBirthday",
+      "args": [
+        {
+          "name": "birthdates",
+          "value": [
+            "1966-07-29",
+            "1977-02-12",
+            "2001-07-29",
+            "1980-11-10"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "b7937d28-403b-4500-acce-4d9fe3a9620d",
+      "name": "shared birthday > multiple birthdates with more than one shared birthday",
+      "group": [
+        "shared birthday"
+      ],
+      "description": "multiple birthdates with more than one shared birthday",
+      "property": "sharedBirthday",
+      "args": [
+        {
+          "name": "birthdates",
+          "value": [
+            "1966-07-29",
+            "1977-02-12",
+            "2001-12-25",
+            "1980-07-29",
+            "2019-02-12"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "70b38cea-d234-4697-b146-7d130cd4ee12",
+      "name": "random birthdates > generate requested number of birthdates",
+      "group": [
+        "random birthdates"
+      ],
+      "description": "generate requested number of birthdates",
+      "property": "randomBirthdates",
+      "args": [],
+      "expected": {
+        "kind": "value",
+        "value": "length == groupsize"
+      },
+      "scenarios": [
+        "random"
+      ]
+    },
+    {
+      "uuid": "d9d5b7d3-5fea-4752-b9c1-3fcd176d1b03",
+      "name": "random birthdates > years are not leap years",
+      "group": [
+        "random birthdates"
+      ],
+      "description": "years are not leap years",
+      "property": "randomBirthdates",
+      "args": [],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "years": {
+            "leapYear": false
+          }
+        }
+      },
+      "scenarios": [
+        "random"
+      ]
+    },
+    {
+      "uuid": "d1074327-f68c-4c8a-b0ff-e3730d0f0521",
+      "name": "random birthdates > months are random",
+      "group": [
+        "random birthdates"
+      ],
+      "description": "months are random",
+      "property": "randomBirthdates",
+      "args": [],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "months": {
+            "random": true
+          }
+        }
+      },
+      "scenarios": [
+        "random"
+      ]
+    },
+    {
+      "uuid": "7df706b3-c3f5-471d-9563-23a4d0577940",
+      "name": "random birthdates > days are random",
+      "group": [
+        "random birthdates"
+      ],
+      "description": "days are random",
+      "property": "randomBirthdates",
+      "args": [],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "days": {
+            "random": true
+          }
+        }
+      },
+      "scenarios": [
+        "random"
+      ]
+    },
+    {
+      "uuid": "89a462a4-4265-4912-9506-fb027913f221",
+      "name": "estimated probability of at least one shared birthday > for one person",
+      "group": [
+        "estimated probability of at least one shared birthday"
+      ],
+      "description": "for one person",
+      "property": "estimatedProbabilityOfSharedBirthday",
+      "args": [
+        {
+          "name": "groupSize",
+          "value": 1
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "$n": "0.0"
+        }
+      },
+      "scenarios": [
+        "random"
+      ]
+    },
+    {
+      "uuid": "ec31c787-0ebb-4548-970c-5dcb4eadfb5f",
+      "name": "estimated probability of at least one shared birthday > among ten people",
+      "group": [
+        "estimated probability of at least one shared birthday"
+      ],
+      "description": "among ten people",
+      "property": "estimatedProbabilityOfSharedBirthday",
+      "args": [
+        {
+          "name": "groupSize",
+          "value": 10
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 11.694818
+      },
+      "scenarios": [
+        "random"
+      ]
+    },
+    {
+      "uuid": "b548afac-a451-46a3-9bb0-cb1f60c48e2f",
+      "name": "estimated probability of at least one shared birthday > among twenty-three people",
+      "group": [
+        "estimated probability of at least one shared birthday"
+      ],
+      "description": "among twenty-three people",
+      "property": "estimatedProbabilityOfSharedBirthday",
+      "args": [
+        {
+          "name": "groupSize",
+          "value": 23
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 50.729723
+      },
+      "scenarios": [
+        "random"
+      ]
+    },
+    {
+      "uuid": "e43e6b9d-d77b-4f6c-a960-0fc0129a0bc5",
+      "name": "estimated probability of at least one shared birthday > among seventy people",
+      "group": [
+        "estimated probability of at least one shared birthday"
+      ],
+      "description": "among seventy people",
+      "property": "estimatedProbabilityOfSharedBirthday",
+      "args": [
+        {
+          "name": "groupSize",
+          "value": 70
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 99.915958
+      },
+      "scenarios": [
+        "random"
+      ]
+    }
+  ],
+  "stats": {
+    "caseCount": 17,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "array",
+      "bool",
+      "float",
+      "int",
+      "record",
+      "string"
+    ]
+  }
+}

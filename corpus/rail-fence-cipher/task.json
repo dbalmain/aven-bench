@@ -1,0 +1,200 @@
+{
+  "schemaVersion": 1,
+  "id": "rail-fence-cipher",
+  "title": "Rail Fence Cipher",
+  "blurb": "Implement encoding and decoding for the rail fence cipher.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [
+    "The tests do not expect any normalization or cleaning.",
+    "That trade is tested in enough other exercises."
+  ],
+  "properties": [
+    {
+      "name": "encode",
+      "argNames": [
+        "msg",
+        "rails"
+      ],
+      "arity": 2,
+      "caseCount": 3,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "msg",
+          "rails"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "decode",
+      "argNames": [
+        "msg",
+        "rails"
+      ],
+      "arity": 2,
+      "caseCount": 3,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "msg",
+          "rails"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "46dc5c50-5538-401d-93a5-41102680d068",
+      "name": "encode > encode with two rails",
+      "group": [
+        "encode"
+      ],
+      "description": "encode with two rails",
+      "property": "encode",
+      "args": [
+        {
+          "name": "msg",
+          "value": "XOXOXOXOXOXOXOXOXO"
+        },
+        {
+          "name": "rails",
+          "value": 2
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "XXXXXXXXXOOOOOOOOO"
+      }
+    },
+    {
+      "uuid": "25691697-fbd8-4278-8c38-b84068b7bc29",
+      "name": "encode > encode with three rails",
+      "group": [
+        "encode"
+      ],
+      "description": "encode with three rails",
+      "property": "encode",
+      "args": [
+        {
+          "name": "msg",
+          "value": "WEAREDISCOVEREDFLEEATONCE"
+        },
+        {
+          "name": "rails",
+          "value": 3
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "WECRLTEERDSOEEFEAOCAIVDEN"
+      }
+    },
+    {
+      "uuid": "384f0fea-1442-4f1a-a7c4-5cbc2044002c",
+      "name": "encode > encode with ending in the middle",
+      "group": [
+        "encode"
+      ],
+      "description": "encode with ending in the middle",
+      "property": "encode",
+      "args": [
+        {
+          "name": "msg",
+          "value": "EXERCISES"
+        },
+        {
+          "name": "rails",
+          "value": 4
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "ESXIEECSR"
+      }
+    },
+    {
+      "uuid": "cd525b17-ec34-45ef-8f0e-4f27c24a7127",
+      "name": "decode > decode with three rails",
+      "group": [
+        "decode"
+      ],
+      "description": "decode with three rails",
+      "property": "decode",
+      "args": [
+        {
+          "name": "msg",
+          "value": "TEITELHDVLSNHDTISEIIEA"
+        },
+        {
+          "name": "rails",
+          "value": 3
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "THEDEVILISINTHEDETAILS"
+      }
+    },
+    {
+      "uuid": "dd7b4a98-1a52-4e5c-9499-cbb117833507",
+      "name": "decode > decode with five rails",
+      "group": [
+        "decode"
+      ],
+      "description": "decode with five rails",
+      "property": "decode",
+      "args": [
+        {
+          "name": "msg",
+          "value": "EIEXMSMESAORIWSCE"
+        },
+        {
+          "name": "rails",
+          "value": 5
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "EXERCISMISAWESOME"
+      }
+    },
+    {
+      "uuid": "93e1ecf4-fac9-45d9-9cd2-591f47d3b8d3",
+      "name": "decode > decode with six rails",
+      "group": [
+        "decode"
+      ],
+      "description": "decode with six rails",
+      "property": "decode",
+      "args": [
+        {
+          "name": "msg",
+          "value": "133714114238148966225439541018335470986172518171757571896261"
+        },
+        {
+          "name": "rails",
+          "value": 6
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "112358132134558914423337761098715972584418167651094617711286"
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 6,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "int",
+      "string"
+    ]
+  }
+}

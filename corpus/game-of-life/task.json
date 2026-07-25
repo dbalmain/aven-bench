@@ -1,0 +1,532 @@
+{
+  "schemaVersion": 1,
+  "id": "game-of-life",
+  "title": "Conway's Game of Life",
+  "blurb": "Implement Conway's Game of Life.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "introduction.md",
+    "instructions.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "tick",
+      "argNames": [
+        "matrix"
+      ],
+      "arity": 1,
+      "caseCount": 8,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "matrix"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "ae86ea7d-bd07-4357-90b3-ac7d256bd5c5",
+      "name": "empty matrix",
+      "group": [],
+      "description": "empty matrix",
+      "property": "tick",
+      "args": [
+        {
+          "name": "matrix",
+          "value": []
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": []
+      }
+    },
+    {
+      "uuid": "4ea5ccb7-7b73-4281-954a-bed1b0f139a5",
+      "name": "live cells with zero live neighbors die",
+      "group": [],
+      "description": "live cells with zero live neighbors die",
+      "property": "tick",
+      "args": [
+        {
+          "name": "matrix",
+          "value": [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ]
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ]
+      }
+    },
+    {
+      "uuid": "df245adc-14ff-4f9c-b2ae-f465ef5321b2",
+      "name": "live cells with only one live neighbor die",
+      "group": [],
+      "description": "live cells with only one live neighbor die",
+      "property": "tick",
+      "args": [
+        {
+          "name": "matrix",
+          "value": [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              1,
+              0
+            ]
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ]
+      }
+    },
+    {
+      "uuid": "2a713b56-283c-48c8-adae-1d21306c80ae",
+      "name": "live cells with two live neighbors stay alive",
+      "group": [],
+      "description": "live cells with two live neighbors stay alive",
+      "property": "tick",
+      "args": [
+        {
+          "name": "matrix",
+          "value": [
+            [
+              1,
+              0,
+              1
+            ],
+            [
+              1,
+              0,
+              1
+            ],
+            [
+              1,
+              0,
+              1
+            ]
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ]
+      }
+    },
+    {
+      "uuid": "86d5c5a5-ab7b-41a1-8907-c9b3fc5e9dae",
+      "name": "live cells with three live neighbors stay alive",
+      "group": [],
+      "description": "live cells with three live neighbors stay alive",
+      "property": "tick",
+      "args": [
+        {
+          "name": "matrix",
+          "value": [
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              1,
+              0,
+              0
+            ],
+            [
+              1,
+              1,
+              0
+            ]
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            0
+          ],
+          [
+            1,
+            1,
+            0
+          ]
+        ]
+      }
+    },
+    {
+      "uuid": "015f60ac-39d8-4c6c-8328-57f334fc9f89",
+      "name": "dead cells with three live neighbors become alive",
+      "group": [],
+      "description": "dead cells with three live neighbors become alive",
+      "property": "tick",
+      "args": [
+        {
+          "name": "matrix",
+          "value": [
+            [
+              1,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              1,
+              0,
+              0
+            ]
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ]
+      }
+    },
+    {
+      "uuid": "2ee69c00-9d41-4b8b-89da-5832e735ccf1",
+      "name": "live cells with four or more neighbors die",
+      "group": [],
+      "description": "live cells with four or more neighbors die",
+      "property": "tick",
+      "args": [
+        {
+          "name": "matrix",
+          "value": [
+            [
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1
+            ]
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            1,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            1
+          ]
+        ]
+      }
+    },
+    {
+      "uuid": "a79b42be-ed6c-4e27-9206-43da08697ef6",
+      "name": "bigger matrix",
+      "group": [],
+      "description": "bigger matrix",
+      "property": "tick",
+      "args": [
+        {
+          "name": "matrix",
+          "value": [
+            [
+              1,
+              1,
+              0,
+              1,
+              1,
+              0,
+              0,
+              0
+            ],
+            [
+              1,
+              0,
+              1,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              1,
+              1,
+              1,
+              0,
+              0,
+              1,
+              1,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              1,
+              0
+            ],
+            [
+              1,
+              0,
+              0,
+              0,
+              1,
+              1,
+              0,
+              0
+            ],
+            [
+              1,
+              1,
+              0,
+              0,
+              0,
+              1,
+              1,
+              1
+            ],
+            [
+              0,
+              0,
+              1,
+              0,
+              1,
+              0,
+              0,
+              1
+            ],
+            [
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              1
+            ]
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            1,
+            1,
+            0,
+            1,
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            1,
+            1,
+            1,
+            0,
+            1
+          ],
+          [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          [
+            1,
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+            1
+          ],
+          [
+            1,
+            1,
+            0,
+            1,
+            0,
+            0,
+            0,
+            1
+          ],
+          [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1
+          ]
+        ]
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 8,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "array",
+      "int",
+      "nested-array"
+    ]
+  }
+}

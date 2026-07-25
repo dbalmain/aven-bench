@@ -1,0 +1,378 @@
+{
+  "schemaVersion": 1,
+  "id": "saddle-points",
+  "title": "Saddle Points",
+  "blurb": "Detect saddle points in a matrix.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "introduction.md",
+    "instructions.md"
+  ],
+  "comments": [
+    "Matrix rows and columns are 1-indexed.",
+    "The test cases list saddle points ordered by row ascending, then column ascending.",
+    "You can choose a different ordering logic and adjust the expected output accordingly,",
+    "or you can choose to skip asserting the order altogether."
+  ],
+  "properties": [
+    {
+      "name": "saddlePoints",
+      "argNames": [
+        "matrix"
+      ],
+      "arity": 1,
+      "caseCount": 9,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "matrix"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "3e374e63-a2e0-4530-a39a-d53c560382bd",
+      "name": "Can identify single saddle point",
+      "group": [],
+      "description": "Can identify single saddle point",
+      "property": "saddlePoints",
+      "args": [
+        {
+          "name": "matrix",
+          "value": [
+            [
+              9,
+              8,
+              7
+            ],
+            [
+              5,
+              3,
+              2
+            ],
+            [
+              6,
+              6,
+              7
+            ]
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          {
+            "row": 2,
+            "column": 1
+          }
+        ]
+      }
+    },
+    {
+      "uuid": "6b501e2b-6c1f-491f-b1bb-7f278f760534",
+      "name": "Can identify that empty matrix has no saddle points",
+      "group": [],
+      "description": "Can identify that empty matrix has no saddle points",
+      "property": "saddlePoints",
+      "args": [
+        {
+          "name": "matrix",
+          "value": [
+            []
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": []
+      }
+    },
+    {
+      "uuid": "8c27cc64-e573-4fcb-a099-f0ae863fb02f",
+      "name": "Can identify lack of saddle points when there are none",
+      "group": [],
+      "description": "Can identify lack of saddle points when there are none",
+      "property": "saddlePoints",
+      "args": [
+        {
+          "name": "matrix",
+          "value": [
+            [
+              1,
+              2,
+              3
+            ],
+            [
+              3,
+              1,
+              2
+            ],
+            [
+              2,
+              3,
+              1
+            ]
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": []
+      }
+    },
+    {
+      "uuid": "6d1399bd-e105-40fd-a2c9-c6609507d7a3",
+      "name": "Can identify multiple saddle points in a column",
+      "group": [],
+      "description": "Can identify multiple saddle points in a column",
+      "property": "saddlePoints",
+      "args": [
+        {
+          "name": "matrix",
+          "value": [
+            [
+              4,
+              5,
+              4
+            ],
+            [
+              3,
+              5,
+              5
+            ],
+            [
+              1,
+              5,
+              4
+            ]
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          {
+            "row": 1,
+            "column": 2
+          },
+          {
+            "row": 2,
+            "column": 2
+          },
+          {
+            "row": 3,
+            "column": 2
+          }
+        ]
+      }
+    },
+    {
+      "uuid": "3e81dce9-53b3-44e6-bf26-e328885fd5d1",
+      "name": "Can identify multiple saddle points in a row",
+      "group": [],
+      "description": "Can identify multiple saddle points in a row",
+      "property": "saddlePoints",
+      "args": [
+        {
+          "name": "matrix",
+          "value": [
+            [
+              6,
+              7,
+              8
+            ],
+            [
+              5,
+              5,
+              5
+            ],
+            [
+              7,
+              5,
+              6
+            ]
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          {
+            "row": 2,
+            "column": 1
+          },
+          {
+            "row": 2,
+            "column": 2
+          },
+          {
+            "row": 2,
+            "column": 3
+          }
+        ]
+      }
+    },
+    {
+      "uuid": "88868621-b6f4-4837-bb8b-3fad8b25d46b",
+      "name": "Can identify saddle point in bottom right corner",
+      "group": [],
+      "description": "Can identify saddle point in bottom right corner",
+      "property": "saddlePoints",
+      "args": [
+        {
+          "name": "matrix",
+          "value": [
+            [
+              8,
+              7,
+              9
+            ],
+            [
+              6,
+              7,
+              6
+            ],
+            [
+              3,
+              2,
+              5
+            ]
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          {
+            "row": 3,
+            "column": 3
+          }
+        ]
+      }
+    },
+    {
+      "uuid": "5b9499ca-fcea-4195-830a-9c4584a0ee79",
+      "name": "Can identify saddle points in a non square matrix",
+      "group": [],
+      "description": "Can identify saddle points in a non square matrix",
+      "property": "saddlePoints",
+      "args": [
+        {
+          "name": "matrix",
+          "value": [
+            [
+              3,
+              1,
+              3
+            ],
+            [
+              3,
+              2,
+              4
+            ]
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          {
+            "row": 1,
+            "column": 3
+          },
+          {
+            "row": 1,
+            "column": 1
+          }
+        ]
+      }
+    },
+    {
+      "uuid": "ee99ccd2-a1f1-4283-ad39-f8c70f0cf594",
+      "name": "Can identify that saddle points in a single column matrix are those with the minimum value",
+      "group": [],
+      "description": "Can identify that saddle points in a single column matrix are those with the minimum value",
+      "property": "saddlePoints",
+      "args": [
+        {
+          "name": "matrix",
+          "value": [
+            [
+              2
+            ],
+            [
+              1
+            ],
+            [
+              4
+            ],
+            [
+              1
+            ]
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          {
+            "row": 2,
+            "column": 1
+          },
+          {
+            "row": 4,
+            "column": 1
+          }
+        ]
+      }
+    },
+    {
+      "uuid": "63abf709-a84b-407f-a1b3-456638689713",
+      "name": "Can identify that saddle points in a single row matrix are those with the maximum value",
+      "group": [],
+      "description": "Can identify that saddle points in a single row matrix are those with the maximum value",
+      "property": "saddlePoints",
+      "args": [
+        {
+          "name": "matrix",
+          "value": [
+            [
+              2,
+              5,
+              3,
+              5
+            ]
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          {
+            "row": 1,
+            "column": 2
+          },
+          {
+            "row": 1,
+            "column": 4
+          }
+        ]
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 9,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "array",
+      "array-of-record",
+      "int",
+      "nested-array",
+      "record"
+    ]
+  }
+}

@@ -1,0 +1,254 @@
+{
+  "schemaVersion": 1,
+  "id": "matrix",
+  "title": "Matrix",
+  "blurb": "Given a string representing a matrix of numbers, return the rows and columns of that matrix.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "row",
+      "argNames": [
+        "string",
+        "index"
+      ],
+      "arity": 2,
+      "caseCount": 4,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "string",
+          "index"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "column",
+      "argNames": [
+        "string",
+        "index"
+      ],
+      "arity": 2,
+      "caseCount": 4,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "string",
+          "index"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "ca733dab-9d85-4065-9ef6-a880a951dafd",
+      "name": "extract row from one number matrix",
+      "group": [],
+      "description": "extract row from one number matrix",
+      "property": "row",
+      "args": [
+        {
+          "name": "string",
+          "value": "1"
+        },
+        {
+          "name": "index",
+          "value": 1
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1
+        ]
+      }
+    },
+    {
+      "uuid": "5c93ec93-80e1-4268-9fc2-63bc7d23385c",
+      "name": "can extract row",
+      "group": [],
+      "description": "can extract row",
+      "property": "row",
+      "args": [
+        {
+          "name": "string",
+          "value": "1 2\n3 4"
+        },
+        {
+          "name": "index",
+          "value": 2
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "uuid": "2f1aad89-ad0f-4bd2-9919-99a8bff0305a",
+      "name": "extract row where numbers have different widths",
+      "group": [],
+      "description": "extract row where numbers have different widths",
+      "property": "row",
+      "args": [
+        {
+          "name": "string",
+          "value": "1 2\n10 20"
+        },
+        {
+          "name": "index",
+          "value": 2
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          10,
+          20
+        ]
+      }
+    },
+    {
+      "uuid": "68f7f6ba-57e2-4e87-82d0-ad09889b5204",
+      "name": "can extract row from non-square matrix with no corresponding column",
+      "group": [],
+      "description": "can extract row from non-square matrix with no corresponding column",
+      "property": "row",
+      "args": [
+        {
+          "name": "string",
+          "value": "1 2 3\n4 5 6\n7 8 9\n8 7 6"
+        },
+        {
+          "name": "index",
+          "value": 4
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          8,
+          7,
+          6
+        ]
+      }
+    },
+    {
+      "uuid": "e8c74391-c93b-4aed-8bfe-f3c9beb89ebb",
+      "name": "extract column from one number matrix",
+      "group": [],
+      "description": "extract column from one number matrix",
+      "property": "column",
+      "args": [
+        {
+          "name": "string",
+          "value": "1"
+        },
+        {
+          "name": "index",
+          "value": 1
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1
+        ]
+      }
+    },
+    {
+      "uuid": "7136bdbd-b3dc-48c4-a10c-8230976d3727",
+      "name": "can extract column",
+      "group": [],
+      "description": "can extract column",
+      "property": "column",
+      "args": [
+        {
+          "name": "string",
+          "value": "1 2 3\n4 5 6\n7 8 9"
+        },
+        {
+          "name": "index",
+          "value": 3
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          3,
+          6,
+          9
+        ]
+      }
+    },
+    {
+      "uuid": "ad64f8d7-bba6-4182-8adf-0c14de3d0eca",
+      "name": "can extract column from non-square matrix with no corresponding row",
+      "group": [],
+      "description": "can extract column from non-square matrix with no corresponding row",
+      "property": "column",
+      "args": [
+        {
+          "name": "string",
+          "value": "1 2 3 4\n5 6 7 8\n9 8 7 6"
+        },
+        {
+          "name": "index",
+          "value": 4
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          4,
+          8,
+          6
+        ]
+      }
+    },
+    {
+      "uuid": "9eddfa5c-8474-440e-ae0a-f018c2a0dd89",
+      "name": "extract column where numbers have different widths",
+      "group": [],
+      "description": "extract column where numbers have different widths",
+      "property": "column",
+      "args": [
+        {
+          "name": "string",
+          "value": "89 1903 3\n18 3 1\n9 4 800"
+        },
+        {
+          "name": "index",
+          "value": 2
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1903,
+          3,
+          4
+        ]
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 8,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "array",
+      "int",
+      "string"
+    ]
+  }
+}

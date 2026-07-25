@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 1,
+  "id": "collatz-conjecture",
+  "title": "Collatz Conjecture",
+  "blurb": "Calculate the number of steps to reach 1 using the Collatz conjecture.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "introduction.md",
+    "instructions.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "steps",
+      "argNames": [
+        "number"
+      ],
+      "arity": 1,
+      "caseCount": 6,
+      "returnsResult": true,
+      "argOrderVariants": [
+        [
+          "number"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "540a3d51-e7a6-47a5-92a3-4ad1838f0bfd",
+      "name": "zero steps for one",
+      "group": [],
+      "description": "zero steps for one",
+      "property": "steps",
+      "args": [
+        {
+          "name": "number",
+          "value": 1
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "3d76a0a6-ea84-444a-821a-f7857c2c1859",
+      "name": "divide if even",
+      "group": [],
+      "description": "divide if even",
+      "property": "steps",
+      "args": [
+        {
+          "name": "number",
+          "value": 16
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 4
+      }
+    },
+    {
+      "uuid": "754dea81-123c-429e-b8bc-db20b05a87b9",
+      "name": "even and odd steps",
+      "group": [],
+      "description": "even and odd steps",
+      "property": "steps",
+      "args": [
+        {
+          "name": "number",
+          "value": 12
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 9
+      }
+    },
+    {
+      "uuid": "ecfd0210-6f85-44f6-8280-f65534892ff6",
+      "name": "large number of even and odd steps",
+      "group": [],
+      "description": "large number of even and odd steps",
+      "property": "steps",
+      "args": [
+        {
+          "name": "number",
+          "value": 1000000
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 152
+      }
+    },
+    {
+      "uuid": "2187673d-77d6-4543-975e-66df6c50e2da",
+      "name": "zero is an error",
+      "group": [],
+      "description": "zero is an error",
+      "property": "steps",
+      "args": [
+        {
+          "name": "number",
+          "value": 0
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "Only positive integers are allowed"
+      }
+    },
+    {
+      "uuid": "ec11f479-56bc-47fd-a434-bcd7a31a7a2e",
+      "name": "negative value is an error",
+      "group": [],
+      "description": "negative value is an error",
+      "property": "steps",
+      "args": [
+        {
+          "name": "number",
+          "value": -15
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "Only positive integers are allowed"
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 6,
+    "errorCaseCount": 2,
+    "droppedCaseCount": 2,
+    "valueKinds": [
+      "error",
+      "int"
+    ]
+  }
+}

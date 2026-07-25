@@ -1,0 +1,234 @@
+{
+  "schemaVersion": 1,
+  "id": "space-age",
+  "title": "Space Age",
+  "blurb": "Given an age in seconds, calculate how old someone is in terms of a given planet's solar years.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "introduction.md",
+    "instructions.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "age",
+      "argNames": [
+        "planet",
+        "seconds"
+      ],
+      "arity": 2,
+      "caseCount": 9,
+      "returnsResult": true,
+      "argOrderVariants": [
+        [
+          "planet",
+          "seconds"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "84f609af-5a91-4d68-90a3-9e32d8a5cd34",
+      "name": "age on Earth",
+      "group": [],
+      "description": "age on Earth",
+      "property": "age",
+      "args": [
+        {
+          "name": "planet",
+          "value": "Earth"
+        },
+        {
+          "name": "seconds",
+          "value": 1000000000
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 31.69
+      }
+    },
+    {
+      "uuid": "ca20c4e9-6054-458c-9312-79679ffab40b",
+      "name": "age on Mercury",
+      "group": [],
+      "description": "age on Mercury",
+      "property": "age",
+      "args": [
+        {
+          "name": "planet",
+          "value": "Mercury"
+        },
+        {
+          "name": "seconds",
+          "value": 2134835688
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 280.88
+      }
+    },
+    {
+      "uuid": "502c6529-fd1b-41d3-8fab-65e03082b024",
+      "name": "age on Venus",
+      "group": [],
+      "description": "age on Venus",
+      "property": "age",
+      "args": [
+        {
+          "name": "planet",
+          "value": "Venus"
+        },
+        {
+          "name": "seconds",
+          "value": 189839836
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 9.78
+      }
+    },
+    {
+      "uuid": "9ceadf5e-a0d5-4388-9d40-2c459227ceb8",
+      "name": "age on Mars",
+      "group": [],
+      "description": "age on Mars",
+      "property": "age",
+      "args": [
+        {
+          "name": "planet",
+          "value": "Mars"
+        },
+        {
+          "name": "seconds",
+          "value": 2129871239
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 35.88
+      }
+    },
+    {
+      "uuid": "42927dc3-fe5e-4f76-a5b5-f737fc19bcde",
+      "name": "age on Jupiter",
+      "group": [],
+      "description": "age on Jupiter",
+      "property": "age",
+      "args": [
+        {
+          "name": "planet",
+          "value": "Jupiter"
+        },
+        {
+          "name": "seconds",
+          "value": 901876382
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 2.41
+      }
+    },
+    {
+      "uuid": "8469b332-7837-4ada-b27c-00ee043ebcad",
+      "name": "age on Saturn",
+      "group": [],
+      "description": "age on Saturn",
+      "property": "age",
+      "args": [
+        {
+          "name": "planet",
+          "value": "Saturn"
+        },
+        {
+          "name": "seconds",
+          "value": 2000000000
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 2.15
+      }
+    },
+    {
+      "uuid": "999354c1-76f8-4bb5-a672-f317b6436743",
+      "name": "age on Uranus",
+      "group": [],
+      "description": "age on Uranus",
+      "property": "age",
+      "args": [
+        {
+          "name": "planet",
+          "value": "Uranus"
+        },
+        {
+          "name": "seconds",
+          "value": 1210123456
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0.46
+      }
+    },
+    {
+      "uuid": "80096d30-a0d4-4449-903e-a381178355d8",
+      "name": "age on Neptune",
+      "group": [],
+      "description": "age on Neptune",
+      "property": "age",
+      "args": [
+        {
+          "name": "planet",
+          "value": "Neptune"
+        },
+        {
+          "name": "seconds",
+          "value": 1821023456
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0.35
+      }
+    },
+    {
+      "uuid": "57b96e2a-1178-40b7-b34d-f3c9c34e4bf4",
+      "name": "invalid planet causes error",
+      "group": [],
+      "description": "invalid planet causes error",
+      "property": "age",
+      "args": [
+        {
+          "name": "planet",
+          "value": "Sun"
+        },
+        {
+          "name": "seconds",
+          "value": 680804807
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "not a planet"
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 9,
+    "errorCaseCount": 1,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "error",
+      "float",
+      "int",
+      "string"
+    ]
+  }
+}

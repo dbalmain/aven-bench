@@ -1,0 +1,13 @@
+# Upstream corpus checkout — re-fetch with scripts/fetch-corpus.sh
+/vendor/
+
+# Run data: append-only JSONL + content-addressed artifacts, never committed
+/data/
+
+# bun / node — bun.lock IS committed (two devDependencies; pin them)
+node_modules/
+*.log
+
+# editors / OS
+.DS_Store
+*.swp

@@ -1,0 +1,289 @@
+{
+  "schemaVersion": 1,
+  "id": "diffie-hellman",
+  "title": "Diffie-Hellman",
+  "blurb": "Diffie-Hellman key exchange.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [
+    "Optional tests to consider:                                              ",
+    "                                                                         ",
+    "* Validation of parameters:                                              ",
+    "  - Validate that `p`, `g` are valid.                                    ",
+    "  - Validate that keys given as inputs are valid.                        ",
+    "  Resources that show what happens if parameters are not validated:      ",
+    "  https://cryptopals.com/sets/5/challenges/34                             ",
+    "  https://cryptopals.com/sets/5/challenges/35                             ",
+    "                                                                         ",
+    "* Large numbers:                                                         ",
+    "  Although the calculations fundamentally do not require large numbers,  ",
+    "  this is a reasonable real-world use for them and it may be instructive ",
+    "  to have an exercise on their use. Consult tracks with this exercise    ",
+    "  (such as the Go track) for possible inputs to use.                     "
+  ],
+  "properties": [
+    {
+      "name": "privateKeyIsInRange",
+      "argNames": [],
+      "arity": 0,
+      "caseCount": 1,
+      "returnsResult": false,
+      "argOrderVariants": [
+        []
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "privateKeyIsRandom",
+      "argNames": [],
+      "arity": 0,
+      "caseCount": 1,
+      "returnsResult": false,
+      "argOrderVariants": [
+        []
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "publicKey",
+      "argNames": [
+        "p",
+        "g",
+        "privateKey"
+      ],
+      "arity": 3,
+      "caseCount": 2,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "p",
+          "g",
+          "privateKey"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "secret",
+      "argNames": [
+        "p",
+        "theirPublicKey",
+        "myPrivateKey"
+      ],
+      "arity": 3,
+      "caseCount": 1,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "p",
+          "theirPublicKey",
+          "myPrivateKey"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "keyExchange",
+      "argNames": [
+        "p",
+        "g",
+        "alicePrivateKey",
+        "bobPrivateKey",
+        "alicePublicKey",
+        "bobPublicKey",
+        "secretA",
+        "secretB"
+      ],
+      "arity": 8,
+      "caseCount": 1,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "p",
+          "g",
+          "alicePrivateKey",
+          "bobPrivateKey",
+          "alicePublicKey",
+          "bobPublicKey",
+          "secretA",
+          "secretB"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "1b97bf38-4307-418e-bfd2-446ffc77588d",
+      "name": "private key is greater than 1 and less than p",
+      "group": [],
+      "description": "private key is greater than 1 and less than p",
+      "property": "privateKeyIsInRange",
+      "args": [],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "greaterThan": 1,
+          "lessThan": "p"
+        }
+      },
+      "scenarios": [
+        "random"
+      ]
+    },
+    {
+      "uuid": "68b2a5f7-7755-44c3-97b2-d28d21f014a9",
+      "name": "private key is random",
+      "group": [],
+      "description": "private key is random",
+      "property": "privateKeyIsRandom",
+      "args": [],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "random": true
+        }
+      },
+      "scenarios": [
+        "random"
+      ]
+    },
+    {
+      "uuid": "b4161d8e-53a1-4241-ae8f-48cc86527f22",
+      "name": "can calculate public key using private key",
+      "group": [],
+      "description": "can calculate public key using private key",
+      "property": "publicKey",
+      "args": [
+        {
+          "name": "p",
+          "value": 23
+        },
+        {
+          "name": "g",
+          "value": 5
+        },
+        {
+          "name": "privateKey",
+          "value": 6
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 8
+      }
+    },
+    {
+      "uuid": "0d25f8d7-4897-4338-a033-2d3d7a9af688",
+      "name": "can calculate public key when given a different private key",
+      "group": [],
+      "description": "can calculate public key when given a different private key",
+      "property": "publicKey",
+      "args": [
+        {
+          "name": "p",
+          "value": 23
+        },
+        {
+          "name": "g",
+          "value": 5
+        },
+        {
+          "name": "privateKey",
+          "value": 15
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 19
+      },
+      "scenarios": [
+        "immutable"
+      ]
+    },
+    {
+      "uuid": "cd02ad45-3f52-4510-99cc-5161dad948a8",
+      "name": "can calculate secret using other party's public key",
+      "group": [],
+      "description": "can calculate secret using other party's public key",
+      "property": "secret",
+      "args": [
+        {
+          "name": "p",
+          "value": 23
+        },
+        {
+          "name": "theirPublicKey",
+          "value": 19
+        },
+        {
+          "name": "myPrivateKey",
+          "value": 6
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 2
+      }
+    },
+    {
+      "uuid": "17f13c61-a111-4075-9a1f-c2d4636dfa60",
+      "name": "key exchange",
+      "group": [],
+      "description": "key exchange",
+      "property": "keyExchange",
+      "args": [
+        {
+          "name": "p",
+          "value": 23
+        },
+        {
+          "name": "g",
+          "value": 5
+        },
+        {
+          "name": "alicePrivateKey",
+          "value": "privateKey(p)"
+        },
+        {
+          "name": "bobPrivateKey",
+          "value": "privateKey(p)"
+        },
+        {
+          "name": "alicePublicKey",
+          "value": "publicKey(p, g, alicePrivateKey)"
+        },
+        {
+          "name": "bobPublicKey",
+          "value": "publicKey(p, g, bobPrivateKey)"
+        },
+        {
+          "name": "secretA",
+          "value": "secret(p, bobPublicKey, alicePrivateKey)"
+        },
+        {
+          "name": "secretB",
+          "value": "secret(p, alicePublicKey, bobPrivateKey)"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "secretA == secretB"
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 6,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "bool",
+      "int",
+      "record",
+      "string"
+    ]
+  }
+}

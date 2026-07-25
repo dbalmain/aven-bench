@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "id": "hello-world",
+  "title": "Hello World",
+  "blurb": "Exercism's classic introductory exercise. Just say \"Hello, World!\".",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "hello",
+      "argNames": [],
+      "arity": 0,
+      "caseCount": 1,
+      "returnsResult": false,
+      "argOrderVariants": [
+        []
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "af9ffe10-dc13-42d8-a742-e7bdafac449d",
+      "name": "Say Hi!",
+      "group": [],
+      "description": "Say Hi!",
+      "property": "hello",
+      "args": [],
+      "expected": {
+        "kind": "value",
+        "value": "Hello, World!"
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 1,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "string"
+    ]
+  }
+}

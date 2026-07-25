@@ -1,0 +1,837 @@
+{
+  "schemaVersion": 1,
+  "id": "yacht",
+  "title": "Yacht",
+  "blurb": "Score a single throw of dice in the game Yacht.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "introduction.md",
+    "instructions.md"
+  ],
+  "comments": [
+    "The dice are represented always as a list of exactly five integers",
+    "with values between 1 and 6 inclusive. The category is an string.",
+    "the categories are 'ones' to 'sixes',",
+    "Then 'full house',",
+    "     'four of a kind'",
+    "     'little straight' 1-5",
+    "     'big straight' 2-6",
+    "     'choice', sometimes called Chance",
+    "     'yacht', or five of a kind"
+  ],
+  "properties": [
+    {
+      "name": "score",
+      "argNames": [
+        "dice",
+        "category"
+      ],
+      "arity": 2,
+      "caseCount": 29,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "dice",
+          "category"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "3060e4a5-4063-4deb-a380-a630b43a84b6",
+      "name": "Yacht",
+      "group": [],
+      "description": "Yacht",
+      "property": "score",
+      "args": [
+        {
+          "name": "dice",
+          "value": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ]
+        },
+        {
+          "name": "category",
+          "value": "yacht"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 50
+      }
+    },
+    {
+      "uuid": "15026df2-f567-482f-b4d5-5297d57769d9",
+      "name": "Not Yacht",
+      "group": [],
+      "description": "Not Yacht",
+      "property": "score",
+      "args": [
+        {
+          "name": "dice",
+          "value": [
+            1,
+            3,
+            3,
+            2,
+            5
+          ]
+        },
+        {
+          "name": "category",
+          "value": "yacht"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "36b6af0c-ca06-4666-97de-5d31213957a4",
+      "name": "Ones",
+      "group": [],
+      "description": "Ones",
+      "property": "score",
+      "args": [
+        {
+          "name": "dice",
+          "value": [
+            1,
+            1,
+            1,
+            3,
+            5
+          ]
+        },
+        {
+          "name": "category",
+          "value": "ones"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 3
+      }
+    },
+    {
+      "uuid": "023a07c8-6c6e-44d0-bc17-efc5e1b8205a",
+      "name": "Ones, out of order",
+      "group": [],
+      "description": "Ones, out of order",
+      "property": "score",
+      "args": [
+        {
+          "name": "dice",
+          "value": [
+            3,
+            1,
+            1,
+            5,
+            1
+          ]
+        },
+        {
+          "name": "category",
+          "value": "ones"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 3
+      }
+    },
+    {
+      "uuid": "7189afac-cccd-4a74-8182-1cb1f374e496",
+      "name": "No ones",
+      "group": [],
+      "description": "No ones",
+      "property": "score",
+      "args": [
+        {
+          "name": "dice",
+          "value": [
+            4,
+            3,
+            6,
+            5,
+            5
+          ]
+        },
+        {
+          "name": "category",
+          "value": "ones"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "793c4292-dd14-49c4-9707-6d9c56cee725",
+      "name": "Twos",
+      "group": [],
+      "description": "Twos",
+      "property": "score",
+      "args": [
+        {
+          "name": "dice",
+          "value": [
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        },
+        {
+          "name": "category",
+          "value": "twos"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 2
+      }
+    },
+    {
+      "uuid": "dc41bceb-d0c5-4634-a734-c01b4233a0c6",
+      "name": "Fours",
+      "group": [],
+      "description": "Fours",
+      "property": "score",
+      "args": [
+        {
+          "name": "dice",
+          "value": [
+            1,
+            4,
+            1,
+            4,
+            1
+          ]
+        },
+        {
+          "name": "category",
+          "value": "fours"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 8
+      }
+    },
+    {
+      "uuid": "f6125417-5c8a-4bca-bc5b-b4b76d0d28c8",
+      "name": "Yacht counted as threes",
+      "group": [],
+      "description": "Yacht counted as threes",
+      "property": "score",
+      "args": [
+        {
+          "name": "dice",
+          "value": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        {
+          "name": "category",
+          "value": "threes"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 15
+      }
+    },
+    {
+      "uuid": "464fc809-96ed-46e4-acb8-d44e302e9726",
+      "name": "Yacht of 3s counted as fives",
+      "group": [],
+      "description": "Yacht of 3s counted as fives",
+      "property": "score",
+      "args": [
+        {
+          "name": "dice",
+          "value": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        {
+          "name": "category",
+          "value": "fives"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "d054227f-3a71-4565-a684-5c7e621ec1e9",
+      "name": "Fives",
+      "group": [],
+      "description": "Fives",
+      "property": "score",
+      "args": [
+        {
+          "name": "dice",
+          "value": [
+            1,
+            5,
+            3,
+            5,
+            3
+          ]
+        },
+        {
+          "name": "category",
+          "value": "fives"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 10
+      }
+    },
+    {
+      "uuid": "e8a036e0-9d21-443a-8b5f-e15a9e19a761",
+      "name": "Sixes",
+      "group": [],
+      "description": "Sixes",
+      "property": "score",
+      "args": [
+        {
+          "name": "dice",
+          "value": [
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        },
+        {
+          "name": "category",
+          "value": "sixes"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 6
+      }
+    },
+    {
+      "uuid": "51cb26db-6b24-49af-a9ff-12f53b252eea",
+      "name": "Full house two small, three big",
+      "group": [],
+      "description": "Full house two small, three big",
+      "property": "score",
+      "args": [
+        {
+          "name": "dice",
+          "value": [
+            2,
+            2,
+            4,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "category",
+          "value": "full house"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 16
+      }
+    },
+    {
+      "uuid": "1822ca9d-f235-4447-b430-2e8cfc448f0c",
+      "name": "Full house three small, two big",
+      "group": [],
+      "description": "Full house three small, two big",
+      "property": "score",
+      "args": [
+        {
+          "name": "dice",
+          "value": [
+            5,
+            3,
+            3,
+            5,
+            3
+          ]
+        },
+        {
+          "name": "category",
+          "value": "full house"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 19
+      }
+    },
+    {
+      "uuid": "b208a3fc-db2e-4363-a936-9e9a71e69c07",
+      "name": "Two pair is not a full house",
+      "group": [],
+      "description": "Two pair is not a full house",
+      "property": "score",
+      "args": [
+        {
+          "name": "dice",
+          "value": [
+            2,
+            2,
+            4,
+            4,
+            5
+          ]
+        },
+        {
+          "name": "category",
+          "value": "full house"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "b90209c3-5956-445b-8a0b-0ac8b906b1c2",
+      "name": "Four of a kind is not a full house",
+      "group": [],
+      "description": "Four of a kind is not a full house",
+      "property": "score",
+      "args": [
+        {
+          "name": "dice",
+          "value": [
+            1,
+            4,
+            4,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "category",
+          "value": "full house"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "32a3f4ee-9142-4edf-ba70-6c0f96eb4b0c",
+      "name": "Yacht is not a full house",
+      "group": [],
+      "description": "Yacht is not a full house",
+      "property": "score",
+      "args": [
+        {
+          "name": "dice",
+          "value": [
+            2,
+            2,
+            2,
+            2,
+            2
+          ]
+        },
+        {
+          "name": "category",
+          "value": "full house"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "b286084d-0568-4460-844a-ba79d71d79c6",
+      "name": "Four of a Kind",
+      "group": [],
+      "description": "Four of a Kind",
+      "property": "score",
+      "args": [
+        {
+          "name": "dice",
+          "value": [
+            6,
+            6,
+            4,
+            6,
+            6
+          ]
+        },
+        {
+          "name": "category",
+          "value": "four of a kind"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 24
+      }
+    },
+    {
+      "uuid": "f25c0c90-5397-4732-9779-b1e9b5f612ca",
+      "name": "Yacht can be scored as Four of a Kind",
+      "group": [],
+      "description": "Yacht can be scored as Four of a Kind",
+      "property": "score",
+      "args": [
+        {
+          "name": "dice",
+          "value": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        {
+          "name": "category",
+          "value": "four of a kind"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 12
+      }
+    },
+    {
+      "uuid": "9f8ef4f0-72bb-401a-a871-cbad39c9cb08",
+      "name": "Full house is not Four of a Kind",
+      "group": [],
+      "description": "Full house is not Four of a Kind",
+      "property": "score",
+      "args": [
+        {
+          "name": "dice",
+          "value": [
+            3,
+            3,
+            3,
+            5,
+            5
+          ]
+        },
+        {
+          "name": "category",
+          "value": "four of a kind"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "b4743c82-1eb8-4a65-98f7-33ad126905cd",
+      "name": "Little Straight",
+      "group": [],
+      "description": "Little Straight",
+      "property": "score",
+      "args": [
+        {
+          "name": "dice",
+          "value": [
+            3,
+            5,
+            4,
+            1,
+            2
+          ]
+        },
+        {
+          "name": "category",
+          "value": "little straight"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 30
+      }
+    },
+    {
+      "uuid": "7ac08422-41bf-459c-8187-a38a12d080bc",
+      "name": "Little Straight as Big Straight",
+      "group": [],
+      "description": "Little Straight as Big Straight",
+      "property": "score",
+      "args": [
+        {
+          "name": "dice",
+          "value": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "name": "category",
+          "value": "big straight"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "97bde8f7-9058-43ea-9de7-0bc3ed6d3002",
+      "name": "Four in order but not a little straight",
+      "group": [],
+      "description": "Four in order but not a little straight",
+      "property": "score",
+      "args": [
+        {
+          "name": "dice",
+          "value": [
+            1,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "name": "category",
+          "value": "little straight"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "cef35ff9-9c5e-4fd2-ae95-6e4af5e95a99",
+      "name": "No pairs but not a little straight",
+      "group": [],
+      "description": "No pairs but not a little straight",
+      "property": "score",
+      "args": [
+        {
+          "name": "dice",
+          "value": [
+            1,
+            2,
+            3,
+            4,
+            6
+          ]
+        },
+        {
+          "name": "category",
+          "value": "little straight"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "fd785ad2-c060-4e45-81c6-ea2bbb781b9d",
+      "name": "Minimum is 1, maximum is 5, but not a little straight",
+      "group": [],
+      "description": "Minimum is 1, maximum is 5, but not a little straight",
+      "property": "score",
+      "args": [
+        {
+          "name": "dice",
+          "value": [
+            1,
+            1,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "name": "category",
+          "value": "little straight"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "35bd74a6-5cf6-431a-97a3-4f713663f467",
+      "name": "Big Straight",
+      "group": [],
+      "description": "Big Straight",
+      "property": "score",
+      "args": [
+        {
+          "name": "dice",
+          "value": [
+            4,
+            6,
+            2,
+            5,
+            3
+          ]
+        },
+        {
+          "name": "category",
+          "value": "big straight"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 30
+      }
+    },
+    {
+      "uuid": "87c67e1e-3e87-4f3a-a9b1-62927822b250",
+      "name": "Big Straight as little straight",
+      "group": [],
+      "description": "Big Straight as little straight",
+      "property": "score",
+      "args": [
+        {
+          "name": "dice",
+          "value": [
+            6,
+            5,
+            4,
+            3,
+            2
+          ]
+        },
+        {
+          "name": "category",
+          "value": "little straight"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "c1fa0a3a-40ba-4153-a42d-32bc34d2521e",
+      "name": "No pairs but not a big straight",
+      "group": [],
+      "description": "No pairs but not a big straight",
+      "property": "score",
+      "args": [
+        {
+          "name": "dice",
+          "value": [
+            6,
+            5,
+            4,
+            3,
+            1
+          ]
+        },
+        {
+          "name": "category",
+          "value": "big straight"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "207e7300-5d10-43e5-afdd-213e3ac8827d",
+      "name": "Choice",
+      "group": [],
+      "description": "Choice",
+      "property": "score",
+      "args": [
+        {
+          "name": "dice",
+          "value": [
+            3,
+            3,
+            5,
+            6,
+            6
+          ]
+        },
+        {
+          "name": "category",
+          "value": "choice"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 23
+      }
+    },
+    {
+      "uuid": "b524c0cf-32d2-4b40-8fb3-be3500f3f135",
+      "name": "Yacht as choice",
+      "group": [],
+      "description": "Yacht as choice",
+      "property": "score",
+      "args": [
+        {
+          "name": "dice",
+          "value": [
+            2,
+            2,
+            2,
+            2,
+            2
+          ]
+        },
+        {
+          "name": "category",
+          "value": "choice"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 10
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 29,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "array",
+      "int",
+      "string"
+    ]
+  }
+}

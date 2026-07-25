@@ -1,0 +1,368 @@
+{
+  "schemaVersion": 1,
+  "id": "simple-cipher",
+  "title": "Simple Cipher",
+  "blurb": "Implement the Vigenère cipher, a simple substitution cipher.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [
+    "Some of the strings used in this file are symbolic and do not represent their literal value. They are:",
+    "cipher.key - Represents the Cipher key",
+    "cipher.encode - Represents the output of the Cipher encode method",
+    "new - Represents the Cipher initialization",
+    "string.substring(start, length) - Represents a substring of 'string' that begins at index 'start' and is 'length' characters long"
+  ],
+  "properties": [
+    {
+      "name": "encode",
+      "argNames": [
+        "key",
+        "plaintext"
+      ],
+      "arity": 2,
+      "caseCount": 5,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "key",
+          "plaintext"
+        ],
+        [
+          "plaintext"
+        ]
+      ],
+      "ambiguousArgOrder": true
+    },
+    {
+      "name": "decode",
+      "argNames": [
+        "key",
+        "ciphertext"
+      ],
+      "arity": 2,
+      "caseCount": 6,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "key",
+          "ciphertext"
+        ],
+        [
+          "ciphertext"
+        ],
+        [
+          "plaintext",
+          "ciphertext"
+        ],
+        [
+          "key",
+          "plaintext",
+          "ciphertext"
+        ]
+      ],
+      "ambiguousArgOrder": true
+    },
+    {
+      "name": "key",
+      "argNames": [],
+      "arity": 0,
+      "caseCount": 1,
+      "returnsResult": false,
+      "argOrderVariants": [
+        []
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "b8bdfbe1-bea3-41bb-a999-b41403f2b15d",
+      "name": "Random key cipher > Can encode",
+      "group": [
+        "Random key cipher"
+      ],
+      "description": "Can encode",
+      "property": "encode",
+      "args": [
+        {
+          "name": "plaintext",
+          "value": "aaaaaaaaaa"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "cipher.key.substring(0, plaintext.length)"
+      },
+      "scenarios": [
+        "random"
+      ]
+    },
+    {
+      "uuid": "3dff7f36-75db-46b4-ab70-644b3f38b81c",
+      "name": "Random key cipher > Can decode",
+      "group": [
+        "Random key cipher"
+      ],
+      "description": "Can decode",
+      "property": "decode",
+      "args": [
+        {
+          "name": "ciphertext",
+          "value": "cipher.key.substring(0, expected.length)"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "aaaaaaaaaa"
+      },
+      "scenarios": [
+        "random"
+      ]
+    },
+    {
+      "uuid": "8143c684-6df6-46ba-bd1f-dea8fcb5d265",
+      "name": "Random key cipher > Is reversible. I.e., if you apply decode in a encoded result, you must see the same plaintext encode parameter as a result of the decode method",
+      "group": [
+        "Random key cipher"
+      ],
+      "description": "Is reversible. I.e., if you apply decode in a encoded result, you must see the same plaintext encode parameter as a result of the decode method",
+      "property": "decode",
+      "args": [
+        {
+          "name": "plaintext",
+          "value": "abcdefghij"
+        },
+        {
+          "name": "ciphertext",
+          "value": "cipher.encode"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "abcdefghij"
+      },
+      "scenarios": [
+        "random"
+      ]
+    },
+    {
+      "uuid": "defc0050-e87d-4840-85e4-51a1ab9dd6aa",
+      "name": "Random key cipher > Key is made only of lowercase letters",
+      "group": [
+        "Random key cipher"
+      ],
+      "description": "Key is made only of lowercase letters",
+      "property": "key",
+      "args": [],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "match": "^[a-z]+$"
+        }
+      },
+      "scenarios": [
+        "random"
+      ]
+    },
+    {
+      "uuid": "565e5158-5b3b-41dd-b99d-33b9f413c39f",
+      "name": "Substitution cipher > Can encode",
+      "group": [
+        "Substitution cipher"
+      ],
+      "description": "Can encode",
+      "property": "encode",
+      "args": [
+        {
+          "name": "key",
+          "value": "abcdefghij"
+        },
+        {
+          "name": "plaintext",
+          "value": "aaaaaaaaaa"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "abcdefghij"
+      }
+    },
+    {
+      "uuid": "d44e4f6a-b8af-4e90-9d08-fd407e31e67b",
+      "name": "Substitution cipher > Can decode",
+      "group": [
+        "Substitution cipher"
+      ],
+      "description": "Can decode",
+      "property": "decode",
+      "args": [
+        {
+          "name": "key",
+          "value": "abcdefghij"
+        },
+        {
+          "name": "ciphertext",
+          "value": "abcdefghij"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "aaaaaaaaaa"
+      }
+    },
+    {
+      "uuid": "70a16473-7339-43df-902d-93408c69e9d1",
+      "name": "Substitution cipher > Is reversible. I.e., if you apply decode in a encoded result, you must see the same plaintext encode parameter as a result of the decode method",
+      "group": [
+        "Substitution cipher"
+      ],
+      "description": "Is reversible. I.e., if you apply decode in a encoded result, you must see the same plaintext encode parameter as a result of the decode method",
+      "property": "decode",
+      "args": [
+        {
+          "name": "key",
+          "value": "abcdefghij"
+        },
+        {
+          "name": "plaintext",
+          "value": "abcdefghij"
+        },
+        {
+          "name": "ciphertext",
+          "value": "cipher.encode"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "abcdefghij"
+      }
+    },
+    {
+      "uuid": "69a1458b-92a6-433a-a02d-7beac3ea91f9",
+      "name": "Substitution cipher > Can double shift encode",
+      "group": [
+        "Substitution cipher"
+      ],
+      "description": "Can double shift encode",
+      "property": "encode",
+      "args": [
+        {
+          "name": "key",
+          "value": "iamapandabear"
+        },
+        {
+          "name": "plaintext",
+          "value": "iamapandabear"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "qayaeaagaciai"
+      }
+    },
+    {
+      "uuid": "21d207c1-98de-40aa-994f-86197ae230fb",
+      "name": "Substitution cipher > Can wrap on encode",
+      "group": [
+        "Substitution cipher"
+      ],
+      "description": "Can wrap on encode",
+      "property": "encode",
+      "args": [
+        {
+          "name": "key",
+          "value": "abcdefghij"
+        },
+        {
+          "name": "plaintext",
+          "value": "zzzzzzzzzz"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "zabcdefghi"
+      }
+    },
+    {
+      "uuid": "a3d7a4d7-24a9-4de6-bdc4-a6614ced0cb3",
+      "name": "Substitution cipher > Can wrap on decode",
+      "group": [
+        "Substitution cipher"
+      ],
+      "description": "Can wrap on decode",
+      "property": "decode",
+      "args": [
+        {
+          "name": "key",
+          "value": "abcdefghij"
+        },
+        {
+          "name": "ciphertext",
+          "value": "zabcdefghi"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "zzzzzzzzzz"
+      }
+    },
+    {
+      "uuid": "e31c9b8c-8eb6-45c9-a4b5-8344a36b9641",
+      "name": "Substitution cipher > Can encode messages longer than the key",
+      "group": [
+        "Substitution cipher"
+      ],
+      "description": "Can encode messages longer than the key",
+      "property": "encode",
+      "args": [
+        {
+          "name": "key",
+          "value": "abc"
+        },
+        {
+          "name": "plaintext",
+          "value": "iamapandabear"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "iboaqcnecbfcr"
+      }
+    },
+    {
+      "uuid": "93cfaae0-17da-4627-9a04-d6d1e1be52e3",
+      "name": "Substitution cipher > Can decode messages longer than the key",
+      "group": [
+        "Substitution cipher"
+      ],
+      "description": "Can decode messages longer than the key",
+      "property": "decode",
+      "args": [
+        {
+          "name": "key",
+          "value": "abc"
+        },
+        {
+          "name": "ciphertext",
+          "value": "iboaqcnecbfcr"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "iamapandabear"
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 12,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "record",
+      "string"
+    ]
+  }
+}

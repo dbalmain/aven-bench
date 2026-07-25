@@ -1,0 +1,708 @@
+{
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptLayouts": {
+    "description.md": 81,
+    "introduction.md+instructions.md": 61
+  },
+  "findingCounts": {
+    "arg-name-set-differs": 4,
+    "arity-varies": 4,
+    "dropped-superseded-cases": 23,
+    "positional-order-unverifiable": 40
+  },
+  "findings": [
+    {
+      "task": "accumulate",
+      "kind": "dropped-superseded-cases",
+      "uuids": [
+        "bee8e9b6-b16f-4cd2-be3b-ccf7457e50bb"
+      ]
+    },
+    {
+      "task": "anagram",
+      "kind": "dropped-superseded-cases",
+      "uuids": [
+        "b3cca662-f50a-489e-ae10-ab8290a09bdc",
+        "7cc195ad-e3c7-44ee-9fd2-d3c344806a2c",
+        "85757361-4535-45fd-ac0e-3810d40debc1",
+        "a0705568-628c-4b55-9798-82e4acde51ca"
+      ]
+    },
+    {
+      "task": "beer-song",
+      "kind": "positional-order-unverifiable",
+      "property": "recite",
+      "argNames": [
+        "startBottles",
+        "takeDown"
+      ]
+    },
+    {
+      "task": "bob",
+      "kind": "dropped-superseded-cases",
+      "uuids": [
+        "66953780-165b-4e7e-8ce3-4bcb80b6385a"
+      ]
+    },
+    {
+      "task": "bottle-song",
+      "kind": "positional-order-unverifiable",
+      "property": "recite",
+      "argNames": [
+        "startBottles",
+        "takeDown"
+      ]
+    },
+    {
+      "task": "camicia",
+      "kind": "positional-order-unverifiable",
+      "property": "simulateGame",
+      "argNames": [
+        "playerA",
+        "playerB"
+      ]
+    },
+    {
+      "task": "clock",
+      "kind": "positional-order-unverifiable",
+      "property": "create",
+      "argNames": [
+        "hour",
+        "minute"
+      ]
+    },
+    {
+      "task": "clock",
+      "kind": "positional-order-unverifiable",
+      "property": "add",
+      "argNames": [
+        "hour",
+        "minute",
+        "value"
+      ]
+    },
+    {
+      "task": "clock",
+      "kind": "positional-order-unverifiable",
+      "property": "subtract",
+      "argNames": [
+        "hour",
+        "minute",
+        "value"
+      ]
+    },
+    {
+      "task": "clock",
+      "kind": "positional-order-unverifiable",
+      "property": "equal",
+      "argNames": [
+        "clock1",
+        "clock2"
+      ]
+    },
+    {
+      "task": "collatz-conjecture",
+      "kind": "dropped-superseded-cases",
+      "uuids": [
+        "7d4750e6-def9-4b86-aec7-9f7eb44f95a3",
+        "c6c795bf-a288-45e9-86a1-841359ad426d"
+      ]
+    },
+    {
+      "task": "complex-numbers",
+      "kind": "positional-order-unverifiable",
+      "property": "mul",
+      "argNames": [
+        "z1",
+        "z2"
+      ]
+    },
+    {
+      "task": "complex-numbers",
+      "kind": "positional-order-unverifiable",
+      "property": "add",
+      "argNames": [
+        "z1",
+        "z2"
+      ]
+    },
+    {
+      "task": "complex-numbers",
+      "kind": "positional-order-unverifiable",
+      "property": "sub",
+      "argNames": [
+        "z1",
+        "z2"
+      ]
+    },
+    {
+      "task": "complex-numbers",
+      "kind": "positional-order-unverifiable",
+      "property": "div",
+      "argNames": [
+        "z1",
+        "z2"
+      ]
+    },
+    {
+      "task": "crypto-square",
+      "kind": "dropped-superseded-cases",
+      "uuids": [
+        "fbcb0c6d-4c39-4a31-83f6-c473baa6af80"
+      ]
+    },
+    {
+      "task": "custom-set",
+      "kind": "positional-order-unverifiable",
+      "property": "subset",
+      "argNames": [
+        "set1",
+        "set2"
+      ]
+    },
+    {
+      "task": "custom-set",
+      "kind": "positional-order-unverifiable",
+      "property": "disjoint",
+      "argNames": [
+        "set1",
+        "set2"
+      ]
+    },
+    {
+      "task": "custom-set",
+      "kind": "positional-order-unverifiable",
+      "property": "equal",
+      "argNames": [
+        "set1",
+        "set2"
+      ]
+    },
+    {
+      "task": "custom-set",
+      "kind": "positional-order-unverifiable",
+      "property": "intersection",
+      "argNames": [
+        "set1",
+        "set2"
+      ]
+    },
+    {
+      "task": "custom-set",
+      "kind": "positional-order-unverifiable",
+      "property": "difference",
+      "argNames": [
+        "set1",
+        "set2"
+      ]
+    },
+    {
+      "task": "custom-set",
+      "kind": "positional-order-unverifiable",
+      "property": "union",
+      "argNames": [
+        "set1",
+        "set2"
+      ]
+    },
+    {
+      "task": "darts",
+      "kind": "positional-order-unverifiable",
+      "property": "score",
+      "argNames": [
+        "x",
+        "y"
+      ]
+    },
+    {
+      "task": "diffie-hellman",
+      "kind": "positional-order-unverifiable",
+      "property": "publicKey",
+      "argNames": [
+        "p",
+        "g",
+        "privateKey"
+      ]
+    },
+    {
+      "task": "diffie-hellman",
+      "kind": "positional-order-unverifiable",
+      "property": "secret",
+      "argNames": [
+        "p",
+        "theirPublicKey",
+        "myPrivateKey"
+      ]
+    },
+    {
+      "task": "dnd-character",
+      "kind": "dropped-superseded-cases",
+      "uuids": [
+        "2ca77b9b-c099-46c3-a02c-0d0f68ffa0fe"
+      ]
+    },
+    {
+      "task": "flatten-array",
+      "kind": "dropped-superseded-cases",
+      "uuids": [
+        "c6cf26de-8ccd-4410-84bd-b9efd88fd2bc",
+        "382c5242-587e-4577-b8ce-a5fb51e385a1",
+        "ef1d4790-1b1e-4939-a179-51ace0829dbd",
+        "85721643-705a-4150-93ab-7ae398e2942d"
+      ]
+    },
+    {
+      "task": "food-chain",
+      "kind": "positional-order-unverifiable",
+      "property": "recite",
+      "argNames": [
+        "startVerse",
+        "endVerse"
+      ]
+    },
+    {
+      "task": "forth",
+      "kind": "positional-order-unverifiable",
+      "property": "evaluateBoth",
+      "argNames": [
+        "instructionsFirst",
+        "instructionsSecond"
+      ]
+    },
+    {
+      "task": "grade-school",
+      "kind": "dropped-superseded-cases",
+      "uuids": [
+        "c125dab7-2a53-492f-a99a-56ad511940d8",
+        "a0c7b9b8-0e89-47f8-8b4a-c50f885e79d1",
+        "6a03b61e-1211-4783-a3cc-fc7f773fba3f"
+      ]
+    },
+    {
+      "task": "hamming",
+      "kind": "positional-order-unverifiable",
+      "property": "distance",
+      "argNames": [
+        "strand1",
+        "strand2"
+      ]
+    },
+    {
+      "task": "hamming",
+      "kind": "dropped-superseded-cases",
+      "uuids": [
+        "919f8ef0-b767-4d1b-8516-6379d07fcb28",
+        "8a2d4ed0-ead5-4fdd-924d-27c4cf56e60e",
+        "5dce058b-28d4-4ca7-aa64-adfe4e17784c",
+        "db92e77e-7c72-499d-8fe6-9354d2bfd504",
+        "38826d4b-16fb-4639-ac3e-ba027dec8b5f",
+        "920cd6e3-18f4-4143-b6b8-74270bb8f8a3"
+      ]
+    },
+    {
+      "task": "house",
+      "kind": "positional-order-unverifiable",
+      "property": "recite",
+      "argNames": [
+        "startVerse",
+        "endVerse"
+      ]
+    },
+    {
+      "task": "kindergarten-garden",
+      "kind": "positional-order-unverifiable",
+      "property": "plants",
+      "argNames": [
+        "diagram",
+        "student"
+      ]
+    },
+    {
+      "task": "knapsack",
+      "kind": "dropped-superseded-cases",
+      "uuids": [
+        "a4d7d2f0-ad8a-460c-86f3-88ba709d41a7"
+      ]
+    },
+    {
+      "task": "largest-series-product",
+      "kind": "dropped-superseded-cases",
+      "uuids": [
+        "5d81aaf7-4f67-4125-bf33-11493cc7eab7",
+        "6d96c691-4374-4404-80ee-2ea8f3613dd4",
+        "5fe3c0e5-a945-49f2-b584-f0814b4dd1ef"
+      ]
+    },
+    {
+      "task": "ledger",
+      "kind": "dropped-superseded-cases",
+      "uuids": [
+        "502c4106-0371-4e7c-a7d8-9ce33f16ccb1"
+      ]
+    },
+    {
+      "task": "list-ops",
+      "kind": "positional-order-unverifiable",
+      "property": "append",
+      "argNames": [
+        "list1",
+        "list2"
+      ]
+    },
+    {
+      "task": "list-ops",
+      "kind": "dropped-superseded-cases",
+      "uuids": [
+        "613b20b7-1873-4070-a3a6-70ae5f50d7cc",
+        "e56df3eb-9405-416a-b13a-aabb4c3b5194",
+        "d2cf5644-aee1-4dfc-9b88-06896676fe27",
+        "aeb576b9-118e-4a57-a451-db49fac20fdc",
+        "c4b64e58-313e-4c47-9c68-7764964efb8e",
+        "be396a53-c074-4db3-8dd6-f7ed003cce7c"
+      ]
+    },
+    {
+      "task": "markdown",
+      "kind": "dropped-superseded-cases",
+      "uuids": [
+        "6dca5d10-5c22-4e2a-ac2b-bd6f21e61939"
+      ]
+    },
+    {
+      "task": "palindrome-products",
+      "kind": "positional-order-unverifiable",
+      "property": "smallest",
+      "argNames": [
+        "min",
+        "max"
+      ]
+    },
+    {
+      "task": "palindrome-products",
+      "kind": "positional-order-unverifiable",
+      "property": "largest",
+      "argNames": [
+        "min",
+        "max"
+      ]
+    },
+    {
+      "task": "pangram",
+      "kind": "dropped-superseded-cases",
+      "uuids": [
+        "2577bf54-83c8-402d-a64b-a2c0f7bb213a"
+      ]
+    },
+    {
+      "task": "phone-number",
+      "kind": "dropped-superseded-cases",
+      "uuids": [
+        "598d8432-0659-4019-a78b-1c6a73691d21",
+        "c6a5f007-895a-4fc5-90bc-a7e70f9b5cad",
+        "63f38f37-53f6-4a5f-bd86-e9b404f10a60",
+        "4bd97d90-52fd-45d3-b0db-06ab95b1244e"
+      ]
+    },
+    {
+      "task": "piecing-it-together",
+      "kind": "arity-varies",
+      "property": "jigsawData",
+      "arities": [
+        2,
+        3
+      ]
+    },
+    {
+      "task": "piecing-it-together",
+      "kind": "arg-name-set-differs",
+      "property": "jigsawData",
+      "variants": [
+        [
+          "pieces",
+          "aspectRatio"
+        ],
+        [
+          "rows",
+          "format"
+        ],
+        [
+          "inside",
+          "aspectRatio"
+        ],
+        [
+          "rows",
+          "aspectRatio"
+        ],
+        [
+          "pieces",
+          "border",
+          "format"
+        ],
+        [
+          "pieces",
+          "format"
+        ],
+        [
+          "rows",
+          "columns",
+          "format"
+        ]
+      ]
+    },
+    {
+      "task": "poker",
+      "kind": "dropped-superseded-cases",
+      "uuids": [
+        "eb856cc2-481c-4b0d-9835-4d75d07a5d9d",
+        "4d90261d-251c-49bd-a468-896bf10133de"
+      ]
+    },
+    {
+      "task": "protein-translation",
+      "kind": "dropped-superseded-cases",
+      "uuids": [
+        "1e75ea2a-f907-4994-ae5c-118632a1cb0f"
+      ]
+    },
+    {
+      "task": "queen-attack",
+      "kind": "positional-order-unverifiable",
+      "property": "canAttack",
+      "argNames": [
+        "white_queen",
+        "black_queen"
+      ]
+    },
+    {
+      "task": "rational-numbers",
+      "kind": "positional-order-unverifiable",
+      "property": "add",
+      "argNames": [
+        "r1",
+        "r2"
+      ]
+    },
+    {
+      "task": "rational-numbers",
+      "kind": "positional-order-unverifiable",
+      "property": "sub",
+      "argNames": [
+        "r1",
+        "r2"
+      ]
+    },
+    {
+      "task": "rational-numbers",
+      "kind": "positional-order-unverifiable",
+      "property": "mul",
+      "argNames": [
+        "r1",
+        "r2"
+      ]
+    },
+    {
+      "task": "rational-numbers",
+      "kind": "positional-order-unverifiable",
+      "property": "div",
+      "argNames": [
+        "r1",
+        "r2"
+      ]
+    },
+    {
+      "task": "react",
+      "kind": "positional-order-unverifiable",
+      "property": "react",
+      "argNames": [
+        "cells",
+        "operations"
+      ]
+    },
+    {
+      "task": "rest-api",
+      "kind": "arity-varies",
+      "property": "get",
+      "arities": [
+        2,
+        3
+      ]
+    },
+    {
+      "task": "rest-api",
+      "kind": "arg-name-set-differs",
+      "property": "get",
+      "variants": [
+        [
+          "database",
+          "url"
+        ],
+        [
+          "database",
+          "url",
+          "payload"
+        ]
+      ]
+    },
+    {
+      "task": "satellite",
+      "kind": "positional-order-unverifiable",
+      "property": "treeFromTraversals",
+      "argNames": [
+        "preorder",
+        "inorder"
+      ]
+    },
+    {
+      "task": "scale-generator",
+      "kind": "positional-order-unverifiable",
+      "property": "interval",
+      "argNames": [
+        "tonic",
+        "intervals"
+      ]
+    },
+    {
+      "task": "scale-generator",
+      "kind": "dropped-superseded-cases",
+      "uuids": [
+        "6f5b1410-1dd7-4c6c-b410-6b7e986f6f1e",
+        "13a92f89-a83e-40b5-b9d4-01136931ba02",
+        "aa3320f6-a761-49a1-bcf6-978e0c81080a",
+        "63daeb2f-c3f9-4c45-92be-5bf97f61ff94",
+        "616594d0-9c48-4301-949e-af1d4fad16fd",
+        "390bd12c-5ac7-4ec7-bdde-4e58d5c78b0a",
+        "846d0862-0f3e-4f3b-8a2d-9cc74f017848",
+        "7d49a8bb-b5f7-46ad-a207-83bd5032291a",
+        "a4e4dac5-1891-4160-a19f-bb06d653d4d0",
+        "ef3650af-90f8-4ad9-9ef6-fdbeae07dcaa",
+        "70517400-12b7-4530-b861-fa940ae69ee8",
+        "37114c0b-c54d-45da-9f4b-3848201470b0",
+        "496466e7-aa45-4bbd-a64d-f41030feed9c",
+        "bee5d9ec-e226-47b6-b62b-847a9241f3cc",
+        "dbee06a6-7535-4ab7-98e8-d8a36c8402d1"
+      ]
+    },
+    {
+      "task": "sgf-parsing",
+      "kind": "dropped-superseded-cases",
+      "uuids": [
+        "11c36323-93fc-495d-bb23-c88ee5844b8c"
+      ]
+    },
+    {
+      "task": "simple-cipher",
+      "kind": "arity-varies",
+      "property": "encode",
+      "arities": [
+        2,
+        1
+      ]
+    },
+    {
+      "task": "simple-cipher",
+      "kind": "arg-name-set-differs",
+      "property": "encode",
+      "variants": [
+        [
+          "key",
+          "plaintext"
+        ],
+        [
+          "plaintext"
+        ]
+      ]
+    },
+    {
+      "task": "simple-cipher",
+      "kind": "arity-varies",
+      "property": "decode",
+      "arities": [
+        2,
+        1,
+        3
+      ]
+    },
+    {
+      "task": "simple-cipher",
+      "kind": "arg-name-set-differs",
+      "property": "decode",
+      "variants": [
+        [
+          "key",
+          "ciphertext"
+        ],
+        [
+          "ciphertext"
+        ],
+        [
+          "plaintext",
+          "ciphertext"
+        ],
+        [
+          "key",
+          "plaintext",
+          "ciphertext"
+        ]
+      ]
+    },
+    {
+      "task": "simple-linked-list",
+      "kind": "dropped-superseded-cases",
+      "uuids": [
+        "70d747a1-2e84-4ebc-bc3f-dcbee6a05f6b",
+        "92851ebe-9f52-4406-b92e-0718c441a2ab"
+      ]
+    },
+    {
+      "task": "state-of-tic-tac-toe",
+      "kind": "dropped-superseded-cases",
+      "uuids": [
+        "108a5e82-cc61-409f-aece-d7a18c1beceb",
+        "b1dc8b13-46c4-47db-a96d-aa90eedc4e8d"
+      ]
+    },
+    {
+      "task": "sublist",
+      "kind": "positional-order-unverifiable",
+      "property": "sublist",
+      "argNames": [
+        "listOne",
+        "listTwo"
+      ]
+    },
+    {
+      "task": "swift-scheduling",
+      "kind": "positional-order-unverifiable",
+      "property": "deliveryDate",
+      "argNames": [
+        "meetingStart",
+        "description"
+      ]
+    },
+    {
+      "task": "twelve-days",
+      "kind": "positional-order-unverifiable",
+      "property": "recite",
+      "argNames": [
+        "startVerse",
+        "endVerse"
+      ]
+    },
+    {
+      "task": "word-count",
+      "kind": "dropped-superseded-cases",
+      "uuids": [
+        "4185a902-bdb0-4074-864c-f416e42a0f19"
+      ]
+    },
+    {
+      "task": "word-search",
+      "kind": "positional-order-unverifiable",
+      "property": "search",
+      "argNames": [
+        "grid",
+        "wordsToSearchFor"
+      ]
+    }
+  ]
+}

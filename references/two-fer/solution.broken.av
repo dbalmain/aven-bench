@@ -1,0 +1,13 @@
+# Deliberately wrong: the two halves of the sentence are swapped.
+#
+# `bun run verify` runs this through the *generated* suite and requires a
+# reported failure. A generator that emitted a vacuous or self-satisfying suite
+# would go green here, so this fixture is the guard against a false green.
+
+twoFer : (Text?) -> Text
+twoFer = (name) =>
+  name ?>
+    null => "One for me, one for you."
+    person => "One for me, one for ${person}."
+
+{ twoFer }

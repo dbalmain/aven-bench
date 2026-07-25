@@ -1,0 +1,2140 @@
+{
+  "schemaVersion": 1,
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "sourceLicense": "MIT",
+  "generatedBy": "ingest/ingest.ts",
+  "taskCount": 142,
+  "caseCount": 2246,
+  "errorCaseCount": 169,
+  "tasks": [
+    {
+      "id": "accumulate",
+      "title": "Accumulate",
+      "caseCount": 5,
+      "errorCaseCount": 0,
+      "properties": [
+        "accumulate"
+      ],
+      "valueKinds": [
+        "array",
+        "int",
+        "nested-array",
+        "string"
+      ]
+    },
+    {
+      "id": "acronym",
+      "title": "Acronym",
+      "caseCount": 9,
+      "errorCaseCount": 0,
+      "properties": [
+        "abbreviate"
+      ],
+      "valueKinds": [
+        "string"
+      ]
+    },
+    {
+      "id": "affine-cipher",
+      "title": "Affine Cipher",
+      "caseCount": 16,
+      "errorCaseCount": 2,
+      "properties": [
+        "encode",
+        "decode"
+      ],
+      "valueKinds": [
+        "error",
+        "int",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "all-your-base",
+      "title": "All Your Base",
+      "caseCount": 21,
+      "errorCaseCount": 9,
+      "properties": [
+        "rebase"
+      ],
+      "valueKinds": [
+        "array",
+        "error",
+        "int"
+      ]
+    },
+    {
+      "id": "allergies",
+      "title": "Allergies",
+      "caseCount": 50,
+      "errorCaseCount": 0,
+      "properties": [
+        "allergicTo",
+        "list"
+      ],
+      "valueKinds": [
+        "array",
+        "bool",
+        "int",
+        "string"
+      ]
+    },
+    {
+      "id": "alphametics",
+      "title": "Alphametics",
+      "caseCount": 10,
+      "errorCaseCount": 0,
+      "properties": [
+        "solve"
+      ],
+      "valueKinds": [
+        "int",
+        "null",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "anagram",
+      "title": "Anagram",
+      "caseCount": 18,
+      "errorCaseCount": 0,
+      "properties": [
+        "findAnagrams"
+      ],
+      "valueKinds": [
+        "array",
+        "string"
+      ]
+    },
+    {
+      "id": "armstrong-numbers",
+      "title": "Armstrong Numbers",
+      "caseCount": 11,
+      "errorCaseCount": 0,
+      "properties": [
+        "isArmstrongNumber"
+      ],
+      "valueKinds": [
+        "bigint",
+        "bool",
+        "int"
+      ]
+    },
+    {
+      "id": "atbash-cipher",
+      "title": "Atbash Cipher",
+      "caseCount": 14,
+      "errorCaseCount": 0,
+      "properties": [
+        "encode",
+        "decode"
+      ],
+      "valueKinds": [
+        "string"
+      ]
+    },
+    {
+      "id": "baffling-birthdays",
+      "title": "Baffling Birthdays",
+      "caseCount": 17,
+      "errorCaseCount": 0,
+      "properties": [
+        "sharedBirthday",
+        "randomBirthdates",
+        "estimatedProbabilityOfSharedBirthday"
+      ],
+      "valueKinds": [
+        "array",
+        "bool",
+        "float",
+        "int",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "bank-account",
+      "title": "Bank Account",
+      "caseCount": 17,
+      "errorCaseCount": 9,
+      "properties": [
+        "bankAccount"
+      ],
+      "valueKinds": [
+        "array",
+        "array-of-record",
+        "error",
+        "int",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "beer-song",
+      "title": "Beer Song",
+      "caseCount": 8,
+      "errorCaseCount": 0,
+      "properties": [
+        "recite"
+      ],
+      "valueKinds": [
+        "array",
+        "int",
+        "string"
+      ]
+    },
+    {
+      "id": "binary",
+      "title": "Binary",
+      "caseCount": 15,
+      "errorCaseCount": 0,
+      "properties": [
+        "decimal"
+      ],
+      "valueKinds": [
+        "int",
+        "null",
+        "string"
+      ]
+    },
+    {
+      "id": "binary-search",
+      "title": "Binary Search",
+      "caseCount": 11,
+      "errorCaseCount": 5,
+      "properties": [
+        "find"
+      ],
+      "valueKinds": [
+        "array",
+        "error",
+        "int"
+      ]
+    },
+    {
+      "id": "binary-search-tree",
+      "title": "Binary Search Tree",
+      "caseCount": 10,
+      "errorCaseCount": 0,
+      "properties": [
+        "data",
+        "sortedData"
+      ],
+      "valueKinds": [
+        "array",
+        "null",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "bob",
+      "title": "Bob",
+      "caseCount": 26,
+      "errorCaseCount": 0,
+      "properties": [
+        "response"
+      ],
+      "valueKinds": [
+        "string"
+      ]
+    },
+    {
+      "id": "book-store",
+      "title": "Book Store",
+      "caseCount": 18,
+      "errorCaseCount": 0,
+      "properties": [
+        "total"
+      ],
+      "valueKinds": [
+        "array",
+        "int"
+      ]
+    },
+    {
+      "id": "bottle-song",
+      "title": "Bottle Song",
+      "caseCount": 7,
+      "errorCaseCount": 0,
+      "properties": [
+        "recite"
+      ],
+      "valueKinds": [
+        "array",
+        "int",
+        "string"
+      ]
+    },
+    {
+      "id": "bowling",
+      "title": "Bowling",
+      "caseCount": 31,
+      "errorCaseCount": 15,
+      "properties": [
+        "score",
+        "roll"
+      ],
+      "valueKinds": [
+        "array",
+        "error",
+        "int"
+      ]
+    },
+    {
+      "id": "camicia",
+      "title": "Camicia",
+      "caseCount": 28,
+      "errorCaseCount": 0,
+      "properties": [
+        "simulateGame"
+      ],
+      "valueKinds": [
+        "array",
+        "int",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "change",
+      "title": "Change",
+      "caseCount": 13,
+      "errorCaseCount": 3,
+      "properties": [
+        "findFewestCoins"
+      ],
+      "valueKinds": [
+        "array",
+        "error",
+        "int"
+      ]
+    },
+    {
+      "id": "circular-buffer",
+      "title": "Circular Buffer",
+      "caseCount": 14,
+      "errorCaseCount": 0,
+      "properties": [
+        "run"
+      ],
+      "valueKinds": [
+        "array",
+        "array-of-record",
+        "bool",
+        "empty-record",
+        "int",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "clock",
+      "title": "Clock",
+      "caseCount": 52,
+      "errorCaseCount": 0,
+      "properties": [
+        "create",
+        "add",
+        "subtract",
+        "equal"
+      ],
+      "valueKinds": [
+        "bool",
+        "int",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "collatz-conjecture",
+      "title": "Collatz Conjecture",
+      "caseCount": 6,
+      "errorCaseCount": 2,
+      "properties": [
+        "steps"
+      ],
+      "valueKinds": [
+        "error",
+        "int"
+      ]
+    },
+    {
+      "id": "complex-numbers",
+      "title": "Complex Numbers",
+      "caseCount": 40,
+      "errorCaseCount": 0,
+      "properties": [
+        "real",
+        "imaginary",
+        "mul",
+        "add",
+        "sub",
+        "div",
+        "abs",
+        "conjugate",
+        "exp"
+      ],
+      "valueKinds": [
+        "array",
+        "float",
+        "int",
+        "string"
+      ]
+    },
+    {
+      "id": "connect",
+      "title": "Connect",
+      "caseCount": 12,
+      "errorCaseCount": 0,
+      "properties": [
+        "winner"
+      ],
+      "valueKinds": [
+        "array",
+        "string"
+      ]
+    },
+    {
+      "id": "crypto-square",
+      "title": "Crypto Square",
+      "caseCount": 8,
+      "errorCaseCount": 0,
+      "properties": [
+        "ciphertext"
+      ],
+      "valueKinds": [
+        "string"
+      ]
+    },
+    {
+      "id": "custom-set",
+      "title": "Custom Set",
+      "caseCount": 40,
+      "errorCaseCount": 0,
+      "properties": [
+        "empty",
+        "contains",
+        "subset",
+        "disjoint",
+        "equal",
+        "add",
+        "intersection",
+        "difference",
+        "union"
+      ],
+      "valueKinds": [
+        "array",
+        "bool",
+        "int"
+      ]
+    },
+    {
+      "id": "darts",
+      "title": "Darts",
+      "caseCount": 13,
+      "errorCaseCount": 0,
+      "properties": [
+        "score"
+      ],
+      "valueKinds": [
+        "float",
+        "int"
+      ]
+    },
+    {
+      "id": "diamond",
+      "title": "Diamond",
+      "caseCount": 5,
+      "errorCaseCount": 0,
+      "properties": [
+        "rows"
+      ],
+      "valueKinds": [
+        "array",
+        "string"
+      ]
+    },
+    {
+      "id": "difference-of-squares",
+      "title": "Difference of Squares",
+      "caseCount": 9,
+      "errorCaseCount": 0,
+      "properties": [
+        "squareOfSum",
+        "sumOfSquares",
+        "differenceOfSquares"
+      ],
+      "valueKinds": [
+        "int"
+      ]
+    },
+    {
+      "id": "diffie-hellman",
+      "title": "Diffie-Hellman",
+      "caseCount": 6,
+      "errorCaseCount": 0,
+      "properties": [
+        "privateKeyIsInRange",
+        "privateKeyIsRandom",
+        "publicKey",
+        "secret",
+        "keyExchange"
+      ],
+      "valueKinds": [
+        "bool",
+        "int",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "dnd-character",
+      "title": "D&D Character",
+      "caseCount": 19,
+      "errorCaseCount": 0,
+      "properties": [
+        "modifier",
+        "ability",
+        "character"
+      ],
+      "valueKinds": [
+        "int",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "dominoes",
+      "title": "Dominoes",
+      "caseCount": 13,
+      "errorCaseCount": 0,
+      "properties": [
+        "canChain"
+      ],
+      "valueKinds": [
+        "array",
+        "bool",
+        "int",
+        "nested-array"
+      ]
+    },
+    {
+      "id": "dot-dsl",
+      "title": "DOT DSL",
+      "caseCount": 19,
+      "errorCaseCount": 10,
+      "properties": [
+        "parse"
+      ],
+      "valueKinds": [
+        "array",
+        "bool",
+        "empty-record",
+        "error",
+        "int",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "eliuds-eggs",
+      "title": "Eliud's Eggs",
+      "caseCount": 4,
+      "errorCaseCount": 0,
+      "properties": [
+        "eggCount"
+      ],
+      "valueKinds": [
+        "int"
+      ]
+    },
+    {
+      "id": "etl",
+      "title": "ETL",
+      "caseCount": 4,
+      "errorCaseCount": 0,
+      "properties": [
+        "transform"
+      ],
+      "valueKinds": [
+        "array",
+        "int",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "flatten-array",
+      "title": "Flatten Array",
+      "caseCount": 11,
+      "errorCaseCount": 0,
+      "properties": [
+        "flatten"
+      ],
+      "valueKinds": [
+        "array",
+        "int",
+        "nested-array",
+        "null"
+      ]
+    },
+    {
+      "id": "flower-field",
+      "title": "Flower Field",
+      "caseCount": 13,
+      "errorCaseCount": 0,
+      "properties": [
+        "annotate"
+      ],
+      "valueKinds": [
+        "array",
+        "string"
+      ]
+    },
+    {
+      "id": "food-chain",
+      "title": "Food Chain",
+      "caseCount": 10,
+      "errorCaseCount": 0,
+      "properties": [
+        "recite"
+      ],
+      "valueKinds": [
+        "array",
+        "int",
+        "string"
+      ]
+    },
+    {
+      "id": "forth",
+      "title": "Forth",
+      "caseCount": 55,
+      "errorCaseCount": 18,
+      "properties": [
+        "evaluate",
+        "evaluateBoth"
+      ],
+      "valueKinds": [
+        "array",
+        "error",
+        "int",
+        "nested-array",
+        "string"
+      ]
+    },
+    {
+      "id": "game-of-life",
+      "title": "Conway's Game of Life",
+      "caseCount": 8,
+      "errorCaseCount": 0,
+      "properties": [
+        "tick"
+      ],
+      "valueKinds": [
+        "array",
+        "int",
+        "nested-array"
+      ]
+    },
+    {
+      "id": "gigasecond",
+      "title": "Gigasecond",
+      "caseCount": 6,
+      "errorCaseCount": 0,
+      "properties": [
+        "add",
+        "isEqual"
+      ],
+      "valueKinds": [
+        "string"
+      ]
+    },
+    {
+      "id": "go-counting",
+      "title": "Go Counting",
+      "caseCount": 11,
+      "errorCaseCount": 4,
+      "properties": [
+        "territory",
+        "territories"
+      ],
+      "valueKinds": [
+        "array",
+        "error",
+        "int",
+        "nested-array",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "grade-school",
+      "title": "Grade School",
+      "caseCount": 20,
+      "errorCaseCount": 0,
+      "properties": [
+        "roster",
+        "add",
+        "grade"
+      ],
+      "valueKinds": [
+        "array",
+        "bool",
+        "int",
+        "nested-array",
+        "string"
+      ]
+    },
+    {
+      "id": "grains",
+      "title": "Grains",
+      "caseCount": 11,
+      "errorCaseCount": 3,
+      "properties": [
+        "square",
+        "total"
+      ],
+      "valueKinds": [
+        "bigint",
+        "error",
+        "int"
+      ]
+    },
+    {
+      "id": "grep",
+      "title": "Grep",
+      "caseCount": 25,
+      "errorCaseCount": 0,
+      "properties": [
+        "grep"
+      ],
+      "valueKinds": [
+        "array",
+        "string"
+      ]
+    },
+    {
+      "id": "hamming",
+      "title": "Hamming",
+      "caseCount": 9,
+      "errorCaseCount": 4,
+      "properties": [
+        "distance"
+      ],
+      "valueKinds": [
+        "error",
+        "int",
+        "string"
+      ]
+    },
+    {
+      "id": "hangman",
+      "title": "Hangman",
+      "caseCount": 10,
+      "errorCaseCount": 2,
+      "properties": [
+        "guess"
+      ],
+      "valueKinds": [
+        "array",
+        "error",
+        "int",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "hello-world",
+      "title": "Hello World",
+      "caseCount": 1,
+      "errorCaseCount": 0,
+      "properties": [
+        "hello"
+      ],
+      "valueKinds": [
+        "string"
+      ]
+    },
+    {
+      "id": "high-scores",
+      "title": "High Scores",
+      "caseCount": 12,
+      "errorCaseCount": 0,
+      "properties": [
+        "scores",
+        "latest",
+        "personalBest",
+        "personalTopThree",
+        "latestAfterTopThree",
+        "scoresAfterTopThree",
+        "latestAfterBest",
+        "scoresAfterBest"
+      ],
+      "valueKinds": [
+        "array",
+        "int"
+      ]
+    },
+    {
+      "id": "house",
+      "title": "House",
+      "caseCount": 14,
+      "errorCaseCount": 0,
+      "properties": [
+        "recite"
+      ],
+      "valueKinds": [
+        "array",
+        "int",
+        "string"
+      ]
+    },
+    {
+      "id": "intergalactic-transmission",
+      "title": "Intergalactic Transmission",
+      "caseCount": 26,
+      "errorCaseCount": 4,
+      "properties": [
+        "transmitSequence",
+        "decodeMessage"
+      ],
+      "valueKinds": [
+        "array",
+        "error",
+        "string"
+      ]
+    },
+    {
+      "id": "isbn-verifier",
+      "title": "ISBN Verifier",
+      "caseCount": 21,
+      "errorCaseCount": 0,
+      "properties": [
+        "isValid"
+      ],
+      "valueKinds": [
+        "bool",
+        "string"
+      ]
+    },
+    {
+      "id": "isogram",
+      "title": "Isogram",
+      "caseCount": 14,
+      "errorCaseCount": 0,
+      "properties": [
+        "isIsogram"
+      ],
+      "valueKinds": [
+        "bool",
+        "string"
+      ]
+    },
+    {
+      "id": "killer-sudoku-helper",
+      "title": "Killer Sudoku Helper",
+      "caseCount": 13,
+      "errorCaseCount": 0,
+      "properties": [
+        "combinations"
+      ],
+      "valueKinds": [
+        "array",
+        "int",
+        "nested-array",
+        "record"
+      ]
+    },
+    {
+      "id": "kindergarten-garden",
+      "title": "Kindergarten Garden",
+      "caseCount": 17,
+      "errorCaseCount": 0,
+      "properties": [
+        "plants"
+      ],
+      "valueKinds": [
+        "array",
+        "string"
+      ]
+    },
+    {
+      "id": "knapsack",
+      "title": "Knapsack",
+      "caseCount": 7,
+      "errorCaseCount": 0,
+      "properties": [
+        "maximumValue"
+      ],
+      "valueKinds": [
+        "array",
+        "array-of-record",
+        "int",
+        "record"
+      ]
+    },
+    {
+      "id": "largest-series-product",
+      "title": "Largest Series Product",
+      "caseCount": 15,
+      "errorCaseCount": 4,
+      "properties": [
+        "largestProduct"
+      ],
+      "valueKinds": [
+        "error",
+        "int",
+        "string"
+      ]
+    },
+    {
+      "id": "leap",
+      "title": "Leap",
+      "caseCount": 9,
+      "errorCaseCount": 0,
+      "properties": [
+        "leapYear"
+      ],
+      "valueKinds": [
+        "bool",
+        "int"
+      ]
+    },
+    {
+      "id": "ledger",
+      "title": "Ledger",
+      "caseCount": 11,
+      "errorCaseCount": 0,
+      "properties": [
+        "formatEntries"
+      ],
+      "valueKinds": [
+        "array",
+        "array-of-record",
+        "int",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "line-up",
+      "title": "Line Up",
+      "caseCount": 19,
+      "errorCaseCount": 0,
+      "properties": [
+        "format"
+      ],
+      "valueKinds": [
+        "int",
+        "string"
+      ]
+    },
+    {
+      "id": "linked-list",
+      "title": "Linked List",
+      "caseCount": 19,
+      "errorCaseCount": 0,
+      "properties": [
+        "list"
+      ],
+      "valueKinds": [
+        "array",
+        "array-of-record",
+        "empty-record",
+        "int",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "list-ops",
+      "title": "List Ops",
+      "caseCount": 22,
+      "errorCaseCount": 0,
+      "properties": [
+        "append",
+        "concat",
+        "filter",
+        "length",
+        "map",
+        "foldl",
+        "foldr",
+        "reverse"
+      ],
+      "valueKinds": [
+        "array",
+        "int",
+        "nested-array",
+        "string"
+      ]
+    },
+    {
+      "id": "luhn",
+      "title": "Luhn",
+      "caseCount": 22,
+      "errorCaseCount": 0,
+      "properties": [
+        "valid"
+      ],
+      "valueKinds": [
+        "bool",
+        "string"
+      ]
+    },
+    {
+      "id": "markdown",
+      "title": "Markdown",
+      "caseCount": 17,
+      "errorCaseCount": 0,
+      "properties": [
+        "parse"
+      ],
+      "valueKinds": [
+        "string"
+      ]
+    },
+    {
+      "id": "matching-brackets",
+      "title": "Matching Brackets",
+      "caseCount": 20,
+      "errorCaseCount": 0,
+      "properties": [
+        "isPaired"
+      ],
+      "valueKinds": [
+        "bool",
+        "string"
+      ]
+    },
+    {
+      "id": "matrix",
+      "title": "Matrix",
+      "caseCount": 8,
+      "errorCaseCount": 0,
+      "properties": [
+        "row",
+        "column"
+      ],
+      "valueKinds": [
+        "array",
+        "int",
+        "string"
+      ]
+    },
+    {
+      "id": "meetup",
+      "title": "Meetup",
+      "caseCount": 95,
+      "errorCaseCount": 0,
+      "properties": [
+        "meetup"
+      ],
+      "valueKinds": [
+        "int",
+        "string"
+      ]
+    },
+    {
+      "id": "micro-blog",
+      "title": "Micro Blog",
+      "caseCount": 12,
+      "errorCaseCount": 0,
+      "properties": [
+        "truncate"
+      ],
+      "valueKinds": [
+        "string"
+      ]
+    },
+    {
+      "id": "minesweeper",
+      "title": "Minesweeper",
+      "caseCount": 12,
+      "errorCaseCount": 0,
+      "properties": [
+        "annotate"
+      ],
+      "valueKinds": [
+        "array",
+        "string"
+      ]
+    },
+    {
+      "id": "nth-prime",
+      "title": "Nth Prime",
+      "caseCount": 5,
+      "errorCaseCount": 1,
+      "properties": [
+        "prime"
+      ],
+      "valueKinds": [
+        "error",
+        "int"
+      ]
+    },
+    {
+      "id": "nucleotide-count",
+      "title": "Nucleotide Count",
+      "caseCount": 5,
+      "errorCaseCount": 1,
+      "properties": [
+        "nucleotideCounts"
+      ],
+      "valueKinds": [
+        "error",
+        "int",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "ocr-numbers",
+      "title": "OCR Numbers",
+      "caseCount": 17,
+      "errorCaseCount": 2,
+      "properties": [
+        "convert"
+      ],
+      "valueKinds": [
+        "array",
+        "error",
+        "string"
+      ]
+    },
+    {
+      "id": "palindrome-products",
+      "title": "Palindrome Products",
+      "caseCount": 13,
+      "errorCaseCount": 2,
+      "properties": [
+        "smallest",
+        "largest"
+      ],
+      "valueKinds": [
+        "array",
+        "error",
+        "int",
+        "nested-array",
+        "null",
+        "record"
+      ]
+    },
+    {
+      "id": "pangram",
+      "title": "Pangram",
+      "caseCount": 10,
+      "errorCaseCount": 0,
+      "properties": [
+        "isPangram"
+      ],
+      "valueKinds": [
+        "bool",
+        "string"
+      ]
+    },
+    {
+      "id": "parallel-letter-frequency",
+      "title": "Parallel Letter Frequency",
+      "caseCount": 13,
+      "errorCaseCount": 0,
+      "properties": [
+        "calculateFrequencies"
+      ],
+      "valueKinds": [
+        "array",
+        "empty-record",
+        "int",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "pascals-triangle",
+      "title": "Pascal's Triangle",
+      "caseCount": 8,
+      "errorCaseCount": 0,
+      "properties": [
+        "rows"
+      ],
+      "valueKinds": [
+        "array",
+        "int",
+        "nested-array"
+      ]
+    },
+    {
+      "id": "perfect-numbers",
+      "title": "Perfect Numbers",
+      "caseCount": 14,
+      "errorCaseCount": 2,
+      "properties": [
+        "classify"
+      ],
+      "valueKinds": [
+        "error",
+        "int",
+        "string"
+      ]
+    },
+    {
+      "id": "phone-number",
+      "title": "Phone Number",
+      "caseCount": 18,
+      "errorCaseCount": 13,
+      "properties": [
+        "clean"
+      ],
+      "valueKinds": [
+        "error",
+        "string"
+      ]
+    },
+    {
+      "id": "piecing-it-together",
+      "title": "Piecing It Together",
+      "caseCount": 7,
+      "errorCaseCount": 2,
+      "properties": [
+        "jigsawData"
+      ],
+      "valueKinds": [
+        "error",
+        "float",
+        "int",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "pig-latin",
+      "title": "Pig Latin",
+      "caseCount": 23,
+      "errorCaseCount": 0,
+      "properties": [
+        "translate"
+      ],
+      "valueKinds": [
+        "string"
+      ]
+    },
+    {
+      "id": "poker",
+      "title": "Poker",
+      "caseCount": 37,
+      "errorCaseCount": 0,
+      "properties": [
+        "bestHands"
+      ],
+      "valueKinds": [
+        "array",
+        "string"
+      ]
+    },
+    {
+      "id": "pov",
+      "title": "POV",
+      "caseCount": 15,
+      "errorCaseCount": 0,
+      "properties": [
+        "fromPov",
+        "pathTo"
+      ],
+      "valueKinds": [
+        "array",
+        "array-of-record",
+        "null",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "prime-factors",
+      "title": "Prime Factors",
+      "caseCount": 12,
+      "errorCaseCount": 0,
+      "properties": [
+        "factors"
+      ],
+      "valueKinds": [
+        "array",
+        "int"
+      ]
+    },
+    {
+      "id": "prism",
+      "title": "Prism",
+      "caseCount": 14,
+      "errorCaseCount": 0,
+      "properties": [
+        "findSequence"
+      ],
+      "valueKinds": [
+        "array",
+        "array-of-record",
+        "float",
+        "int",
+        "record"
+      ]
+    },
+    {
+      "id": "protein-translation",
+      "title": "Protein Translation",
+      "caseCount": 30,
+      "errorCaseCount": 2,
+      "properties": [
+        "proteins"
+      ],
+      "valueKinds": [
+        "array",
+        "error",
+        "string"
+      ]
+    },
+    {
+      "id": "proverb",
+      "title": "Proverb",
+      "caseCount": 6,
+      "errorCaseCount": 0,
+      "properties": [
+        "recite"
+      ],
+      "valueKinds": [
+        "array",
+        "string"
+      ]
+    },
+    {
+      "id": "pythagorean-triplet",
+      "title": "Pythagorean Triplet",
+      "caseCount": 7,
+      "errorCaseCount": 0,
+      "properties": [
+        "tripletsWithSum"
+      ],
+      "valueKinds": [
+        "array",
+        "int",
+        "nested-array"
+      ]
+    },
+    {
+      "id": "queen-attack",
+      "title": "Queen Attack",
+      "caseCount": 13,
+      "errorCaseCount": 4,
+      "properties": [
+        "create",
+        "canAttack"
+      ],
+      "valueKinds": [
+        "bool",
+        "error",
+        "int",
+        "record"
+      ]
+    },
+    {
+      "id": "rail-fence-cipher",
+      "title": "Rail Fence Cipher",
+      "caseCount": 6,
+      "errorCaseCount": 0,
+      "properties": [
+        "encode",
+        "decode"
+      ],
+      "valueKinds": [
+        "int",
+        "string"
+      ]
+    },
+    {
+      "id": "raindrops",
+      "title": "Raindrops",
+      "caseCount": 18,
+      "errorCaseCount": 0,
+      "properties": [
+        "convert"
+      ],
+      "valueKinds": [
+        "int",
+        "string"
+      ]
+    },
+    {
+      "id": "rational-numbers",
+      "title": "Rational Numbers",
+      "caseCount": 43,
+      "errorCaseCount": 0,
+      "properties": [
+        "add",
+        "sub",
+        "mul",
+        "div",
+        "abs",
+        "exprational",
+        "expreal",
+        "reduce"
+      ],
+      "valueKinds": [
+        "array",
+        "float",
+        "int"
+      ]
+    },
+    {
+      "id": "react",
+      "title": "React",
+      "caseCount": 14,
+      "errorCaseCount": 0,
+      "properties": [
+        "react"
+      ],
+      "valueKinds": [
+        "array",
+        "array-of-record",
+        "empty-record",
+        "int",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "rectangles",
+      "title": "Rectangles",
+      "caseCount": 14,
+      "errorCaseCount": 0,
+      "properties": [
+        "rectangles"
+      ],
+      "valueKinds": [
+        "array",
+        "int",
+        "string"
+      ]
+    },
+    {
+      "id": "relative-distance",
+      "title": "Relative Distance",
+      "caseCount": 7,
+      "errorCaseCount": 0,
+      "properties": [
+        "degreeOfSeparation"
+      ],
+      "valueKinds": [
+        "array",
+        "int",
+        "null",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "resistor-color",
+      "title": "Resistor Color",
+      "caseCount": 4,
+      "errorCaseCount": 0,
+      "properties": [
+        "colorCode",
+        "colors"
+      ],
+      "valueKinds": [
+        "array",
+        "int",
+        "string"
+      ]
+    },
+    {
+      "id": "resistor-color-duo",
+      "title": "Resistor Color Duo",
+      "caseCount": 7,
+      "errorCaseCount": 0,
+      "properties": [
+        "value"
+      ],
+      "valueKinds": [
+        "array",
+        "int",
+        "string"
+      ]
+    },
+    {
+      "id": "resistor-color-trio",
+      "title": "Resistor Color Trio",
+      "caseCount": 10,
+      "errorCaseCount": 0,
+      "properties": [
+        "label"
+      ],
+      "valueKinds": [
+        "array",
+        "int",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "rest-api",
+      "title": "REST API",
+      "caseCount": 9,
+      "errorCaseCount": 0,
+      "properties": [
+        "get",
+        "post"
+      ],
+      "valueKinds": [
+        "array",
+        "array-of-record",
+        "empty-record",
+        "float",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "reverse-string",
+      "title": "Reverse String",
+      "caseCount": 9,
+      "errorCaseCount": 0,
+      "properties": [
+        "reverse"
+      ],
+      "valueKinds": [
+        "string"
+      ]
+    },
+    {
+      "id": "rna-transcription",
+      "title": "RNA Transcription",
+      "caseCount": 6,
+      "errorCaseCount": 0,
+      "properties": [
+        "toRna"
+      ],
+      "valueKinds": [
+        "string"
+      ]
+    },
+    {
+      "id": "robot-simulator",
+      "title": "Robot Simulator",
+      "caseCount": 18,
+      "errorCaseCount": 0,
+      "properties": [
+        "create",
+        "move"
+      ],
+      "valueKinds": [
+        "int",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "roman-numerals",
+      "title": "Roman Numerals",
+      "caseCount": 27,
+      "errorCaseCount": 0,
+      "properties": [
+        "roman"
+      ],
+      "valueKinds": [
+        "int",
+        "string"
+      ]
+    },
+    {
+      "id": "rotational-cipher",
+      "title": "Rotational Cipher",
+      "caseCount": 10,
+      "errorCaseCount": 0,
+      "properties": [
+        "rotate"
+      ],
+      "valueKinds": [
+        "int",
+        "string"
+      ]
+    },
+    {
+      "id": "run-length-encoding",
+      "title": "Run-Length Encoding",
+      "caseCount": 13,
+      "errorCaseCount": 0,
+      "properties": [
+        "encode",
+        "decode",
+        "consistency"
+      ],
+      "valueKinds": [
+        "string"
+      ]
+    },
+    {
+      "id": "saddle-points",
+      "title": "Saddle Points",
+      "caseCount": 9,
+      "errorCaseCount": 0,
+      "properties": [
+        "saddlePoints"
+      ],
+      "valueKinds": [
+        "array",
+        "array-of-record",
+        "int",
+        "nested-array",
+        "record"
+      ]
+    },
+    {
+      "id": "satellite",
+      "title": "Satellite",
+      "caseCount": 9,
+      "errorCaseCount": 3,
+      "properties": [
+        "treeFromTraversals"
+      ],
+      "valueKinds": [
+        "array",
+        "empty-record",
+        "error",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "save-the-cow",
+      "title": "Save the Cow",
+      "caseCount": 10,
+      "errorCaseCount": 2,
+      "properties": [
+        "guess"
+      ],
+      "valueKinds": [
+        "array",
+        "error",
+        "int",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "say",
+      "title": "Say",
+      "caseCount": 19,
+      "errorCaseCount": 2,
+      "properties": [
+        "say"
+      ],
+      "valueKinds": [
+        "error",
+        "int",
+        "string"
+      ]
+    },
+    {
+      "id": "scale-generator",
+      "title": "Scale Generator",
+      "caseCount": 17,
+      "errorCaseCount": 0,
+      "properties": [
+        "chromatic",
+        "interval"
+      ],
+      "valueKinds": [
+        "array",
+        "string"
+      ]
+    },
+    {
+      "id": "scrabble-score",
+      "title": "Scrabble Score",
+      "caseCount": 11,
+      "errorCaseCount": 0,
+      "properties": [
+        "score"
+      ],
+      "valueKinds": [
+        "int",
+        "string"
+      ]
+    },
+    {
+      "id": "secret-handshake",
+      "title": "Secret Handshake",
+      "caseCount": 11,
+      "errorCaseCount": 0,
+      "properties": [
+        "commands"
+      ],
+      "valueKinds": [
+        "array",
+        "int",
+        "string"
+      ]
+    },
+    {
+      "id": "series",
+      "title": "Series",
+      "caseCount": 11,
+      "errorCaseCount": 5,
+      "properties": [
+        "slices"
+      ],
+      "valueKinds": [
+        "array",
+        "error",
+        "int",
+        "string"
+      ]
+    },
+    {
+      "id": "sgf-parsing",
+      "title": "SGF Parsing",
+      "caseCount": 23,
+      "errorCaseCount": 6,
+      "properties": [
+        "parse"
+      ],
+      "valueKinds": [
+        "array",
+        "array-of-record",
+        "empty-record",
+        "error",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "sieve",
+      "title": "Sieve",
+      "caseCount": 5,
+      "errorCaseCount": 0,
+      "properties": [
+        "primes"
+      ],
+      "valueKinds": [
+        "array",
+        "int"
+      ]
+    },
+    {
+      "id": "simple-cipher",
+      "title": "Simple Cipher",
+      "caseCount": 12,
+      "errorCaseCount": 0,
+      "properties": [
+        "encode",
+        "decode",
+        "key"
+      ],
+      "valueKinds": [
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "simple-linked-list",
+      "title": "Simple Linked List",
+      "caseCount": 27,
+      "errorCaseCount": 0,
+      "properties": [
+        "list"
+      ],
+      "valueKinds": [
+        "array",
+        "array-of-record",
+        "empty-record",
+        "int",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "space-age",
+      "title": "Space Age",
+      "caseCount": 9,
+      "errorCaseCount": 1,
+      "properties": [
+        "age"
+      ],
+      "valueKinds": [
+        "error",
+        "float",
+        "int",
+        "string"
+      ]
+    },
+    {
+      "id": "spiral-matrix",
+      "title": "Spiral Matrix",
+      "caseCount": 6,
+      "errorCaseCount": 0,
+      "properties": [
+        "spiralMatrix"
+      ],
+      "valueKinds": [
+        "array",
+        "int",
+        "nested-array"
+      ]
+    },
+    {
+      "id": "split-second-stopwatch",
+      "title": "Split-Second Stopwatch",
+      "caseCount": 29,
+      "errorCaseCount": 0,
+      "properties": [
+        "time"
+      ],
+      "valueKinds": [
+        "array",
+        "array-of-record",
+        "empty-record",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "square-root",
+      "title": "Square Root",
+      "caseCount": 6,
+      "errorCaseCount": 0,
+      "properties": [
+        "squareRoot"
+      ],
+      "valueKinds": [
+        "int"
+      ]
+    },
+    {
+      "id": "state-of-tic-tac-toe",
+      "title": "State of Tic-Tac-Toe",
+      "caseCount": 29,
+      "errorCaseCount": 6,
+      "properties": [
+        "gamestate"
+      ],
+      "valueKinds": [
+        "array",
+        "error",
+        "string"
+      ]
+    },
+    {
+      "id": "strain",
+      "title": "Strain",
+      "caseCount": 14,
+      "errorCaseCount": 0,
+      "properties": [
+        "keep",
+        "discard"
+      ],
+      "valueKinds": [
+        "array",
+        "int",
+        "nested-array",
+        "string"
+      ]
+    },
+    {
+      "id": "sublist",
+      "title": "Sublist",
+      "caseCount": 18,
+      "errorCaseCount": 0,
+      "properties": [
+        "sublist"
+      ],
+      "valueKinds": [
+        "array",
+        "int",
+        "string"
+      ]
+    },
+    {
+      "id": "sum-of-multiples",
+      "title": "Sum of Multiples",
+      "caseCount": 16,
+      "errorCaseCount": 0,
+      "properties": [
+        "sum"
+      ],
+      "valueKinds": [
+        "array",
+        "int"
+      ]
+    },
+    {
+      "id": "swift-scheduling",
+      "title": "Swift Scheduling",
+      "caseCount": 17,
+      "errorCaseCount": 0,
+      "properties": [
+        "deliveryDate"
+      ],
+      "valueKinds": [
+        "string"
+      ]
+    },
+    {
+      "id": "tournament",
+      "title": "Tournament",
+      "caseCount": 12,
+      "errorCaseCount": 0,
+      "properties": [
+        "tally"
+      ],
+      "valueKinds": [
+        "array",
+        "string"
+      ]
+    },
+    {
+      "id": "transpose",
+      "title": "Transpose",
+      "caseCount": 12,
+      "errorCaseCount": 0,
+      "properties": [
+        "transpose"
+      ],
+      "valueKinds": [
+        "array",
+        "string"
+      ]
+    },
+    {
+      "id": "tree-building",
+      "title": "Tree Building",
+      "caseCount": 16,
+      "errorCaseCount": 9,
+      "properties": [
+        "buildTree"
+      ],
+      "valueKinds": [
+        "array",
+        "array-of-record",
+        "empty-record",
+        "error",
+        "int",
+        "record"
+      ]
+    },
+    {
+      "id": "triangle",
+      "title": "Triangle",
+      "caseCount": 21,
+      "errorCaseCount": 0,
+      "properties": [
+        "equilateral",
+        "isosceles",
+        "scalene"
+      ],
+      "valueKinds": [
+        "array",
+        "bool",
+        "float",
+        "int"
+      ]
+    },
+    {
+      "id": "trinary",
+      "title": "Trinary",
+      "caseCount": 11,
+      "errorCaseCount": 0,
+      "properties": [
+        "toDecimal"
+      ],
+      "valueKinds": [
+        "int",
+        "string"
+      ]
+    },
+    {
+      "id": "twelve-days",
+      "title": "Twelve Days",
+      "caseCount": 15,
+      "errorCaseCount": 0,
+      "properties": [
+        "recite"
+      ],
+      "valueKinds": [
+        "array",
+        "int",
+        "string"
+      ]
+    },
+    {
+      "id": "two-bucket",
+      "title": "Two Bucket",
+      "caseCount": 11,
+      "errorCaseCount": 2,
+      "properties": [
+        "measure"
+      ],
+      "valueKinds": [
+        "error",
+        "int",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "two-fer",
+      "title": "Two-Fer",
+      "caseCount": 3,
+      "errorCaseCount": 0,
+      "properties": [
+        "twoFer"
+      ],
+      "valueKinds": [
+        "null",
+        "string"
+      ]
+    },
+    {
+      "id": "variable-length-quantity",
+      "title": "Variable Length Quantity",
+      "caseCount": 31,
+      "errorCaseCount": 2,
+      "properties": [
+        "encode",
+        "decode"
+      ],
+      "valueKinds": [
+        "array",
+        "error",
+        "int"
+      ]
+    },
+    {
+      "id": "word-count",
+      "title": "Word Count",
+      "caseCount": 14,
+      "errorCaseCount": 0,
+      "properties": [
+        "countWords"
+      ],
+      "valueKinds": [
+        "int",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "word-search",
+      "title": "Word Search",
+      "caseCount": 24,
+      "errorCaseCount": 0,
+      "properties": [
+        "search"
+      ],
+      "valueKinds": [
+        "array",
+        "int",
+        "null",
+        "record",
+        "string"
+      ]
+    },
+    {
+      "id": "wordy",
+      "title": "Wordy",
+      "caseCount": 27,
+      "errorCaseCount": 8,
+      "properties": [
+        "answer"
+      ],
+      "valueKinds": [
+        "error",
+        "int",
+        "string"
+      ]
+    },
+    {
+      "id": "yacht",
+      "title": "Yacht",
+      "caseCount": 29,
+      "errorCaseCount": 0,
+      "properties": [
+        "score"
+      ],
+      "valueKinds": [
+        "array",
+        "int",
+        "string"
+      ]
+    },
+    {
+      "id": "zebra-puzzle",
+      "title": "Zebra Puzzle",
+      "caseCount": 2,
+      "errorCaseCount": 0,
+      "properties": [
+        "drinksWater",
+        "ownsZebra"
+      ],
+      "valueKinds": [
+        "string"
+      ]
+    },
+    {
+      "id": "zipper",
+      "title": "Zipper",
+      "caseCount": 14,
+      "errorCaseCount": 0,
+      "properties": [
+        "expectedValue",
+        "sameResultFromOperations"
+      ],
+      "valueKinds": [
+        "array",
+        "array-of-record",
+        "int",
+        "null",
+        "record",
+        "string"
+      ]
+    }
+  ],
+  "skipped": [
+    {
+      "id": "counter",
+      "reason": "no canonical-data.json (no oracle)"
+    },
+    {
+      "id": "error-handling",
+      "reason": "no canonical-data.json (no oracle)"
+    },
+    {
+      "id": "hexadecimal",
+      "reason": "no canonical-data.json (no oracle)"
+    },
+    {
+      "id": "lens-person",
+      "reason": "no canonical-data.json (no oracle)"
+    },
+    {
+      "id": "nucleotide-codons",
+      "reason": "no canonical-data.json (no oracle)"
+    },
+    {
+      "id": "octal",
+      "reason": "no canonical-data.json (no oracle)"
+    },
+    {
+      "id": "paasio",
+      "reason": "no canonical-data.json (no oracle)"
+    },
+    {
+      "id": "point-mutations",
+      "reason": "no canonical-data.json (no oracle)"
+    },
+    {
+      "id": "robot-name",
+      "reason": "no canonical-data.json (no oracle)"
+    }
+  ]
+}

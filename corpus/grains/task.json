@@ -1,0 +1,262 @@
+{
+  "schemaVersion": 1,
+  "id": "grains",
+  "title": "Grains",
+  "blurb": "Calculate the number of grains of wheat on a chessboard given that the number on each square doubles.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "introduction.md",
+    "instructions.md"
+  ],
+  "comments": [
+    "The final tests of square test error conditions",
+    "In these cases you should expect an error as is idiomatic for your language"
+  ],
+  "properties": [
+    {
+      "name": "square",
+      "argNames": [
+        "square"
+      ],
+      "arity": 1,
+      "caseCount": 10,
+      "returnsResult": true,
+      "argOrderVariants": [
+        [
+          "square"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "total",
+      "argNames": [],
+      "arity": 0,
+      "caseCount": 1,
+      "returnsResult": false,
+      "argOrderVariants": [
+        []
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "9fbde8de-36b2-49de-baf2-cd42d6f28405",
+      "name": "returns the number of grains on the square > grains on square 1",
+      "group": [
+        "returns the number of grains on the square"
+      ],
+      "description": "grains on square 1",
+      "property": "square",
+      "args": [
+        {
+          "name": "square",
+          "value": 1
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 1
+      }
+    },
+    {
+      "uuid": "ee1f30c2-01d8-4298-b25d-c677331b5e6d",
+      "name": "returns the number of grains on the square > grains on square 2",
+      "group": [
+        "returns the number of grains on the square"
+      ],
+      "description": "grains on square 2",
+      "property": "square",
+      "args": [
+        {
+          "name": "square",
+          "value": 2
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 2
+      }
+    },
+    {
+      "uuid": "10f45584-2fc3-4875-8ec6-666065d1163b",
+      "name": "returns the number of grains on the square > grains on square 3",
+      "group": [
+        "returns the number of grains on the square"
+      ],
+      "description": "grains on square 3",
+      "property": "square",
+      "args": [
+        {
+          "name": "square",
+          "value": 3
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 4
+      }
+    },
+    {
+      "uuid": "a7cbe01b-36f4-4601-b053-c5f6ae055170",
+      "name": "returns the number of grains on the square > grains on square 4",
+      "group": [
+        "returns the number of grains on the square"
+      ],
+      "description": "grains on square 4",
+      "property": "square",
+      "args": [
+        {
+          "name": "square",
+          "value": 4
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 8
+      }
+    },
+    {
+      "uuid": "c50acc89-8535-44e4-918f-b848ad2817d4",
+      "name": "returns the number of grains on the square > grains on square 16",
+      "group": [
+        "returns the number of grains on the square"
+      ],
+      "description": "grains on square 16",
+      "property": "square",
+      "args": [
+        {
+          "name": "square",
+          "value": 16
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 32768
+      }
+    },
+    {
+      "uuid": "acd81b46-c2ad-4951-b848-80d15ed5a04f",
+      "name": "returns the number of grains on the square > grains on square 32",
+      "group": [
+        "returns the number of grains on the square"
+      ],
+      "description": "grains on square 32",
+      "property": "square",
+      "args": [
+        {
+          "name": "square",
+          "value": 32
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 2147483648
+      }
+    },
+    {
+      "uuid": "c73b470a-5efb-4d53-9ac6-c5f6487f227b",
+      "name": "returns the number of grains on the square > grains on square 64",
+      "group": [
+        "returns the number of grains on the square"
+      ],
+      "description": "grains on square 64",
+      "property": "square",
+      "args": [
+        {
+          "name": "square",
+          "value": 64
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "$n": "9223372036854775808"
+        }
+      }
+    },
+    {
+      "uuid": "1d47d832-3e85-4974-9466-5bd35af484e3",
+      "name": "returns the number of grains on the square > square 0 is invalid",
+      "group": [
+        "returns the number of grains on the square"
+      ],
+      "description": "square 0 is invalid",
+      "property": "square",
+      "args": [
+        {
+          "name": "square",
+          "value": 0
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "square must be between 1 and 64"
+      }
+    },
+    {
+      "uuid": "61974483-eeb2-465e-be54-ca5dde366453",
+      "name": "returns the number of grains on the square > negative square is invalid",
+      "group": [
+        "returns the number of grains on the square"
+      ],
+      "description": "negative square is invalid",
+      "property": "square",
+      "args": [
+        {
+          "name": "square",
+          "value": -1
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "square must be between 1 and 64"
+      }
+    },
+    {
+      "uuid": "a95e4374-f32c-45a7-a10d-ffec475c012f",
+      "name": "returns the number of grains on the square > square greater than 64 is invalid",
+      "group": [
+        "returns the number of grains on the square"
+      ],
+      "description": "square greater than 64 is invalid",
+      "property": "square",
+      "args": [
+        {
+          "name": "square",
+          "value": 65
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "square must be between 1 and 64"
+      }
+    },
+    {
+      "uuid": "6eb07385-3659-4b45-a6be-9dc474222750",
+      "name": "returns the total number of grains on the board",
+      "group": [],
+      "description": "returns the total number of grains on the board",
+      "property": "total",
+      "args": [],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "$n": "18446744073709551615"
+        }
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 11,
+    "errorCaseCount": 3,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "bigint",
+      "error",
+      "int"
+    ]
+  }
+}

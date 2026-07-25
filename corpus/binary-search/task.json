@@ -1,0 +1,366 @@
+{
+  "schemaVersion": 1,
+  "id": "binary-search",
+  "title": "Binary Search",
+  "blurb": "Implement a binary search algorithm.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "introduction.md",
+    "instructions.md"
+  ],
+  "comments": [
+    "The error object is used to indicate that the value is not included in the array.",
+    "It should be replaced with the respective expression that is idiomatic",
+    "for the language that implements the tests.",
+    "Following https://github.com/exercism/problem-specifications/issues/234 the exercise",
+    "should NOT include checking whether the array is sorted as it defeats",
+    "the point of the binary search.",
+    "The exercise should utilize an array-like (i.e. constant-time indexed)",
+    "data structure and not a linked list. If something like an array is not",
+    "usually used in the language the problem should not be implemented.",
+    "See https://github.com/exercism/problem-specifications/issues/244 for details."
+  ],
+  "properties": [
+    {
+      "name": "find",
+      "argNames": [
+        "array",
+        "value"
+      ],
+      "arity": 2,
+      "caseCount": 11,
+      "returnsResult": true,
+      "argOrderVariants": [
+        [
+          "array",
+          "value"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "b55c24a9-a98d-4379-a08c-2adcf8ebeee8",
+      "name": "finds a value in an array with one element",
+      "group": [],
+      "description": "finds a value in an array with one element",
+      "property": "find",
+      "args": [
+        {
+          "name": "array",
+          "value": [
+            6
+          ]
+        },
+        {
+          "name": "value",
+          "value": 6
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "73469346-b0a0-4011-89bf-989e443d503d",
+      "name": "finds a value in the middle of an array",
+      "group": [],
+      "description": "finds a value in the middle of an array",
+      "property": "find",
+      "args": [
+        {
+          "name": "array",
+          "value": [
+            1,
+            3,
+            4,
+            6,
+            8,
+            9,
+            11
+          ]
+        },
+        {
+          "name": "value",
+          "value": 6
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 3
+      }
+    },
+    {
+      "uuid": "327bc482-ab85-424e-a724-fb4658e66ddb",
+      "name": "finds a value at the beginning of an array",
+      "group": [],
+      "description": "finds a value at the beginning of an array",
+      "property": "find",
+      "args": [
+        {
+          "name": "array",
+          "value": [
+            1,
+            3,
+            4,
+            6,
+            8,
+            9,
+            11
+          ]
+        },
+        {
+          "name": "value",
+          "value": 1
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "f9f94b16-fe5e-472c-85ea-c513804c7d59",
+      "name": "finds a value at the end of an array",
+      "group": [],
+      "description": "finds a value at the end of an array",
+      "property": "find",
+      "args": [
+        {
+          "name": "array",
+          "value": [
+            1,
+            3,
+            4,
+            6,
+            8,
+            9,
+            11
+          ]
+        },
+        {
+          "name": "value",
+          "value": 11
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 6
+      }
+    },
+    {
+      "uuid": "f0068905-26e3-4342-856d-ad153cadb338",
+      "name": "finds a value in an array of odd length",
+      "group": [],
+      "description": "finds a value in an array of odd length",
+      "property": "find",
+      "args": [
+        {
+          "name": "array",
+          "value": [
+            1,
+            3,
+            5,
+            8,
+            13,
+            21,
+            34,
+            55,
+            89,
+            144,
+            233,
+            377,
+            634
+          ]
+        },
+        {
+          "name": "value",
+          "value": 144
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 9
+      }
+    },
+    {
+      "uuid": "fc316b12-c8b3-4f5e-9e89-532b3389de8c",
+      "name": "finds a value in an array of even length",
+      "group": [],
+      "description": "finds a value in an array of even length",
+      "property": "find",
+      "args": [
+        {
+          "name": "array",
+          "value": [
+            1,
+            3,
+            5,
+            8,
+            13,
+            21,
+            34,
+            55,
+            89,
+            144,
+            233,
+            377
+          ]
+        },
+        {
+          "name": "value",
+          "value": 21
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 5
+      }
+    },
+    {
+      "uuid": "da7db20a-354f-49f7-a6a1-650a54998aa6",
+      "name": "identifies that a value is not included in the array",
+      "group": [],
+      "description": "identifies that a value is not included in the array",
+      "property": "find",
+      "args": [
+        {
+          "name": "array",
+          "value": [
+            1,
+            3,
+            4,
+            6,
+            8,
+            9,
+            11
+          ]
+        },
+        {
+          "name": "value",
+          "value": 7
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "value not in array"
+      }
+    },
+    {
+      "uuid": "95d869ff-3daf-4c79-b622-6e805c675f97",
+      "name": "a value smaller than the array's smallest value is not found",
+      "group": [],
+      "description": "a value smaller than the array's smallest value is not found",
+      "property": "find",
+      "args": [
+        {
+          "name": "array",
+          "value": [
+            1,
+            3,
+            4,
+            6,
+            8,
+            9,
+            11
+          ]
+        },
+        {
+          "name": "value",
+          "value": 0
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "value not in array"
+      }
+    },
+    {
+      "uuid": "8b24ef45-6e51-4a94-9eac-c2bf38fdb0ba",
+      "name": "a value larger than the array's largest value is not found",
+      "group": [],
+      "description": "a value larger than the array's largest value is not found",
+      "property": "find",
+      "args": [
+        {
+          "name": "array",
+          "value": [
+            1,
+            3,
+            4,
+            6,
+            8,
+            9,
+            11
+          ]
+        },
+        {
+          "name": "value",
+          "value": 13
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "value not in array"
+      }
+    },
+    {
+      "uuid": "f439a0fa-cf42-4262-8ad1-64bf41ce566a",
+      "name": "nothing is found in an empty array",
+      "group": [],
+      "description": "nothing is found in an empty array",
+      "property": "find",
+      "args": [
+        {
+          "name": "array",
+          "value": []
+        },
+        {
+          "name": "value",
+          "value": 1
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "value not in array"
+      }
+    },
+    {
+      "uuid": "2c353967-b56d-40b8-acff-ce43115eed64",
+      "name": "nothing is found when the left and right bounds cross",
+      "group": [],
+      "description": "nothing is found when the left and right bounds cross",
+      "property": "find",
+      "args": [
+        {
+          "name": "array",
+          "value": [
+            1,
+            2
+          ]
+        },
+        {
+          "name": "value",
+          "value": 0
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "value not in array"
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 11,
+    "errorCaseCount": 5,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "array",
+      "error",
+      "int"
+    ]
+  }
+}

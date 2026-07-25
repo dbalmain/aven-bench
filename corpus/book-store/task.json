@@ -1,0 +1,509 @@
+{
+  "schemaVersion": 1,
+  "id": "book-store",
+  "title": "Book Store",
+  "blurb": "To try and encourage more sales of different books from a popular 5 book series, a bookshop has decided to offer discounts of multiple-book purchases.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [
+    "Calculate lowest price for a shopping basket containing books only from ",
+    "a single series.  There is no discount advantage for having more than ",
+    "one copy of any single book in a grouping.",
+    "implementors should use proper fixed-point or currency data types of the ",
+    "corresponding language and not float.",
+    "All 'expected' amounts are in cents."
+  ],
+  "properties": [
+    {
+      "name": "total",
+      "argNames": [
+        "basket"
+      ],
+      "arity": 1,
+      "caseCount": 18,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "basket"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "17146bd5-2e80-4557-ab4c-05632b6b0d01",
+      "name": "Only a single book",
+      "group": [],
+      "description": "Only a single book",
+      "property": "total",
+      "args": [
+        {
+          "name": "basket",
+          "value": [
+            1
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 800
+      }
+    },
+    {
+      "uuid": "cc2de9ac-ff2a-4efd-b7c7-bfe0f43271ce",
+      "name": "Two of the same book",
+      "group": [],
+      "description": "Two of the same book",
+      "property": "total",
+      "args": [
+        {
+          "name": "basket",
+          "value": [
+            2,
+            2
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 1600
+      }
+    },
+    {
+      "uuid": "5a86eac0-45d2-46aa-bbf0-266b94393a1a",
+      "name": "Empty basket",
+      "group": [],
+      "description": "Empty basket",
+      "property": "total",
+      "args": [
+        {
+          "name": "basket",
+          "value": []
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "158bd19a-3db4-4468-ae85-e0638a688990",
+      "name": "Two different books",
+      "group": [],
+      "description": "Two different books",
+      "property": "total",
+      "args": [
+        {
+          "name": "basket",
+          "value": [
+            1,
+            2
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 1520
+      }
+    },
+    {
+      "uuid": "f3833f6b-9332-4a1f-ad98-6c3f8e30e163",
+      "name": "Three different books",
+      "group": [],
+      "description": "Three different books",
+      "property": "total",
+      "args": [
+        {
+          "name": "basket",
+          "value": [
+            1,
+            2,
+            3
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 2160
+      }
+    },
+    {
+      "uuid": "1951a1db-2fb6-4cd1-a69a-f691b6dd30a2",
+      "name": "Four different books",
+      "group": [],
+      "description": "Four different books",
+      "property": "total",
+      "args": [
+        {
+          "name": "basket",
+          "value": [
+            1,
+            2,
+            3,
+            4
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 2560
+      }
+    },
+    {
+      "uuid": "d70f6682-3019-4c3f-aede-83c6a8c647a3",
+      "name": "Five different books",
+      "group": [],
+      "description": "Five different books",
+      "property": "total",
+      "args": [
+        {
+          "name": "basket",
+          "value": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 3000
+      }
+    },
+    {
+      "uuid": "78cacb57-911a-45f1-be52-2a5bd428c634",
+      "name": "Two groups of four is cheaper than group of five plus group of three",
+      "group": [],
+      "description": "Two groups of four is cheaper than group of five plus group of three",
+      "property": "total",
+      "args": [
+        {
+          "name": "basket",
+          "value": [
+            1,
+            1,
+            2,
+            2,
+            3,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 5120
+      }
+    },
+    {
+      "uuid": "f808b5a4-e01f-4c0d-881f-f7b90d9739da",
+      "name": "Two groups of four is cheaper than groups of five and three",
+      "group": [],
+      "description": "Two groups of four is cheaper than groups of five and three",
+      "property": "total",
+      "args": [
+        {
+          "name": "basket",
+          "value": [
+            1,
+            1,
+            2,
+            3,
+            4,
+            4,
+            5,
+            5
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 5120
+      }
+    },
+    {
+      "uuid": "fe96401c-5268-4be2-9d9e-19b76478007c",
+      "name": "Group of four plus group of two is cheaper than two groups of three",
+      "group": [],
+      "description": "Group of four plus group of two is cheaper than two groups of three",
+      "property": "total",
+      "args": [
+        {
+          "name": "basket",
+          "value": [
+            1,
+            1,
+            2,
+            2,
+            3,
+            4
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 4080
+      }
+    },
+    {
+      "uuid": "68ea9b78-10ad-420e-a766-836a501d3633",
+      "name": "Two each of first four books and one copy each of rest",
+      "group": [],
+      "description": "Two each of first four books and one copy each of rest",
+      "property": "total",
+      "args": [
+        {
+          "name": "basket",
+          "value": [
+            1,
+            1,
+            2,
+            2,
+            3,
+            3,
+            4,
+            4,
+            5
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 5560
+      }
+    },
+    {
+      "uuid": "c0a779d5-a40c-47ae-9828-a340e936b866",
+      "name": "Two copies of each book",
+      "group": [],
+      "description": "Two copies of each book",
+      "property": "total",
+      "args": [
+        {
+          "name": "basket",
+          "value": [
+            1,
+            1,
+            2,
+            2,
+            3,
+            3,
+            4,
+            4,
+            5,
+            5
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 6000
+      }
+    },
+    {
+      "uuid": "18fd86fe-08f1-4b68-969b-392b8af20513",
+      "name": "Three copies of first book and two each of remaining",
+      "group": [],
+      "description": "Three copies of first book and two each of remaining",
+      "property": "total",
+      "args": [
+        {
+          "name": "basket",
+          "value": [
+            1,
+            1,
+            2,
+            2,
+            3,
+            3,
+            4,
+            4,
+            5,
+            5,
+            1
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 6800
+      }
+    },
+    {
+      "uuid": "0b19a24d-e4cf-4ec8-9db2-8899a41af0da",
+      "name": "Three each of first two books and two each of remaining books",
+      "group": [],
+      "description": "Three each of first two books and two each of remaining books",
+      "property": "total",
+      "args": [
+        {
+          "name": "basket",
+          "value": [
+            1,
+            1,
+            2,
+            2,
+            3,
+            3,
+            4,
+            4,
+            5,
+            5,
+            1,
+            2
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 7520
+      }
+    },
+    {
+      "uuid": "bb376344-4fb2-49ab-ab85-e38d8354a58d",
+      "name": "Four groups of four are cheaper than two groups each of five and three",
+      "group": [],
+      "description": "Four groups of four are cheaper than two groups each of five and three",
+      "property": "total",
+      "args": [
+        {
+          "name": "basket",
+          "value": [
+            1,
+            1,
+            2,
+            2,
+            3,
+            3,
+            4,
+            5,
+            1,
+            1,
+            2,
+            2,
+            3,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 10240
+      }
+    },
+    {
+      "uuid": "5260ddde-2703-4915-b45a-e54dbbac4303",
+      "name": "Check that groups of four are created properly even when there are more groups of three than groups of five",
+      "group": [],
+      "description": "Check that groups of four are created properly even when there are more groups of three than groups of five",
+      "property": "total",
+      "args": [
+        {
+          "name": "basket",
+          "value": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            4,
+            4,
+            5,
+            5
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 14560
+      }
+    },
+    {
+      "uuid": "b0478278-c551-4747-b0fc-7e0be3158b1f",
+      "name": "One group of one and four is cheaper than one group of two and three",
+      "group": [],
+      "description": "One group of one and four is cheaper than one group of two and three",
+      "property": "total",
+      "args": [
+        {
+          "name": "basket",
+          "value": [
+            1,
+            1,
+            2,
+            3,
+            4
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 3360
+      }
+    },
+    {
+      "uuid": "cf868453-6484-4ae1-9dfc-f8ee85bbde01",
+      "name": "One group of one and two plus three groups of four is cheaper than one group of each size",
+      "group": [],
+      "description": "One group of one and two plus three groups of four is cheaper than one group of each size",
+      "property": "total",
+      "args": [
+        {
+          "name": "basket",
+          "value": [
+            1,
+            2,
+            2,
+            3,
+            3,
+            3,
+            4,
+            4,
+            4,
+            4,
+            5,
+            5,
+            5,
+            5,
+            5
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 10000
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 18,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "array",
+      "int"
+    ]
+  }
+}

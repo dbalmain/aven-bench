@@ -1,0 +1,752 @@
+{
+  "schemaVersion": 1,
+  "id": "relative-distance",
+  "title": "Relative Distance",
+  "blurb": "Given a family tree, calculate the degree of separation.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "introduction.md",
+    "instructions.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "degreeOfSeparation",
+      "argNames": [
+        "familyTree",
+        "personA",
+        "personB"
+      ],
+      "arity": 3,
+      "caseCount": 7,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "familyTree",
+          "personA",
+          "personB"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "4a1ded74-5d32-47fb-8ae5-321f51d06b5b",
+      "name": "Direct parent-child relation",
+      "group": [],
+      "description": "Direct parent-child relation",
+      "property": "degreeOfSeparation",
+      "args": [
+        {
+          "name": "familyTree",
+          "value": {
+            "Vera": [
+              "Tomoko"
+            ],
+            "Tomoko": [
+              "Aditi"
+            ]
+          }
+        },
+        {
+          "name": "personA",
+          "value": "Vera"
+        },
+        {
+          "name": "personB",
+          "value": "Tomoko"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 1
+      }
+    },
+    {
+      "uuid": "30d17269-83e9-4f82-a0d7-8ef9656d8dce",
+      "name": "Sibling relationship",
+      "group": [],
+      "description": "Sibling relationship",
+      "property": "degreeOfSeparation",
+      "args": [
+        {
+          "name": "familyTree",
+          "value": {
+            "Dalia": [
+              "Olga",
+              "Yassin"
+            ]
+          }
+        },
+        {
+          "name": "personA",
+          "value": "Olga"
+        },
+        {
+          "name": "personB",
+          "value": "Yassin"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 1
+      }
+    },
+    {
+      "uuid": "8dffa27d-a8ab-496d-80b3-2f21c77648b5",
+      "name": "Two degrees of separation, grandchild",
+      "group": [],
+      "description": "Two degrees of separation, grandchild",
+      "property": "degreeOfSeparation",
+      "args": [
+        {
+          "name": "familyTree",
+          "value": {
+            "Khadija": [
+              "Mateo"
+            ],
+            "Mateo": [
+              "Rami"
+            ]
+          }
+        },
+        {
+          "name": "personA",
+          "value": "Khadija"
+        },
+        {
+          "name": "personB",
+          "value": "Rami"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 2
+      }
+    },
+    {
+      "uuid": "34e56ec1-d528-4a42-908e-020a4606ee60",
+      "name": "Unrelated individuals",
+      "group": [],
+      "description": "Unrelated individuals",
+      "property": "degreeOfSeparation",
+      "args": [
+        {
+          "name": "familyTree",
+          "value": {
+            "Priya": [
+              "Rami"
+            ],
+            "Kaito": [
+              "Elif"
+            ]
+          }
+        },
+        {
+          "name": "personA",
+          "value": "Priya"
+        },
+        {
+          "name": "personB",
+          "value": "Kaito"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": null
+      }
+    },
+    {
+      "uuid": "93ffe989-bad2-48c4-878f-3acb1ce2611b",
+      "name": "Complex graph, cousins",
+      "group": [],
+      "description": "Complex graph, cousins",
+      "property": "degreeOfSeparation",
+      "args": [
+        {
+          "name": "familyTree",
+          "value": {
+            "Aiko": [
+              "Bao",
+              "Carlos"
+            ],
+            "Bao": [
+              "Dalia",
+              "Elias"
+            ],
+            "Carlos": [
+              "Fatima",
+              "Gustavo"
+            ],
+            "Dalia": [
+              "Hassan",
+              "Isla"
+            ],
+            "Elias": [
+              "Javier"
+            ],
+            "Fatima": [
+              "Khadija",
+              "Liam"
+            ],
+            "Gustavo": [
+              "Mina"
+            ],
+            "Hassan": [
+              "Noah",
+              "Olga"
+            ],
+            "Isla": [
+              "Pedro"
+            ],
+            "Javier": [
+              "Quynh",
+              "Ravi"
+            ],
+            "Khadija": [
+              "Sofia"
+            ],
+            "Liam": [
+              "Tariq",
+              "Uma"
+            ],
+            "Mina": [
+              "Viktor",
+              "Wang"
+            ],
+            "Noah": [
+              "Xiomara"
+            ],
+            "Olga": [
+              "Yuki"
+            ],
+            "Pedro": [
+              "Zane",
+              "Aditi"
+            ],
+            "Quynh": [
+              "Boris"
+            ],
+            "Ravi": [
+              "Celine"
+            ],
+            "Sofia": [
+              "Diego",
+              "Elif"
+            ],
+            "Tariq": [
+              "Farah"
+            ],
+            "Uma": [
+              "Giorgio"
+            ],
+            "Viktor": [
+              "Hana",
+              "Ian"
+            ],
+            "Wang": [
+              "Jing"
+            ],
+            "Xiomara": [
+              "Kaito"
+            ],
+            "Yuki": [
+              "Leila"
+            ],
+            "Zane": [
+              "Mateo"
+            ],
+            "Aditi": [
+              "Nia"
+            ],
+            "Boris": [
+              "Oscar"
+            ],
+            "Celine": [
+              "Priya"
+            ],
+            "Diego": [
+              "Qi"
+            ],
+            "Elif": [
+              "Rami"
+            ],
+            "Farah": [
+              "Sven"
+            ],
+            "Giorgio": [
+              "Tomoko"
+            ],
+            "Hana": [
+              "Umar"
+            ],
+            "Ian": [
+              "Vera"
+            ],
+            "Jing": [
+              "Wyatt"
+            ],
+            "Kaito": [
+              "Xia"
+            ],
+            "Leila": [
+              "Yassin"
+            ],
+            "Mateo": [
+              "Zara"
+            ],
+            "Nia": [
+              "Antonio"
+            ],
+            "Oscar": [
+              "Bianca"
+            ],
+            "Priya": [
+              "Cai"
+            ],
+            "Qi": [
+              "Dimitri"
+            ],
+            "Rami": [
+              "Ewa"
+            ],
+            "Sven": [
+              "Fabio"
+            ],
+            "Tomoko": [
+              "Gabriela"
+            ],
+            "Umar": [
+              "Helena"
+            ],
+            "Vera": [
+              "Igor"
+            ],
+            "Wyatt": [
+              "Jun"
+            ],
+            "Xia": [
+              "Kim"
+            ],
+            "Yassin": [
+              "Lucia"
+            ],
+            "Zara": [
+              "Mohammed"
+            ]
+          }
+        },
+        {
+          "name": "personA",
+          "value": "Dimitri"
+        },
+        {
+          "name": "personB",
+          "value": "Fabio"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 9
+      }
+    },
+    {
+      "uuid": "2cc2e76b-013a-433c-9486-1dbe29bf06e5",
+      "name": "Complex graph, no shortcut, far removed nephew",
+      "group": [],
+      "description": "Complex graph, no shortcut, far removed nephew",
+      "property": "degreeOfSeparation",
+      "args": [
+        {
+          "name": "familyTree",
+          "value": {
+            "Aiko": [
+              "Bao",
+              "Carlos"
+            ],
+            "Bao": [
+              "Dalia",
+              "Elias"
+            ],
+            "Carlos": [
+              "Fatima",
+              "Gustavo"
+            ],
+            "Dalia": [
+              "Hassan",
+              "Isla"
+            ],
+            "Elias": [
+              "Javier"
+            ],
+            "Fatima": [
+              "Khadija",
+              "Liam"
+            ],
+            "Gustavo": [
+              "Mina"
+            ],
+            "Hassan": [
+              "Noah",
+              "Olga"
+            ],
+            "Isla": [
+              "Pedro"
+            ],
+            "Javier": [
+              "Quynh",
+              "Ravi"
+            ],
+            "Khadija": [
+              "Sofia"
+            ],
+            "Liam": [
+              "Tariq",
+              "Uma"
+            ],
+            "Mina": [
+              "Viktor",
+              "Wang"
+            ],
+            "Noah": [
+              "Xiomara"
+            ],
+            "Olga": [
+              "Yuki"
+            ],
+            "Pedro": [
+              "Zane",
+              "Aditi"
+            ],
+            "Quynh": [
+              "Boris"
+            ],
+            "Ravi": [
+              "Celine"
+            ],
+            "Sofia": [
+              "Diego",
+              "Elif"
+            ],
+            "Tariq": [
+              "Farah"
+            ],
+            "Uma": [
+              "Giorgio"
+            ],
+            "Viktor": [
+              "Hana",
+              "Ian"
+            ],
+            "Wang": [
+              "Jing"
+            ],
+            "Xiomara": [
+              "Kaito"
+            ],
+            "Yuki": [
+              "Leila"
+            ],
+            "Zane": [
+              "Mateo"
+            ],
+            "Aditi": [
+              "Nia"
+            ],
+            "Boris": [
+              "Oscar"
+            ],
+            "Celine": [
+              "Priya"
+            ],
+            "Diego": [
+              "Qi"
+            ],
+            "Elif": [
+              "Rami"
+            ],
+            "Farah": [
+              "Sven"
+            ],
+            "Giorgio": [
+              "Tomoko"
+            ],
+            "Hana": [
+              "Umar"
+            ],
+            "Ian": [
+              "Vera"
+            ],
+            "Jing": [
+              "Wyatt"
+            ],
+            "Kaito": [
+              "Xia"
+            ],
+            "Leila": [
+              "Yassin"
+            ],
+            "Mateo": [
+              "Zara"
+            ],
+            "Nia": [
+              "Antonio"
+            ],
+            "Oscar": [
+              "Bianca"
+            ],
+            "Priya": [
+              "Cai"
+            ],
+            "Qi": [
+              "Dimitri"
+            ],
+            "Rami": [
+              "Ewa"
+            ],
+            "Sven": [
+              "Fabio"
+            ],
+            "Tomoko": [
+              "Gabriela"
+            ],
+            "Umar": [
+              "Helena"
+            ],
+            "Vera": [
+              "Igor"
+            ],
+            "Wyatt": [
+              "Jun"
+            ],
+            "Xia": [
+              "Kim"
+            ],
+            "Yassin": [
+              "Lucia"
+            ],
+            "Zara": [
+              "Mohammed"
+            ]
+          }
+        },
+        {
+          "name": "personA",
+          "value": "Lucia"
+        },
+        {
+          "name": "personB",
+          "value": "Jun"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 14
+      }
+    },
+    {
+      "uuid": "46c9fbcb-e464-455f-a718-049ea3c7400a",
+      "name": "Complex graph, some shortcuts, cross-down and cross-up, cousins several times removed, with unrelated family tree",
+      "group": [],
+      "description": "Complex graph, some shortcuts, cross-down and cross-up, cousins several times removed, with unrelated family tree",
+      "property": "degreeOfSeparation",
+      "args": [
+        {
+          "name": "familyTree",
+          "value": {
+            "Aiko": [
+              "Bao",
+              "Carlos"
+            ],
+            "Bao": [
+              "Dalia"
+            ],
+            "Carlos": [
+              "Fatima",
+              "Gustavo"
+            ],
+            "Dalia": [
+              "Hassan",
+              "Isla"
+            ],
+            "Fatima": [
+              "Khadija",
+              "Liam"
+            ],
+            "Gustavo": [
+              "Mina"
+            ],
+            "Hassan": [
+              "Noah",
+              "Olga"
+            ],
+            "Isla": [
+              "Pedro"
+            ],
+            "Javier": [
+              "Quynh",
+              "Ravi"
+            ],
+            "Khadija": [
+              "Sofia"
+            ],
+            "Liam": [
+              "Tariq",
+              "Uma"
+            ],
+            "Mina": [
+              "Viktor",
+              "Wang"
+            ],
+            "Noah": [
+              "Xiomara"
+            ],
+            "Olga": [
+              "Yuki"
+            ],
+            "Pedro": [
+              "Zane",
+              "Aditi"
+            ],
+            "Quynh": [
+              "Boris"
+            ],
+            "Ravi": [
+              "Celine"
+            ],
+            "Sofia": [
+              "Diego",
+              "Elif"
+            ],
+            "Tariq": [
+              "Farah"
+            ],
+            "Uma": [
+              "Giorgio"
+            ],
+            "Viktor": [
+              "Hana",
+              "Ian"
+            ],
+            "Wang": [
+              "Jing"
+            ],
+            "Xiomara": [
+              "Kaito"
+            ],
+            "Yuki": [
+              "Leila"
+            ],
+            "Zane": [
+              "Mateo"
+            ],
+            "Aditi": [
+              "Nia"
+            ],
+            "Boris": [
+              "Oscar"
+            ],
+            "Celine": [
+              "Priya"
+            ],
+            "Diego": [
+              "Qi"
+            ],
+            "Elif": [
+              "Rami"
+            ],
+            "Farah": [
+              "Sven"
+            ],
+            "Giorgio": [
+              "Tomoko"
+            ],
+            "Hana": [
+              "Umar"
+            ],
+            "Ian": [
+              "Vera"
+            ],
+            "Jing": [
+              "Wyatt"
+            ],
+            "Kaito": [
+              "Xia"
+            ],
+            "Leila": [
+              "Yassin"
+            ],
+            "Mateo": [
+              "Zara"
+            ],
+            "Nia": [
+              "Antonio"
+            ],
+            "Oscar": [
+              "Bianca"
+            ],
+            "Priya": [
+              "Cai"
+            ],
+            "Qi": [
+              "Dimitri"
+            ],
+            "Rami": [
+              "Ewa"
+            ],
+            "Sven": [
+              "Fabio"
+            ],
+            "Tomoko": [
+              "Gabriela"
+            ],
+            "Umar": [
+              "Helena"
+            ],
+            "Vera": [
+              "Igor"
+            ],
+            "Wyatt": [
+              "Jun"
+            ],
+            "Xia": [
+              "Kim"
+            ],
+            "Yassin": [
+              "Lucia"
+            ],
+            "Zara": [
+              "Mohammed"
+            ]
+          }
+        },
+        {
+          "name": "personA",
+          "value": "Wyatt"
+        },
+        {
+          "name": "personB",
+          "value": "Xia"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 12
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 7,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "array",
+      "int",
+      "null",
+      "record",
+      "string"
+    ]
+  }
+}

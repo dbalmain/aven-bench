@@ -1,0 +1,1460 @@
+{
+  "schemaVersion": 1,
+  "id": "clock",
+  "title": "Clock",
+  "blurb": "Implement a clock that handles times without dates.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [
+    "Most languages require constructing a clock with initial values,",
+    "adding or subtracting some number of minutes, and testing equality",
+    "in some language-native way.  Negative and out of range values are",
+    "generally expected to wrap around rather than represent errors."
+  ],
+  "properties": [
+    {
+      "name": "create",
+      "argNames": [
+        "hour",
+        "minute"
+      ],
+      "arity": 2,
+      "caseCount": 20,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "hour",
+          "minute"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "add",
+      "argNames": [
+        "hour",
+        "minute",
+        "value"
+      ],
+      "arity": 3,
+      "caseCount": 8,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "hour",
+          "minute",
+          "value"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "subtract",
+      "argNames": [
+        "hour",
+        "minute",
+        "value"
+      ],
+      "arity": 3,
+      "caseCount": 8,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "hour",
+          "minute",
+          "value"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "equal",
+      "argNames": [
+        "clock1",
+        "clock2"
+      ],
+      "arity": 2,
+      "caseCount": 16,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "clock1",
+          "clock2"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "a577bacc-106b-496e-9792-b3083ea8705e",
+      "name": "Create a new clock with an initial time > on the hour",
+      "group": [
+        "Create a new clock with an initial time"
+      ],
+      "description": "on the hour",
+      "property": "create",
+      "args": [
+        {
+          "name": "hour",
+          "value": 8
+        },
+        {
+          "name": "minute",
+          "value": 0
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "08:00"
+      }
+    },
+    {
+      "uuid": "b5d0c360-3b88-489b-8e84-68a1c7a4fa23",
+      "name": "Create a new clock with an initial time > past the hour",
+      "group": [
+        "Create a new clock with an initial time"
+      ],
+      "description": "past the hour",
+      "property": "create",
+      "args": [
+        {
+          "name": "hour",
+          "value": 11
+        },
+        {
+          "name": "minute",
+          "value": 9
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "11:09"
+      }
+    },
+    {
+      "uuid": "473223f4-65f3-46ff-a9f7-7663c7e59440",
+      "name": "Create a new clock with an initial time > midnight is zero hours",
+      "group": [
+        "Create a new clock with an initial time"
+      ],
+      "description": "midnight is zero hours",
+      "property": "create",
+      "args": [
+        {
+          "name": "hour",
+          "value": 24
+        },
+        {
+          "name": "minute",
+          "value": 0
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "00:00"
+      }
+    },
+    {
+      "uuid": "ca95d24a-5924-447d-9a96-b91c8334725c",
+      "name": "Create a new clock with an initial time > hour rolls over",
+      "group": [
+        "Create a new clock with an initial time"
+      ],
+      "description": "hour rolls over",
+      "property": "create",
+      "args": [
+        {
+          "name": "hour",
+          "value": 25
+        },
+        {
+          "name": "minute",
+          "value": 0
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "01:00"
+      }
+    },
+    {
+      "uuid": "f3826de0-0925-4d69-8ac8-89aea7e52b78",
+      "name": "Create a new clock with an initial time > hour rolls over continuously",
+      "group": [
+        "Create a new clock with an initial time"
+      ],
+      "description": "hour rolls over continuously",
+      "property": "create",
+      "args": [
+        {
+          "name": "hour",
+          "value": 100
+        },
+        {
+          "name": "minute",
+          "value": 0
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "04:00"
+      }
+    },
+    {
+      "uuid": "a02f7edf-dfd4-4b11-b21a-86de3cc6a95c",
+      "name": "Create a new clock with an initial time > sixty minutes is next hour",
+      "group": [
+        "Create a new clock with an initial time"
+      ],
+      "description": "sixty minutes is next hour",
+      "property": "create",
+      "args": [
+        {
+          "name": "hour",
+          "value": 1
+        },
+        {
+          "name": "minute",
+          "value": 60
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "02:00"
+      }
+    },
+    {
+      "uuid": "8f520df6-b816-444d-b90f-8a477789beb5",
+      "name": "Create a new clock with an initial time > minutes roll over",
+      "group": [
+        "Create a new clock with an initial time"
+      ],
+      "description": "minutes roll over",
+      "property": "create",
+      "args": [
+        {
+          "name": "hour",
+          "value": 0
+        },
+        {
+          "name": "minute",
+          "value": 160
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "02:40"
+      }
+    },
+    {
+      "uuid": "c75c091b-47ac-4655-8d40-643767fc4eed",
+      "name": "Create a new clock with an initial time > minutes roll over continuously",
+      "group": [
+        "Create a new clock with an initial time"
+      ],
+      "description": "minutes roll over continuously",
+      "property": "create",
+      "args": [
+        {
+          "name": "hour",
+          "value": 0
+        },
+        {
+          "name": "minute",
+          "value": 1723
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "04:43"
+      }
+    },
+    {
+      "uuid": "06343ecb-cf39-419d-a3f5-dcbae0cc4c57",
+      "name": "Create a new clock with an initial time > hour and minutes roll over",
+      "group": [
+        "Create a new clock with an initial time"
+      ],
+      "description": "hour and minutes roll over",
+      "property": "create",
+      "args": [
+        {
+          "name": "hour",
+          "value": 25
+        },
+        {
+          "name": "minute",
+          "value": 160
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "03:40"
+      }
+    },
+    {
+      "uuid": "be60810e-f5d9-4b58-9351-a9d1e90e660c",
+      "name": "Create a new clock with an initial time > hour and minutes roll over continuously",
+      "group": [
+        "Create a new clock with an initial time"
+      ],
+      "description": "hour and minutes roll over continuously",
+      "property": "create",
+      "args": [
+        {
+          "name": "hour",
+          "value": 201
+        },
+        {
+          "name": "minute",
+          "value": 3001
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "11:01"
+      }
+    },
+    {
+      "uuid": "1689107b-0b5c-4bea-aad3-65ec9859368a",
+      "name": "Create a new clock with an initial time > hour and minutes roll over to exactly midnight",
+      "group": [
+        "Create a new clock with an initial time"
+      ],
+      "description": "hour and minutes roll over to exactly midnight",
+      "property": "create",
+      "args": [
+        {
+          "name": "hour",
+          "value": 72
+        },
+        {
+          "name": "minute",
+          "value": 8640
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "00:00"
+      }
+    },
+    {
+      "uuid": "d3088ee8-91b7-4446-9e9d-5e2ad6219d91",
+      "name": "Create a new clock with an initial time > negative hour",
+      "group": [
+        "Create a new clock with an initial time"
+      ],
+      "description": "negative hour",
+      "property": "create",
+      "args": [
+        {
+          "name": "hour",
+          "value": -1
+        },
+        {
+          "name": "minute",
+          "value": 15
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "23:15"
+      }
+    },
+    {
+      "uuid": "77ef6921-f120-4d29-bade-80d54aa43b54",
+      "name": "Create a new clock with an initial time > negative hour rolls over",
+      "group": [
+        "Create a new clock with an initial time"
+      ],
+      "description": "negative hour rolls over",
+      "property": "create",
+      "args": [
+        {
+          "name": "hour",
+          "value": -25
+        },
+        {
+          "name": "minute",
+          "value": 0
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "23:00"
+      }
+    },
+    {
+      "uuid": "359294b5-972f-4546-bb9a-a85559065234",
+      "name": "Create a new clock with an initial time > negative hour rolls over continuously",
+      "group": [
+        "Create a new clock with an initial time"
+      ],
+      "description": "negative hour rolls over continuously",
+      "property": "create",
+      "args": [
+        {
+          "name": "hour",
+          "value": -91
+        },
+        {
+          "name": "minute",
+          "value": 0
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "05:00"
+      }
+    },
+    {
+      "uuid": "509db8b7-ac19-47cc-bd3a-a9d2f30b03c0",
+      "name": "Create a new clock with an initial time > negative minutes",
+      "group": [
+        "Create a new clock with an initial time"
+      ],
+      "description": "negative minutes",
+      "property": "create",
+      "args": [
+        {
+          "name": "hour",
+          "value": 1
+        },
+        {
+          "name": "minute",
+          "value": -40
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "00:20"
+      }
+    },
+    {
+      "uuid": "5d6bb225-130f-4084-84fd-9e0df8996f2a",
+      "name": "Create a new clock with an initial time > negative minutes roll over",
+      "group": [
+        "Create a new clock with an initial time"
+      ],
+      "description": "negative minutes roll over",
+      "property": "create",
+      "args": [
+        {
+          "name": "hour",
+          "value": 1
+        },
+        {
+          "name": "minute",
+          "value": -160
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "22:20"
+      }
+    },
+    {
+      "uuid": "d483ceef-b520-4f0c-b94a-8d2d58cf0484",
+      "name": "Create a new clock with an initial time > negative minutes roll over continuously",
+      "group": [
+        "Create a new clock with an initial time"
+      ],
+      "description": "negative minutes roll over continuously",
+      "property": "create",
+      "args": [
+        {
+          "name": "hour",
+          "value": 1
+        },
+        {
+          "name": "minute",
+          "value": -4820
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "16:40"
+      }
+    },
+    {
+      "uuid": "1cd19447-19c6-44bf-9d04-9f8305ccb9ea",
+      "name": "Create a new clock with an initial time > negative sixty minutes is previous hour",
+      "group": [
+        "Create a new clock with an initial time"
+      ],
+      "description": "negative sixty minutes is previous hour",
+      "property": "create",
+      "args": [
+        {
+          "name": "hour",
+          "value": 2
+        },
+        {
+          "name": "minute",
+          "value": -60
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "01:00"
+      }
+    },
+    {
+      "uuid": "9d3053aa-4f47-4afc-bd45-d67a72cef4dc",
+      "name": "Create a new clock with an initial time > negative hour and minutes both roll over",
+      "group": [
+        "Create a new clock with an initial time"
+      ],
+      "description": "negative hour and minutes both roll over",
+      "property": "create",
+      "args": [
+        {
+          "name": "hour",
+          "value": -25
+        },
+        {
+          "name": "minute",
+          "value": -160
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "20:20"
+      }
+    },
+    {
+      "uuid": "51d41fcf-491e-4ca0-9cae-2aa4f0163ad4",
+      "name": "Create a new clock with an initial time > negative hour and minutes both roll over continuously",
+      "group": [
+        "Create a new clock with an initial time"
+      ],
+      "description": "negative hour and minutes both roll over continuously",
+      "property": "create",
+      "args": [
+        {
+          "name": "hour",
+          "value": -121
+        },
+        {
+          "name": "minute",
+          "value": -5810
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "22:10"
+      }
+    },
+    {
+      "uuid": "d098e723-ad29-4ef9-997a-2693c4c9d89a",
+      "name": "Add minutes > add minutes",
+      "group": [
+        "Add minutes"
+      ],
+      "description": "add minutes",
+      "property": "add",
+      "args": [
+        {
+          "name": "hour",
+          "value": 10
+        },
+        {
+          "name": "minute",
+          "value": 0
+        },
+        {
+          "name": "value",
+          "value": 3
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "10:03"
+      }
+    },
+    {
+      "uuid": "b6ec8f38-e53e-4b22-92a7-60dab1f485f4",
+      "name": "Add minutes > add no minutes",
+      "group": [
+        "Add minutes"
+      ],
+      "description": "add no minutes",
+      "property": "add",
+      "args": [
+        {
+          "name": "hour",
+          "value": 6
+        },
+        {
+          "name": "minute",
+          "value": 41
+        },
+        {
+          "name": "value",
+          "value": 0
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "06:41"
+      }
+    },
+    {
+      "uuid": "efd349dd-0785-453e-9ff8-d7452a8e7269",
+      "name": "Add minutes > add to next hour",
+      "group": [
+        "Add minutes"
+      ],
+      "description": "add to next hour",
+      "property": "add",
+      "args": [
+        {
+          "name": "hour",
+          "value": 0
+        },
+        {
+          "name": "minute",
+          "value": 45
+        },
+        {
+          "name": "value",
+          "value": 40
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "01:25"
+      }
+    },
+    {
+      "uuid": "749890f7-aba9-4702-acce-87becf4ef9fe",
+      "name": "Add minutes > add more than one hour",
+      "group": [
+        "Add minutes"
+      ],
+      "description": "add more than one hour",
+      "property": "add",
+      "args": [
+        {
+          "name": "hour",
+          "value": 10
+        },
+        {
+          "name": "minute",
+          "value": 0
+        },
+        {
+          "name": "value",
+          "value": 61
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "11:01"
+      }
+    },
+    {
+      "uuid": "da63e4c1-1584-46e3-8d18-c9dc802c1713",
+      "name": "Add minutes > add more than two hours with carry",
+      "group": [
+        "Add minutes"
+      ],
+      "description": "add more than two hours with carry",
+      "property": "add",
+      "args": [
+        {
+          "name": "hour",
+          "value": 0
+        },
+        {
+          "name": "minute",
+          "value": 45
+        },
+        {
+          "name": "value",
+          "value": 160
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "03:25"
+      }
+    },
+    {
+      "uuid": "be167a32-3d33-4cec-a8bc-accd47ddbb71",
+      "name": "Add minutes > add across midnight",
+      "group": [
+        "Add minutes"
+      ],
+      "description": "add across midnight",
+      "property": "add",
+      "args": [
+        {
+          "name": "hour",
+          "value": 23
+        },
+        {
+          "name": "minute",
+          "value": 59
+        },
+        {
+          "name": "value",
+          "value": 2
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "00:01"
+      }
+    },
+    {
+      "uuid": "6672541e-cdae-46e4-8be7-a820cc3be2a8",
+      "name": "Add minutes > add more than one day (1500 min = 25 hrs)",
+      "group": [
+        "Add minutes"
+      ],
+      "description": "add more than one day (1500 min = 25 hrs)",
+      "property": "add",
+      "args": [
+        {
+          "name": "hour",
+          "value": 5
+        },
+        {
+          "name": "minute",
+          "value": 32
+        },
+        {
+          "name": "value",
+          "value": 1500
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "06:32"
+      }
+    },
+    {
+      "uuid": "1918050d-c79b-4cb7-b707-b607e2745c7e",
+      "name": "Add minutes > add more than two days",
+      "group": [
+        "Add minutes"
+      ],
+      "description": "add more than two days",
+      "property": "add",
+      "args": [
+        {
+          "name": "hour",
+          "value": 1
+        },
+        {
+          "name": "minute",
+          "value": 1
+        },
+        {
+          "name": "value",
+          "value": 3500
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "11:21"
+      }
+    },
+    {
+      "uuid": "37336cac-5ede-43a5-9026-d426cbe40354",
+      "name": "Subtract minutes > subtract minutes",
+      "group": [
+        "Subtract minutes"
+      ],
+      "description": "subtract minutes",
+      "property": "subtract",
+      "args": [
+        {
+          "name": "hour",
+          "value": 10
+        },
+        {
+          "name": "minute",
+          "value": 3
+        },
+        {
+          "name": "value",
+          "value": 3
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "10:00"
+      }
+    },
+    {
+      "uuid": "0aafa4d0-3b5f-4b12-b3af-e3a9e09c047b",
+      "name": "Subtract minutes > subtract to previous hour",
+      "group": [
+        "Subtract minutes"
+      ],
+      "description": "subtract to previous hour",
+      "property": "subtract",
+      "args": [
+        {
+          "name": "hour",
+          "value": 10
+        },
+        {
+          "name": "minute",
+          "value": 3
+        },
+        {
+          "name": "value",
+          "value": 30
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "09:33"
+      }
+    },
+    {
+      "uuid": "9b4e809c-612f-4b15-aae0-1df0acb801b9",
+      "name": "Subtract minutes > subtract more than an hour",
+      "group": [
+        "Subtract minutes"
+      ],
+      "description": "subtract more than an hour",
+      "property": "subtract",
+      "args": [
+        {
+          "name": "hour",
+          "value": 10
+        },
+        {
+          "name": "minute",
+          "value": 3
+        },
+        {
+          "name": "value",
+          "value": 70
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "08:53"
+      }
+    },
+    {
+      "uuid": "8b04bb6a-3d33-4e6c-8de9-f5de6d2c70d6",
+      "name": "Subtract minutes > subtract across midnight",
+      "group": [
+        "Subtract minutes"
+      ],
+      "description": "subtract across midnight",
+      "property": "subtract",
+      "args": [
+        {
+          "name": "hour",
+          "value": 0
+        },
+        {
+          "name": "minute",
+          "value": 3
+        },
+        {
+          "name": "value",
+          "value": 4
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "23:59"
+      }
+    },
+    {
+      "uuid": "07c3bbf7-ce4d-4658-86e8-4a77b7a5ccd9",
+      "name": "Subtract minutes > subtract more than two hours",
+      "group": [
+        "Subtract minutes"
+      ],
+      "description": "subtract more than two hours",
+      "property": "subtract",
+      "args": [
+        {
+          "name": "hour",
+          "value": 0
+        },
+        {
+          "name": "minute",
+          "value": 0
+        },
+        {
+          "name": "value",
+          "value": 160
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "21:20"
+      }
+    },
+    {
+      "uuid": "90ac8a1b-761c-4342-9c9c-cdc3ed5db097",
+      "name": "Subtract minutes > subtract more than two hours with borrow",
+      "group": [
+        "Subtract minutes"
+      ],
+      "description": "subtract more than two hours with borrow",
+      "property": "subtract",
+      "args": [
+        {
+          "name": "hour",
+          "value": 6
+        },
+        {
+          "name": "minute",
+          "value": 15
+        },
+        {
+          "name": "value",
+          "value": 160
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "03:35"
+      }
+    },
+    {
+      "uuid": "2149f985-7136-44ad-9b29-ec023a97a2b7",
+      "name": "Subtract minutes > subtract more than one day (1500 min = 25 hrs)",
+      "group": [
+        "Subtract minutes"
+      ],
+      "description": "subtract more than one day (1500 min = 25 hrs)",
+      "property": "subtract",
+      "args": [
+        {
+          "name": "hour",
+          "value": 5
+        },
+        {
+          "name": "minute",
+          "value": 32
+        },
+        {
+          "name": "value",
+          "value": 1500
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "04:32"
+      }
+    },
+    {
+      "uuid": "ba11dbf0-ac27-4acb-ada9-3b853ec08c97",
+      "name": "Subtract minutes > subtract more than two days",
+      "group": [
+        "Subtract minutes"
+      ],
+      "description": "subtract more than two days",
+      "property": "subtract",
+      "args": [
+        {
+          "name": "hour",
+          "value": 2
+        },
+        {
+          "name": "minute",
+          "value": 20
+        },
+        {
+          "name": "value",
+          "value": 3000
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "00:20"
+      }
+    },
+    {
+      "uuid": "f2fdad51-499f-4c9b-a791-b28c9282e311",
+      "name": "Compare two clocks for equality > clocks with same time",
+      "group": [
+        "Compare two clocks for equality"
+      ],
+      "description": "clocks with same time",
+      "property": "equal",
+      "args": [
+        {
+          "name": "clock1",
+          "value": {
+            "hour": 15,
+            "minute": 37
+          }
+        },
+        {
+          "name": "clock2",
+          "value": {
+            "hour": 15,
+            "minute": 37
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "5d409d4b-f862-4960-901e-ec430160b768",
+      "name": "Compare two clocks for equality > clocks a minute apart",
+      "group": [
+        "Compare two clocks for equality"
+      ],
+      "description": "clocks a minute apart",
+      "property": "equal",
+      "args": [
+        {
+          "name": "clock1",
+          "value": {
+            "hour": 15,
+            "minute": 36
+          }
+        },
+        {
+          "name": "clock2",
+          "value": {
+            "hour": 15,
+            "minute": 37
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "uuid": "a6045fcf-2b52-4a47-8bb2-ef10a064cba5",
+      "name": "Compare two clocks for equality > clocks an hour apart",
+      "group": [
+        "Compare two clocks for equality"
+      ],
+      "description": "clocks an hour apart",
+      "property": "equal",
+      "args": [
+        {
+          "name": "clock1",
+          "value": {
+            "hour": 14,
+            "minute": 37
+          }
+        },
+        {
+          "name": "clock2",
+          "value": {
+            "hour": 15,
+            "minute": 37
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "uuid": "66b12758-0be5-448b-a13c-6a44bce83527",
+      "name": "Compare two clocks for equality > clocks with hour overflow",
+      "group": [
+        "Compare two clocks for equality"
+      ],
+      "description": "clocks with hour overflow",
+      "property": "equal",
+      "args": [
+        {
+          "name": "clock1",
+          "value": {
+            "hour": 10,
+            "minute": 37
+          }
+        },
+        {
+          "name": "clock2",
+          "value": {
+            "hour": 34,
+            "minute": 37
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "2b19960c-212e-4a71-9aac-c581592f8111",
+      "name": "Compare two clocks for equality > clocks with hour overflow by several days",
+      "group": [
+        "Compare two clocks for equality"
+      ],
+      "description": "clocks with hour overflow by several days",
+      "property": "equal",
+      "args": [
+        {
+          "name": "clock1",
+          "value": {
+            "hour": 3,
+            "minute": 11
+          }
+        },
+        {
+          "name": "clock2",
+          "value": {
+            "hour": 99,
+            "minute": 11
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "6f8c6541-afac-4a92-b0c2-b10d4e50269f",
+      "name": "Compare two clocks for equality > clocks with negative hour",
+      "group": [
+        "Compare two clocks for equality"
+      ],
+      "description": "clocks with negative hour",
+      "property": "equal",
+      "args": [
+        {
+          "name": "clock1",
+          "value": {
+            "hour": 22,
+            "minute": 40
+          }
+        },
+        {
+          "name": "clock2",
+          "value": {
+            "hour": -2,
+            "minute": 40
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "bb9d5a68-e324-4bf5-a75e-0e9b1f97a90d",
+      "name": "Compare two clocks for equality > clocks with negative hour that wraps",
+      "group": [
+        "Compare two clocks for equality"
+      ],
+      "description": "clocks with negative hour that wraps",
+      "property": "equal",
+      "args": [
+        {
+          "name": "clock1",
+          "value": {
+            "hour": 17,
+            "minute": 3
+          }
+        },
+        {
+          "name": "clock2",
+          "value": {
+            "hour": -31,
+            "minute": 3
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "56c0326d-565b-4d19-a26f-63b3205778b7",
+      "name": "Compare two clocks for equality > clocks with negative hour that wraps multiple times",
+      "group": [
+        "Compare two clocks for equality"
+      ],
+      "description": "clocks with negative hour that wraps multiple times",
+      "property": "equal",
+      "args": [
+        {
+          "name": "clock1",
+          "value": {
+            "hour": 13,
+            "minute": 49
+          }
+        },
+        {
+          "name": "clock2",
+          "value": {
+            "hour": -83,
+            "minute": 49
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "c90b9de8-ddff-4ffe-9858-da44a40fdbc2",
+      "name": "Compare two clocks for equality > clocks with minute overflow",
+      "group": [
+        "Compare two clocks for equality"
+      ],
+      "description": "clocks with minute overflow",
+      "property": "equal",
+      "args": [
+        {
+          "name": "clock1",
+          "value": {
+            "hour": 0,
+            "minute": 1
+          }
+        },
+        {
+          "name": "clock2",
+          "value": {
+            "hour": 0,
+            "minute": 1441
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "533a3dc5-59a7-491b-b728-a7a34fe325de",
+      "name": "Compare two clocks for equality > clocks with minute overflow by several days",
+      "group": [
+        "Compare two clocks for equality"
+      ],
+      "description": "clocks with minute overflow by several days",
+      "property": "equal",
+      "args": [
+        {
+          "name": "clock1",
+          "value": {
+            "hour": 2,
+            "minute": 2
+          }
+        },
+        {
+          "name": "clock2",
+          "value": {
+            "hour": 2,
+            "minute": 4322
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "fff49e15-f7b7-4692-a204-0f6052d62636",
+      "name": "Compare two clocks for equality > clocks with negative minute",
+      "group": [
+        "Compare two clocks for equality"
+      ],
+      "description": "clocks with negative minute",
+      "property": "equal",
+      "args": [
+        {
+          "name": "clock1",
+          "value": {
+            "hour": 2,
+            "minute": 40
+          }
+        },
+        {
+          "name": "clock2",
+          "value": {
+            "hour": 3,
+            "minute": -20
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "605c65bb-21bd-43eb-8f04-878edf508366",
+      "name": "Compare two clocks for equality > clocks with negative minute that wraps",
+      "group": [
+        "Compare two clocks for equality"
+      ],
+      "description": "clocks with negative minute that wraps",
+      "property": "equal",
+      "args": [
+        {
+          "name": "clock1",
+          "value": {
+            "hour": 4,
+            "minute": 10
+          }
+        },
+        {
+          "name": "clock2",
+          "value": {
+            "hour": 5,
+            "minute": -1490
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "b87e64ed-212a-4335-91fd-56da8421d077",
+      "name": "Compare two clocks for equality > clocks with negative minute that wraps multiple times",
+      "group": [
+        "Compare two clocks for equality"
+      ],
+      "description": "clocks with negative minute that wraps multiple times",
+      "property": "equal",
+      "args": [
+        {
+          "name": "clock1",
+          "value": {
+            "hour": 6,
+            "minute": 15
+          }
+        },
+        {
+          "name": "clock2",
+          "value": {
+            "hour": 6,
+            "minute": -4305
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "822fbf26-1f3b-4b13-b9bf-c914816b53dd",
+      "name": "Compare two clocks for equality > clocks with negative hours and minutes",
+      "group": [
+        "Compare two clocks for equality"
+      ],
+      "description": "clocks with negative hours and minutes",
+      "property": "equal",
+      "args": [
+        {
+          "name": "clock1",
+          "value": {
+            "hour": 7,
+            "minute": 32
+          }
+        },
+        {
+          "name": "clock2",
+          "value": {
+            "hour": -12,
+            "minute": -268
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "e787bccd-cf58-4a1d-841c-ff80eaaccfaa",
+      "name": "Compare two clocks for equality > clocks with negative hours and minutes that wrap",
+      "group": [
+        "Compare two clocks for equality"
+      ],
+      "description": "clocks with negative hours and minutes that wrap",
+      "property": "equal",
+      "args": [
+        {
+          "name": "clock1",
+          "value": {
+            "hour": 18,
+            "minute": 7
+          }
+        },
+        {
+          "name": "clock2",
+          "value": {
+            "hour": -54,
+            "minute": -11513
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "96969ca8-875a-48a1-86ae-257a528c44f5",
+      "name": "Compare two clocks for equality > full clock and zeroed clock",
+      "group": [
+        "Compare two clocks for equality"
+      ],
+      "description": "full clock and zeroed clock",
+      "property": "equal",
+      "args": [
+        {
+          "name": "clock1",
+          "value": {
+            "hour": 24,
+            "minute": 0
+          }
+        },
+        {
+          "name": "clock2",
+          "value": {
+            "hour": 0,
+            "minute": 0
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 52,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "bool",
+      "int",
+      "record",
+      "string"
+    ]
+  }
+}

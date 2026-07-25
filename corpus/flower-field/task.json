@@ -1,0 +1,365 @@
+{
+  "schemaVersion": 1,
+  "id": "flower-field",
+  "title": "Flower Field",
+  "blurb": "Mark all the flowers in a garden.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "introduction.md",
+    "instructions.md"
+  ],
+  "comments": [
+    "The expected outputs are represented as arrays of strings to",
+    "improve readability in this JSON file.",
+    "Your track may choose whether to present the input as a single",
+    "string (concatenating all the lines) or as the list."
+  ],
+  "properties": [
+    {
+      "name": "annotate",
+      "argNames": [
+        "garden"
+      ],
+      "arity": 1,
+      "caseCount": 13,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "garden"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "237ff487-467a-47e1-9b01-8a891844f86c",
+      "name": "no rows",
+      "group": [],
+      "description": "no rows",
+      "property": "annotate",
+      "args": [
+        {
+          "name": "garden",
+          "value": []
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": []
+      }
+    },
+    {
+      "uuid": "4b4134ec-e20f-439c-a295-664c38950ba1",
+      "name": "no columns",
+      "group": [],
+      "description": "no columns",
+      "property": "annotate",
+      "args": [
+        {
+          "name": "garden",
+          "value": [
+            ""
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          ""
+        ]
+      }
+    },
+    {
+      "uuid": "d774d054-bbad-4867-88ae-069cbd1c4f92",
+      "name": "no flowers",
+      "group": [],
+      "description": "no flowers",
+      "property": "annotate",
+      "args": [
+        {
+          "name": "garden",
+          "value": [
+            "   ",
+            "   ",
+            "   "
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "   ",
+          "   ",
+          "   "
+        ]
+      }
+    },
+    {
+      "uuid": "225176a0-725e-43cd-aa13-9dced501f16e",
+      "name": "garden full of flowers",
+      "group": [],
+      "description": "garden full of flowers",
+      "property": "annotate",
+      "args": [
+        {
+          "name": "garden",
+          "value": [
+            "***",
+            "***",
+            "***"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "***",
+          "***",
+          "***"
+        ]
+      }
+    },
+    {
+      "uuid": "3f345495-f1a5-4132-8411-74bd7ca08c49",
+      "name": "flower surrounded by spaces",
+      "group": [],
+      "description": "flower surrounded by spaces",
+      "property": "annotate",
+      "args": [
+        {
+          "name": "garden",
+          "value": [
+            "   ",
+            " * ",
+            "   "
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "111",
+          "1*1",
+          "111"
+        ]
+      }
+    },
+    {
+      "uuid": "6cb04070-4199-4ef7-a6fa-92f68c660fca",
+      "name": "space surrounded by flowers",
+      "group": [],
+      "description": "space surrounded by flowers",
+      "property": "annotate",
+      "args": [
+        {
+          "name": "garden",
+          "value": [
+            "***",
+            "* *",
+            "***"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "***",
+          "*8*",
+          "***"
+        ]
+      }
+    },
+    {
+      "uuid": "272d2306-9f62-44fe-8ab5-6b0f43a26338",
+      "name": "horizontal line",
+      "group": [],
+      "description": "horizontal line",
+      "property": "annotate",
+      "args": [
+        {
+          "name": "garden",
+          "value": [
+            " * * "
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "1*2*1"
+        ]
+      }
+    },
+    {
+      "uuid": "c6f0a4b2-58d0-4bf6-ad8d-ccf4144f1f8e",
+      "name": "horizontal line, flowers at edges",
+      "group": [],
+      "description": "horizontal line, flowers at edges",
+      "property": "annotate",
+      "args": [
+        {
+          "name": "garden",
+          "value": [
+            "*   *"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "*1 1*"
+        ]
+      }
+    },
+    {
+      "uuid": "a54e84b7-3b25-44a8-b8cf-1753c8bb4cf5",
+      "name": "vertical line",
+      "group": [],
+      "description": "vertical line",
+      "property": "annotate",
+      "args": [
+        {
+          "name": "garden",
+          "value": [
+            " ",
+            "*",
+            " ",
+            "*",
+            " "
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "1",
+          "*",
+          "2",
+          "*",
+          "1"
+        ]
+      }
+    },
+    {
+      "uuid": "b40f42f5-dec5-4abc-b167-3f08195189c1",
+      "name": "vertical line, flowers at edges",
+      "group": [],
+      "description": "vertical line, flowers at edges",
+      "property": "annotate",
+      "args": [
+        {
+          "name": "garden",
+          "value": [
+            "*",
+            " ",
+            " ",
+            " ",
+            "*"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "*",
+          "1",
+          " ",
+          "1",
+          "*"
+        ]
+      }
+    },
+    {
+      "uuid": "58674965-7b42-4818-b930-0215062d543c",
+      "name": "cross",
+      "group": [],
+      "description": "cross",
+      "property": "annotate",
+      "args": [
+        {
+          "name": "garden",
+          "value": [
+            "  *  ",
+            "  *  ",
+            "*****",
+            "  *  ",
+            "  *  "
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          " 2*2 ",
+          "25*52",
+          "*****",
+          "25*52",
+          " 2*2 "
+        ]
+      }
+    },
+    {
+      "uuid": "dd9d4ca8-9e68-4f78-a677-a2a70fd7a7b8",
+      "name": "large garden",
+      "group": [],
+      "description": "large garden",
+      "property": "annotate",
+      "args": [
+        {
+          "name": "garden",
+          "value": [
+            " *  * ",
+            "  *   ",
+            "    * ",
+            "   * *",
+            " *  * ",
+            "      "
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "1*22*1",
+          "12*322",
+          " 123*2",
+          "112*4*",
+          "1*22*2",
+          "111111"
+        ]
+      }
+    },
+    {
+      "uuid": "6e4ac13a-3e43-4728-a2e3-3551d4b1a996",
+      "name": "multiple adjacent flowers",
+      "group": [],
+      "description": "multiple adjacent flowers",
+      "property": "annotate",
+      "args": [
+        {
+          "name": "garden",
+          "value": [
+            " ** "
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "1**1"
+        ]
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 13,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "array",
+      "string"
+    ]
+  }
+}

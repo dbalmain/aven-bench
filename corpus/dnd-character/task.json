@@ -1,0 +1,441 @@
+{
+  "schemaVersion": 1,
+  "id": "dnd-character",
+  "title": "D&D Character",
+  "blurb": "Randomly generate Dungeons & Dragons characters.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "introduction.md",
+    "instructions.md"
+  ],
+  "comments": [
+    "The random generator 'ability' can be property-tested.",
+    "The pure function 'modifier' can be tested totally.",
+    "The random generator 'character' should return some",
+    "kind of structure with six random abilities and a",
+    "hitpoint score. This structure can be property-tested",
+    "in the same way as 'ability' and 'modifier'.",
+    "",
+    "It may be fun to provide a 'name' property for characters",
+    "that may or may not be randomly generated but not tested.",
+    "",
+    "Many programming languages feature property-based test",
+    "frameworks. For a language-agnostic introduction to",
+    "property-based testing, see:",
+    "",
+    "https://hypothesis.works/articles/what-is-property-based-testing/"
+  ],
+  "properties": [
+    {
+      "name": "modifier",
+      "argNames": [
+        "score"
+      ],
+      "arity": 1,
+      "caseCount": 16,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "score"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "ability",
+      "argNames": [],
+      "arity": 0,
+      "caseCount": 1,
+      "returnsResult": false,
+      "argOrderVariants": [
+        []
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "character",
+      "argNames": [],
+      "arity": 0,
+      "caseCount": 2,
+      "returnsResult": false,
+      "argOrderVariants": [
+        []
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "1e9ae1dc-35bd-43ba-aa08-e4b94c20fa37",
+      "name": "ability modifier > ability modifier for score 3 is -4",
+      "group": [
+        "ability modifier"
+      ],
+      "description": "ability modifier for score 3 is -4",
+      "property": "modifier",
+      "args": [
+        {
+          "name": "score",
+          "value": 3
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": -4
+      }
+    },
+    {
+      "uuid": "cc9bb24e-56b8-4e9e-989d-a0d1a29ebb9c",
+      "name": "ability modifier > ability modifier for score 4 is -3",
+      "group": [
+        "ability modifier"
+      ],
+      "description": "ability modifier for score 4 is -3",
+      "property": "modifier",
+      "args": [
+        {
+          "name": "score",
+          "value": 4
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": -3
+      }
+    },
+    {
+      "uuid": "5b519fcd-6946-41ee-91fe-34b4f9808326",
+      "name": "ability modifier > ability modifier for score 5 is -3",
+      "group": [
+        "ability modifier"
+      ],
+      "description": "ability modifier for score 5 is -3",
+      "property": "modifier",
+      "args": [
+        {
+          "name": "score",
+          "value": 5
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": -3
+      }
+    },
+    {
+      "uuid": "dc2913bd-6d7a-402e-b1e2-6d568b1cbe21",
+      "name": "ability modifier > ability modifier for score 6 is -2",
+      "group": [
+        "ability modifier"
+      ],
+      "description": "ability modifier for score 6 is -2",
+      "property": "modifier",
+      "args": [
+        {
+          "name": "score",
+          "value": 6
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": -2
+      }
+    },
+    {
+      "uuid": "099440f5-0d66-4b1a-8a10-8f3a03cc499f",
+      "name": "ability modifier > ability modifier for score 7 is -2",
+      "group": [
+        "ability modifier"
+      ],
+      "description": "ability modifier for score 7 is -2",
+      "property": "modifier",
+      "args": [
+        {
+          "name": "score",
+          "value": 7
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": -2
+      }
+    },
+    {
+      "uuid": "cfda6e5c-3489-42f0-b22b-4acb47084df0",
+      "name": "ability modifier > ability modifier for score 8 is -1",
+      "group": [
+        "ability modifier"
+      ],
+      "description": "ability modifier for score 8 is -1",
+      "property": "modifier",
+      "args": [
+        {
+          "name": "score",
+          "value": 8
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": -1
+      }
+    },
+    {
+      "uuid": "c70f0507-fa7e-4228-8463-858bfbba1754",
+      "name": "ability modifier > ability modifier for score 9 is -1",
+      "group": [
+        "ability modifier"
+      ],
+      "description": "ability modifier for score 9 is -1",
+      "property": "modifier",
+      "args": [
+        {
+          "name": "score",
+          "value": 9
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": -1
+      }
+    },
+    {
+      "uuid": "6f4e6c88-1cd9-46a0-92b8-db4a99b372f7",
+      "name": "ability modifier > ability modifier for score 10 is 0",
+      "group": [
+        "ability modifier"
+      ],
+      "description": "ability modifier for score 10 is 0",
+      "property": "modifier",
+      "args": [
+        {
+          "name": "score",
+          "value": 10
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "e00d9e5c-63c8-413f-879d-cd9be9697097",
+      "name": "ability modifier > ability modifier for score 11 is 0",
+      "group": [
+        "ability modifier"
+      ],
+      "description": "ability modifier for score 11 is 0",
+      "property": "modifier",
+      "args": [
+        {
+          "name": "score",
+          "value": 11
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "eea06f3c-8de0-45e7-9d9d-b8cab4179715",
+      "name": "ability modifier > ability modifier for score 12 is +1",
+      "group": [
+        "ability modifier"
+      ],
+      "description": "ability modifier for score 12 is +1",
+      "property": "modifier",
+      "args": [
+        {
+          "name": "score",
+          "value": 12
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 1
+      }
+    },
+    {
+      "uuid": "9c51f6be-db72-4af7-92ac-b293a02c0dcd",
+      "name": "ability modifier > ability modifier for score 13 is +1",
+      "group": [
+        "ability modifier"
+      ],
+      "description": "ability modifier for score 13 is +1",
+      "property": "modifier",
+      "args": [
+        {
+          "name": "score",
+          "value": 13
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 1
+      }
+    },
+    {
+      "uuid": "94053a5d-53b6-4efc-b669-a8b5098f7762",
+      "name": "ability modifier > ability modifier for score 14 is +2",
+      "group": [
+        "ability modifier"
+      ],
+      "description": "ability modifier for score 14 is +2",
+      "property": "modifier",
+      "args": [
+        {
+          "name": "score",
+          "value": 14
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 2
+      }
+    },
+    {
+      "uuid": "8c33e7ca-3f9f-4820-8ab3-65f2c9e2f0e2",
+      "name": "ability modifier > ability modifier for score 15 is +2",
+      "group": [
+        "ability modifier"
+      ],
+      "description": "ability modifier for score 15 is +2",
+      "property": "modifier",
+      "args": [
+        {
+          "name": "score",
+          "value": 15
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 2
+      }
+    },
+    {
+      "uuid": "c3ec871e-1791-44d0-b3cc-77e5fb4cd33d",
+      "name": "ability modifier > ability modifier for score 16 is +3",
+      "group": [
+        "ability modifier"
+      ],
+      "description": "ability modifier for score 16 is +3",
+      "property": "modifier",
+      "args": [
+        {
+          "name": "score",
+          "value": 16
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 3
+      }
+    },
+    {
+      "uuid": "3d053cee-2888-4616-b9fd-602a3b1efff4",
+      "name": "ability modifier > ability modifier for score 17 is +3",
+      "group": [
+        "ability modifier"
+      ],
+      "description": "ability modifier for score 17 is +3",
+      "property": "modifier",
+      "args": [
+        {
+          "name": "score",
+          "value": 17
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 3
+      }
+    },
+    {
+      "uuid": "bafd997a-e852-4e56-9f65-14b60261faee",
+      "name": "ability modifier > ability modifier for score 18 is +4",
+      "group": [
+        "ability modifier"
+      ],
+      "description": "ability modifier for score 18 is +4",
+      "property": "modifier",
+      "args": [
+        {
+          "name": "score",
+          "value": 18
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 4
+      }
+    },
+    {
+      "uuid": "4f28f19c-2e47-4453-a46a-c0d365259c14",
+      "name": "random ability is within range",
+      "group": [],
+      "description": "random ability is within range",
+      "property": "ability",
+      "args": [],
+      "expected": {
+        "kind": "value",
+        "value": "score >= 3 && score <= 18"
+      },
+      "scenarios": [
+        "random"
+      ]
+    },
+    {
+      "uuid": "385d7e72-864f-4e88-8279-81a7d75b04ad",
+      "name": "random character is valid",
+      "group": [],
+      "description": "random character is valid",
+      "property": "character",
+      "args": [],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "strength": "strength >= 3 && strength <= 18",
+          "dexterity": "dexterity >= 3 && dexterity <= 18",
+          "constitution": "constitution >= 3 && constitution <= 18",
+          "intelligence": "intelligence >= 3 && intelligence <= 18",
+          "wisdom": "wisdom >= 3 && wisdom <= 18",
+          "charisma": "charisma >= 3 && charisma <= 18",
+          "hitpoints": "hitpoints == 10 + modifier(constitution)"
+        }
+      },
+      "scenarios": [
+        "random"
+      ]
+    },
+    {
+      "uuid": "dca2b2ec-f729-4551-84b9-078876bb4808",
+      "name": "each ability is only calculated once",
+      "group": [],
+      "description": "each ability is only calculated once",
+      "property": "character",
+      "args": [],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "strength": "strength == strength",
+          "dexterity": "dexterity == dexterity",
+          "constitution": "constitution == constitution",
+          "intelligence": "intelligence == intelligence",
+          "wisdom": "wisdom == wisdom",
+          "charisma": "charisma == charisma"
+        }
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 19,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 1,
+    "valueKinds": [
+      "int",
+      "record",
+      "string"
+    ]
+  }
+}

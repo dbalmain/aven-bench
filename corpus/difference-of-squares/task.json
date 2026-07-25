@@ -1,0 +1,240 @@
+{
+  "schemaVersion": 1,
+  "id": "difference-of-squares",
+  "title": "Difference of Squares",
+  "blurb": "Find the difference between the square of the sum and the sum of the squares of the first N natural numbers.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "squareOfSum",
+      "argNames": [
+        "number"
+      ],
+      "arity": 1,
+      "caseCount": 3,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "number"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "sumOfSquares",
+      "argNames": [
+        "number"
+      ],
+      "arity": 1,
+      "caseCount": 3,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "number"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "differenceOfSquares",
+      "argNames": [
+        "number"
+      ],
+      "arity": 1,
+      "caseCount": 3,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "number"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "e46c542b-31fc-4506-bcae-6b62b3268537",
+      "name": "Square the sum of the numbers up to the given number > square of sum 1",
+      "group": [
+        "Square the sum of the numbers up to the given number"
+      ],
+      "description": "square of sum 1",
+      "property": "squareOfSum",
+      "args": [
+        {
+          "name": "number",
+          "value": 1
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 1
+      }
+    },
+    {
+      "uuid": "9b3f96cb-638d-41ee-99b7-b4f9c0622948",
+      "name": "Square the sum of the numbers up to the given number > square of sum 5",
+      "group": [
+        "Square the sum of the numbers up to the given number"
+      ],
+      "description": "square of sum 5",
+      "property": "squareOfSum",
+      "args": [
+        {
+          "name": "number",
+          "value": 5
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 225
+      }
+    },
+    {
+      "uuid": "54ba043f-3c35-4d43-86ff-3a41625d5e86",
+      "name": "Square the sum of the numbers up to the given number > square of sum 100",
+      "group": [
+        "Square the sum of the numbers up to the given number"
+      ],
+      "description": "square of sum 100",
+      "property": "squareOfSum",
+      "args": [
+        {
+          "name": "number",
+          "value": 100
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 25502500
+      }
+    },
+    {
+      "uuid": "01d84507-b03e-4238-9395-dd61d03074b5",
+      "name": "Sum the squares of the numbers up to the given number > sum of squares 1",
+      "group": [
+        "Sum the squares of the numbers up to the given number"
+      ],
+      "description": "sum of squares 1",
+      "property": "sumOfSquares",
+      "args": [
+        {
+          "name": "number",
+          "value": 1
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 1
+      }
+    },
+    {
+      "uuid": "c93900cd-8cc2-4ca4-917b-dd3027023499",
+      "name": "Sum the squares of the numbers up to the given number > sum of squares 5",
+      "group": [
+        "Sum the squares of the numbers up to the given number"
+      ],
+      "description": "sum of squares 5",
+      "property": "sumOfSquares",
+      "args": [
+        {
+          "name": "number",
+          "value": 5
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 55
+      }
+    },
+    {
+      "uuid": "94807386-73e4-4d9e-8dec-69eb135b19e4",
+      "name": "Sum the squares of the numbers up to the given number > sum of squares 100",
+      "group": [
+        "Sum the squares of the numbers up to the given number"
+      ],
+      "description": "sum of squares 100",
+      "property": "sumOfSquares",
+      "args": [
+        {
+          "name": "number",
+          "value": 100
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 338350
+      }
+    },
+    {
+      "uuid": "44f72ae6-31a7-437f-858d-2c0837adabb6",
+      "name": "Subtract sum of squares from square of sums > difference of squares 1",
+      "group": [
+        "Subtract sum of squares from square of sums"
+      ],
+      "description": "difference of squares 1",
+      "property": "differenceOfSquares",
+      "args": [
+        {
+          "name": "number",
+          "value": 1
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "005cb2bf-a0c8-46f3-ae25-924029f8b00b",
+      "name": "Subtract sum of squares from square of sums > difference of squares 5",
+      "group": [
+        "Subtract sum of squares from square of sums"
+      ],
+      "description": "difference of squares 5",
+      "property": "differenceOfSquares",
+      "args": [
+        {
+          "name": "number",
+          "value": 5
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 170
+      }
+    },
+    {
+      "uuid": "b1bf19de-9a16-41c0-a62b-1f02ecc0b036",
+      "name": "Subtract sum of squares from square of sums > difference of squares 100",
+      "group": [
+        "Subtract sum of squares from square of sums"
+      ],
+      "description": "difference of squares 100",
+      "property": "differenceOfSquares",
+      "args": [
+        {
+          "name": "number",
+          "value": 100
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 25164150
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 9,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "int"
+    ]
+  }
+}

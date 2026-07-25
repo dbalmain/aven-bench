@@ -1,0 +1,708 @@
+{
+  "schemaVersion": 1,
+  "id": "state-of-tic-tac-toe",
+  "title": "State of Tic-Tac-Toe",
+  "blurb": "Determine the game state of a match of Tic-Tac-Toe.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "gamestate",
+      "argNames": [
+        "board"
+      ],
+      "arity": 1,
+      "caseCount": 29,
+      "returnsResult": true,
+      "argOrderVariants": [
+        [
+          "board"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "fe8e9fa9-37af-4d7e-aa24-2f4b8517161a",
+      "name": "Won games > Finished game where X won via left column victory",
+      "group": [
+        "Won games"
+      ],
+      "description": "Finished game where X won via left column victory",
+      "property": "gamestate",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "XOO",
+            "X  ",
+            "X  "
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "win"
+      }
+    },
+    {
+      "uuid": "96c30df5-ae23-4cf6-bf09-5ef056dddea1",
+      "name": "Won games > Finished game where X won via middle column victory",
+      "group": [
+        "Won games"
+      ],
+      "description": "Finished game where X won via middle column victory",
+      "property": "gamestate",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "OXO",
+            " X ",
+            " X "
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "win"
+      }
+    },
+    {
+      "uuid": "0d7a4b0a-2afd-4a75-8389-5fb88ab05eda",
+      "name": "Won games > Finished game where X won via right column victory",
+      "group": [
+        "Won games"
+      ],
+      "description": "Finished game where X won via right column victory",
+      "property": "gamestate",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "OOX",
+            "  X",
+            "  X"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "win"
+      }
+    },
+    {
+      "uuid": "bd1007c0-ec5d-4c60-bb9f-1a4f22177d51",
+      "name": "Won games > Finished game where O won via left column victory",
+      "group": [
+        "Won games"
+      ],
+      "description": "Finished game where O won via left column victory",
+      "property": "gamestate",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "OXX",
+            "OX ",
+            "O  "
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "win"
+      }
+    },
+    {
+      "uuid": "c032f800-5735-4354-b1b9-46f14d4ee955",
+      "name": "Won games > Finished game where O won via middle column victory",
+      "group": [
+        "Won games"
+      ],
+      "description": "Finished game where O won via middle column victory",
+      "property": "gamestate",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "XOX",
+            " OX",
+            " O "
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "win"
+      }
+    },
+    {
+      "uuid": "662c8902-c94a-4c4c-9d9c-e8ca513db2b4",
+      "name": "Won games > Finished game where O won via right column victory",
+      "group": [
+        "Won games"
+      ],
+      "description": "Finished game where O won via right column victory",
+      "property": "gamestate",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "XXO",
+            " XO",
+            "  O"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "win"
+      }
+    },
+    {
+      "uuid": "2d62121f-7e3a-44a0-9032-0d73e3494941",
+      "name": "Won games > Finished game where X won via top row victory",
+      "group": [
+        "Won games"
+      ],
+      "description": "Finished game where X won via top row victory",
+      "property": "gamestate",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "XXX",
+            "XOO",
+            "O  "
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "win"
+      }
+    },
+    {
+      "uuid": "346527db-4db9-4a96-b262-d7023dc022b0",
+      "name": "Won games > Finished game where X won via middle row victory",
+      "group": [
+        "Won games"
+      ],
+      "description": "Finished game where X won via middle row victory",
+      "property": "gamestate",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "O  ",
+            "XXX",
+            " O "
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "win"
+      }
+    },
+    {
+      "uuid": "a013c583-75f8-4ab2-8d68-57688ff04574",
+      "name": "Won games > Finished game where X won via bottom row victory",
+      "group": [
+        "Won games"
+      ],
+      "description": "Finished game where X won via bottom row victory",
+      "property": "gamestate",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            " OO",
+            "O X",
+            "XXX"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "win"
+      }
+    },
+    {
+      "uuid": "2c08e7d7-7d00-487f-9442-e7398c8f1727",
+      "name": "Won games > Finished game where O won via top row victory",
+      "group": [
+        "Won games"
+      ],
+      "description": "Finished game where O won via top row victory",
+      "property": "gamestate",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "OOO",
+            "XXO",
+            "XX "
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "win"
+      }
+    },
+    {
+      "uuid": "bb1d6c62-3e3f-4d1a-9766-f8803c8ed70f",
+      "name": "Won games > Finished game where O won via middle row victory",
+      "group": [
+        "Won games"
+      ],
+      "description": "Finished game where O won via middle row victory",
+      "property": "gamestate",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "XX ",
+            "OOO",
+            "X  "
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "win"
+      }
+    },
+    {
+      "uuid": "6ef641e9-12ec-44f5-a21c-660ea93907af",
+      "name": "Won games > Finished game where O won via bottom row victory",
+      "group": [
+        "Won games"
+      ],
+      "description": "Finished game where O won via bottom row victory",
+      "property": "gamestate",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "XOX",
+            " XX",
+            "OOO"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "win"
+      }
+    },
+    {
+      "uuid": "ab145b7b-26a7-426c-ab71-bf418cd07f81",
+      "name": "Won games > Finished game where X won via falling diagonal victory",
+      "group": [
+        "Won games"
+      ],
+      "description": "Finished game where X won via falling diagonal victory",
+      "property": "gamestate",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "XOO",
+            " X ",
+            "  X"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "win"
+      }
+    },
+    {
+      "uuid": "7450caab-08f5-4f03-a74b-99b98c4b7a4b",
+      "name": "Won games > Finished game where X won via rising diagonal victory",
+      "group": [
+        "Won games"
+      ],
+      "description": "Finished game where X won via rising diagonal victory",
+      "property": "gamestate",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "O X",
+            "OX ",
+            "X  "
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "win"
+      }
+    },
+    {
+      "uuid": "c2a652ee-2f93-48aa-a710-a70cd2edce61",
+      "name": "Won games > Finished game where O won via falling diagonal victory",
+      "group": [
+        "Won games"
+      ],
+      "description": "Finished game where O won via falling diagonal victory",
+      "property": "gamestate",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "OXX",
+            "OOX",
+            "X O"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "win"
+      }
+    },
+    {
+      "uuid": "5b20ceea-494d-4f0c-a986-b99efc163bcf",
+      "name": "Won games > Finished game where O won via rising diagonal victory",
+      "group": [
+        "Won games"
+      ],
+      "description": "Finished game where O won via rising diagonal victory",
+      "property": "gamestate",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "  O",
+            " OX",
+            "OXX"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "win"
+      }
+    },
+    {
+      "uuid": "035a49b9-dc35-47d3-9d7c-de197161b9d4",
+      "name": "Won games > Finished game where X won via a row and a column victory",
+      "group": [
+        "Won games"
+      ],
+      "description": "Finished game where X won via a row and a column victory",
+      "property": "gamestate",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "XXX",
+            "XOO",
+            "XOO"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "win"
+      }
+    },
+    {
+      "uuid": "e5dfdeb0-d2bf-4b5a-b307-e673f69d4a53",
+      "name": "Won games > Finished game where X won via two diagonal victories",
+      "group": [
+        "Won games"
+      ],
+      "description": "Finished game where X won via two diagonal victories",
+      "property": "gamestate",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "XOX",
+            "OXO",
+            "XOX"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "win"
+      }
+    },
+    {
+      "uuid": "b42ed767-194c-4364-b36e-efbfb3de8788",
+      "name": "Drawn games > Draw",
+      "group": [
+        "Drawn games"
+      ],
+      "description": "Draw",
+      "property": "gamestate",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "XOX",
+            "XXO",
+            "OXO"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "draw"
+      }
+    },
+    {
+      "uuid": "227a76b2-0fef-4e16-a4bd-8f9d7e4c3b13",
+      "name": "Drawn games > Another draw",
+      "group": [
+        "Drawn games"
+      ],
+      "description": "Another draw",
+      "property": "gamestate",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "XXO",
+            "OXX",
+            "XOO"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "draw"
+      }
+    },
+    {
+      "uuid": "4d93f15c-0c40-43d6-b966-418b040012a9",
+      "name": "Ongoing games > Ongoing game: one move in",
+      "group": [
+        "Ongoing games"
+      ],
+      "description": "Ongoing game: one move in",
+      "property": "gamestate",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "   ",
+            "X  ",
+            "   "
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "ongoing"
+      }
+    },
+    {
+      "uuid": "c407ae32-4c44-4989-b124-2890cf531f19",
+      "name": "Ongoing games > Ongoing game: two moves in",
+      "group": [
+        "Ongoing games"
+      ],
+      "description": "Ongoing game: two moves in",
+      "property": "gamestate",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "O  ",
+            " X ",
+            "   "
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "ongoing"
+      }
+    },
+    {
+      "uuid": "199b7a8d-e2b6-4526-a85e-78b416e7a8a9",
+      "name": "Ongoing games > Ongoing game: five moves in",
+      "group": [
+        "Ongoing games"
+      ],
+      "description": "Ongoing game: five moves in",
+      "property": "gamestate",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "X  ",
+            " XO",
+            "OX "
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "ongoing"
+      }
+    },
+    {
+      "uuid": "1670145b-1e3d-4269-a7eb-53cd327b302e",
+      "name": "Invalid boards > Invalid board: X went twice",
+      "group": [
+        "Invalid boards"
+      ],
+      "description": "Invalid board: X went twice",
+      "property": "gamestate",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "XX ",
+            "   ",
+            "   "
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "Wrong turn order: X went twice"
+      }
+    },
+    {
+      "uuid": "47c048e8-b404-4bcf-9e51-8acbb3253f3b",
+      "name": "Invalid boards > Invalid board: O started",
+      "group": [
+        "Invalid boards"
+      ],
+      "description": "Invalid board: O started",
+      "property": "gamestate",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "OOX",
+            "   ",
+            "   "
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "Wrong turn order: O started"
+      }
+    },
+    {
+      "uuid": "6c1920f2-ab5c-4648-a0c9-997414dda5eb",
+      "name": "Invalid boards > Invalid board: X won and O kept playing",
+      "group": [
+        "Invalid boards"
+      ],
+      "description": "Invalid board: X won and O kept playing",
+      "property": "gamestate",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "XXX",
+            "OOO",
+            "   "
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "Impossible board: game should have ended after the game was won"
+      }
+    },
+    {
+      "uuid": "4801cda2-f5b7-4c36-8317-3cdd167ac22c",
+      "name": "Invalid boards > Invalid board: players kept playing after a win",
+      "group": [
+        "Invalid boards"
+      ],
+      "description": "Invalid board: players kept playing after a win",
+      "property": "gamestate",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "XXX",
+            "OOO",
+            "XOX"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "Impossible board: game should have ended after the game was won"
+      }
+    },
+    {
+      "uuid": "5a84757a-fc86-4328-aec9-a5759e6ed35d",
+      "name": "Invalid boards > Invalid board: O kept playing after X wins",
+      "group": [
+        "Invalid boards"
+      ],
+      "description": "Invalid board: O kept playing after X wins",
+      "property": "gamestate",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "OO ",
+            "XXX",
+            " O "
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "Impossible board: game should have ended after the game was won"
+      }
+    },
+    {
+      "uuid": "cf25543d-583a-4656-b9ab-f82dc00a4a02",
+      "name": "Invalid boards > Invalid board: X kept playing after O wins",
+      "group": [
+        "Invalid boards"
+      ],
+      "description": "Invalid board: X kept playing after O wins",
+      "property": "gamestate",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "XX ",
+            "OOO",
+            " XX"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "Impossible board: game should have ended after the game was won"
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 29,
+    "errorCaseCount": 6,
+    "droppedCaseCount": 2,
+    "valueKinds": [
+      "array",
+      "error",
+      "string"
+    ]
+  }
+}

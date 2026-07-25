@@ -1,0 +1,241 @@
+{
+  "schemaVersion": 1,
+  "id": "hamming",
+  "title": "Hamming",
+  "blurb": "Calculate the Hamming distance between two DNA strands.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "introduction.md",
+    "instructions.md"
+  ],
+  "comments": [
+    "Language implementations vary on the issue of unequal length strands.",
+    "A language may elect to simplify this task by only presenting equal",
+    "length test cases.  For languages handling unequal length strands as",
+    "error condition, unequal length test cases are included here and are",
+    "indicated with an error object.  Language idioms of errors or exceptions",
+    "should be followed.  Alternative interpretations such as ignoring excess",
+    "length at the end are not represented here."
+  ],
+  "properties": [
+    {
+      "name": "distance",
+      "argNames": [
+        "strand1",
+        "strand2"
+      ],
+      "arity": 2,
+      "caseCount": 9,
+      "returnsResult": true,
+      "argOrderVariants": [
+        [
+          "strand1",
+          "strand2"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "f6dcb64f-03b0-4b60-81b1-3c9dbf47e887",
+      "name": "empty strands",
+      "group": [],
+      "description": "empty strands",
+      "property": "distance",
+      "args": [
+        {
+          "name": "strand1",
+          "value": ""
+        },
+        {
+          "name": "strand2",
+          "value": ""
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "54681314-eee2-439a-9db0-b0636c656156",
+      "name": "single letter identical strands",
+      "group": [],
+      "description": "single letter identical strands",
+      "property": "distance",
+      "args": [
+        {
+          "name": "strand1",
+          "value": "A"
+        },
+        {
+          "name": "strand2",
+          "value": "A"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "294479a3-a4c8-478f-8d63-6209815a827b",
+      "name": "single letter different strands",
+      "group": [],
+      "description": "single letter different strands",
+      "property": "distance",
+      "args": [
+        {
+          "name": "strand1",
+          "value": "G"
+        },
+        {
+          "name": "strand2",
+          "value": "T"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 1
+      }
+    },
+    {
+      "uuid": "9aed5f34-5693-4344-9b31-40c692fb5592",
+      "name": "long identical strands",
+      "group": [],
+      "description": "long identical strands",
+      "property": "distance",
+      "args": [
+        {
+          "name": "strand1",
+          "value": "GGACTGAAATCTG"
+        },
+        {
+          "name": "strand2",
+          "value": "GGACTGAAATCTG"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "cd2273a5-c576-46c8-a52b-dee251c3e6e5",
+      "name": "long different strands",
+      "group": [],
+      "description": "long different strands",
+      "property": "distance",
+      "args": [
+        {
+          "name": "strand1",
+          "value": "GGACGGATTCTG"
+        },
+        {
+          "name": "strand2",
+          "value": "AGGACGGATTCT"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 9
+      }
+    },
+    {
+      "uuid": "b9228bb1-465f-4141-b40f-1f99812de5a8",
+      "name": "disallow first strand longer",
+      "group": [],
+      "description": "disallow first strand longer",
+      "property": "distance",
+      "args": [
+        {
+          "name": "strand1",
+          "value": "AATG"
+        },
+        {
+          "name": "strand2",
+          "value": "AAA"
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "strands must be of equal length"
+      }
+    },
+    {
+      "uuid": "dab38838-26bb-4fff-acbe-3b0a9bfeba2d",
+      "name": "disallow second strand longer",
+      "group": [],
+      "description": "disallow second strand longer",
+      "property": "distance",
+      "args": [
+        {
+          "name": "strand1",
+          "value": "ATA"
+        },
+        {
+          "name": "strand2",
+          "value": "AGTG"
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "strands must be of equal length"
+      }
+    },
+    {
+      "uuid": "b764d47c-83ff-4de2-ab10-6cfe4b15c0f3",
+      "name": "disallow empty first strand",
+      "group": [],
+      "description": "disallow empty first strand",
+      "property": "distance",
+      "args": [
+        {
+          "name": "strand1",
+          "value": ""
+        },
+        {
+          "name": "strand2",
+          "value": "G"
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "strands must be of equal length"
+      }
+    },
+    {
+      "uuid": "9ab9262f-3521-4191-81f5-0ed184a5aa89",
+      "name": "disallow empty second strand",
+      "group": [],
+      "description": "disallow empty second strand",
+      "property": "distance",
+      "args": [
+        {
+          "name": "strand1",
+          "value": "G"
+        },
+        {
+          "name": "strand2",
+          "value": ""
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "strands must be of equal length"
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 9,
+    "errorCaseCount": 4,
+    "droppedCaseCount": 6,
+    "valueKinds": [
+      "error",
+      "int",
+      "string"
+    ]
+  }
+}

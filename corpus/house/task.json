@@ -1,0 +1,389 @@
+{
+  "schemaVersion": 1,
+  "id": "house",
+  "title": "House",
+  "blurb": "Output the nursery rhyme 'This is the House that Jack Built'.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [
+    "JSON doesn't allow for multi-line strings, so all verses are presented ",
+    "here as arrays of strings. It's up to the test generator to join the ",
+    "lines together with line breaks.",
+    "Some languages test for the verse() method, which takes a start verse ",
+    "and optional end verse, but other languages have only tested for the full poem.",
+    "For those languages in the latter category, you may wish to only ",
+    "implement the full song test and leave the rest alone, ignoring the startVerse ",
+    "and endVerse fields."
+  ],
+  "properties": [
+    {
+      "name": "recite",
+      "argNames": [
+        "startVerse",
+        "endVerse"
+      ],
+      "arity": 2,
+      "caseCount": 14,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "startVerse",
+          "endVerse"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "28a540ff-f765-4348-9d57-ae33f25f41f2",
+      "name": "verse one - the house that jack built",
+      "group": [],
+      "description": "verse one - the house that jack built",
+      "property": "recite",
+      "args": [
+        {
+          "name": "startVerse",
+          "value": 1
+        },
+        {
+          "name": "endVerse",
+          "value": 1
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "This is the house that Jack built."
+        ]
+      }
+    },
+    {
+      "uuid": "ebc825ac-6e2b-4a5e-9afd-95732191c8da",
+      "name": "verse two - the malt that lay",
+      "group": [],
+      "description": "verse two - the malt that lay",
+      "property": "recite",
+      "args": [
+        {
+          "name": "startVerse",
+          "value": 2
+        },
+        {
+          "name": "endVerse",
+          "value": 2
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "This is the malt that lay in the house that Jack built."
+        ]
+      }
+    },
+    {
+      "uuid": "1ed8bb0f-edb8-4bd1-b6d4-b64754fe4a60",
+      "name": "verse three - the rat that ate",
+      "group": [],
+      "description": "verse three - the rat that ate",
+      "property": "recite",
+      "args": [
+        {
+          "name": "startVerse",
+          "value": 3
+        },
+        {
+          "name": "endVerse",
+          "value": 3
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "This is the rat that ate the malt that lay in the house that Jack built."
+        ]
+      }
+    },
+    {
+      "uuid": "64b0954e-8b7d-4d14-aad0-d3f6ce297a30",
+      "name": "verse four - the cat that killed",
+      "group": [],
+      "description": "verse four - the cat that killed",
+      "property": "recite",
+      "args": [
+        {
+          "name": "startVerse",
+          "value": 4
+        },
+        {
+          "name": "endVerse",
+          "value": 4
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "This is the cat that killed the rat that ate the malt that lay in the house that Jack built."
+        ]
+      }
+    },
+    {
+      "uuid": "1e8d56bc-fe31-424d-9084-61e6111d2c82",
+      "name": "verse five - the dog that worried",
+      "group": [],
+      "description": "verse five - the dog that worried",
+      "property": "recite",
+      "args": [
+        {
+          "name": "startVerse",
+          "value": 5
+        },
+        {
+          "name": "endVerse",
+          "value": 5
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "This is the dog that worried the cat that killed the rat that ate the malt that lay in the house that Jack built."
+        ]
+      }
+    },
+    {
+      "uuid": "6312dc6f-ab0a-40c9-8a55-8d4e582beac4",
+      "name": "verse six - the cow with the crumpled horn",
+      "group": [],
+      "description": "verse six - the cow with the crumpled horn",
+      "property": "recite",
+      "args": [
+        {
+          "name": "startVerse",
+          "value": 6
+        },
+        {
+          "name": "endVerse",
+          "value": 6
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "This is the cow with the crumpled horn that tossed the dog that worried the cat that killed the rat that ate the malt that lay in the house that Jack built."
+        ]
+      }
+    },
+    {
+      "uuid": "68f76d18-6e19-4692-819c-5ff6a7f92feb",
+      "name": "verse seven - the maiden all forlorn",
+      "group": [],
+      "description": "verse seven - the maiden all forlorn",
+      "property": "recite",
+      "args": [
+        {
+          "name": "startVerse",
+          "value": 7
+        },
+        {
+          "name": "endVerse",
+          "value": 7
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "This is the maiden all forlorn that milked the cow with the crumpled horn that tossed the dog that worried the cat that killed the rat that ate the malt that lay in the house that Jack built."
+        ]
+      }
+    },
+    {
+      "uuid": "73872564-2004-4071-b51d-2e4326096747",
+      "name": "verse eight - the man all tattered and torn",
+      "group": [],
+      "description": "verse eight - the man all tattered and torn",
+      "property": "recite",
+      "args": [
+        {
+          "name": "startVerse",
+          "value": 8
+        },
+        {
+          "name": "endVerse",
+          "value": 8
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "This is the man all tattered and torn that kissed the maiden all forlorn that milked the cow with the crumpled horn that tossed the dog that worried the cat that killed the rat that ate the malt that lay in the house that Jack built."
+        ]
+      }
+    },
+    {
+      "uuid": "0d53d743-66cb-4351-a173-82702f3338c9",
+      "name": "verse nine - the priest all shaven and shorn",
+      "group": [],
+      "description": "verse nine - the priest all shaven and shorn",
+      "property": "recite",
+      "args": [
+        {
+          "name": "startVerse",
+          "value": 9
+        },
+        {
+          "name": "endVerse",
+          "value": 9
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "This is the priest all shaven and shorn that married the man all tattered and torn that kissed the maiden all forlorn that milked the cow with the crumpled horn that tossed the dog that worried the cat that killed the rat that ate the malt that lay in the house that Jack built."
+        ]
+      }
+    },
+    {
+      "uuid": "452f24dc-8fd7-4a82-be1a-3b4839cfeb41",
+      "name": "verse 10 - the rooster that crowed in the morn",
+      "group": [],
+      "description": "verse 10 - the rooster that crowed in the morn",
+      "property": "recite",
+      "args": [
+        {
+          "name": "startVerse",
+          "value": 10
+        },
+        {
+          "name": "endVerse",
+          "value": 10
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "This is the rooster that crowed in the morn that woke the priest all shaven and shorn that married the man all tattered and torn that kissed the maiden all forlorn that milked the cow with the crumpled horn that tossed the dog that worried the cat that killed the rat that ate the malt that lay in the house that Jack built."
+        ]
+      }
+    },
+    {
+      "uuid": "97176f20-2dd3-4646-ac72-cffced91ea26",
+      "name": "verse 11 - the farmer sowing his corn",
+      "group": [],
+      "description": "verse 11 - the farmer sowing his corn",
+      "property": "recite",
+      "args": [
+        {
+          "name": "startVerse",
+          "value": 11
+        },
+        {
+          "name": "endVerse",
+          "value": 11
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "This is the farmer sowing his corn that kept the rooster that crowed in the morn that woke the priest all shaven and shorn that married the man all tattered and torn that kissed the maiden all forlorn that milked the cow with the crumpled horn that tossed the dog that worried the cat that killed the rat that ate the malt that lay in the house that Jack built."
+        ]
+      }
+    },
+    {
+      "uuid": "09824c29-6aad-4dcd-ac98-f61374a6a8b7",
+      "name": "verse 12 - the horse and the hound and the horn",
+      "group": [],
+      "description": "verse 12 - the horse and the hound and the horn",
+      "property": "recite",
+      "args": [
+        {
+          "name": "startVerse",
+          "value": 12
+        },
+        {
+          "name": "endVerse",
+          "value": 12
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "This is the horse and the hound and the horn that belonged to the farmer sowing his corn that kept the rooster that crowed in the morn that woke the priest all shaven and shorn that married the man all tattered and torn that kissed the maiden all forlorn that milked the cow with the crumpled horn that tossed the dog that worried the cat that killed the rat that ate the malt that lay in the house that Jack built."
+        ]
+      }
+    },
+    {
+      "uuid": "d2b980d3-7851-49e1-97ab-1524515ec200",
+      "name": "multiple verses",
+      "group": [],
+      "description": "multiple verses",
+      "property": "recite",
+      "args": [
+        {
+          "name": "startVerse",
+          "value": 4
+        },
+        {
+          "name": "endVerse",
+          "value": 8
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "This is the cat that killed the rat that ate the malt that lay in the house that Jack built.",
+          "This is the dog that worried the cat that killed the rat that ate the malt that lay in the house that Jack built.",
+          "This is the cow with the crumpled horn that tossed the dog that worried the cat that killed the rat that ate the malt that lay in the house that Jack built.",
+          "This is the maiden all forlorn that milked the cow with the crumpled horn that tossed the dog that worried the cat that killed the rat that ate the malt that lay in the house that Jack built.",
+          "This is the man all tattered and torn that kissed the maiden all forlorn that milked the cow with the crumpled horn that tossed the dog that worried the cat that killed the rat that ate the malt that lay in the house that Jack built."
+        ]
+      }
+    },
+    {
+      "uuid": "0311d1d0-e085-4f23-8ae7-92406fb3e803",
+      "name": "full rhyme",
+      "group": [],
+      "description": "full rhyme",
+      "property": "recite",
+      "args": [
+        {
+          "name": "startVerse",
+          "value": 1
+        },
+        {
+          "name": "endVerse",
+          "value": 12
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "This is the house that Jack built.",
+          "This is the malt that lay in the house that Jack built.",
+          "This is the rat that ate the malt that lay in the house that Jack built.",
+          "This is the cat that killed the rat that ate the malt that lay in the house that Jack built.",
+          "This is the dog that worried the cat that killed the rat that ate the malt that lay in the house that Jack built.",
+          "This is the cow with the crumpled horn that tossed the dog that worried the cat that killed the rat that ate the malt that lay in the house that Jack built.",
+          "This is the maiden all forlorn that milked the cow with the crumpled horn that tossed the dog that worried the cat that killed the rat that ate the malt that lay in the house that Jack built.",
+          "This is the man all tattered and torn that kissed the maiden all forlorn that milked the cow with the crumpled horn that tossed the dog that worried the cat that killed the rat that ate the malt that lay in the house that Jack built.",
+          "This is the priest all shaven and shorn that married the man all tattered and torn that kissed the maiden all forlorn that milked the cow with the crumpled horn that tossed the dog that worried the cat that killed the rat that ate the malt that lay in the house that Jack built.",
+          "This is the rooster that crowed in the morn that woke the priest all shaven and shorn that married the man all tattered and torn that kissed the maiden all forlorn that milked the cow with the crumpled horn that tossed the dog that worried the cat that killed the rat that ate the malt that lay in the house that Jack built.",
+          "This is the farmer sowing his corn that kept the rooster that crowed in the morn that woke the priest all shaven and shorn that married the man all tattered and torn that kissed the maiden all forlorn that milked the cow with the crumpled horn that tossed the dog that worried the cat that killed the rat that ate the malt that lay in the house that Jack built.",
+          "This is the horse and the hound and the horn that belonged to the farmer sowing his corn that kept the rooster that crowed in the morn that woke the priest all shaven and shorn that married the man all tattered and torn that kissed the maiden all forlorn that milked the cow with the crumpled horn that tossed the dog that worried the cat that killed the rat that ate the malt that lay in the house that Jack built."
+        ]
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 14,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "array",
+      "int",
+      "string"
+    ]
+  }
+}

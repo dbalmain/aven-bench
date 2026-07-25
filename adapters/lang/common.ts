@@ -1,0 +1,78 @@
+/**
+ * The language-adapter interface plus the helpers every adapter needs.
+ *
+ * An adapter is deliberately *not* allowed to know about individual tasks.
+ * Anything it cannot express is reported as an omitted case with a reason,
+ * which is a measurement, not a bug to paper over.
+ */
+
+import type { Task, TaskCase, TaskProperty } from "../../ingest/task.ts";
+
+/** A case the adapter refused to render, with the reason it refused. */
+export type OmittedCase = { name: string; uuid: string; reason: string };
+
+export type RenderedSuite = {
+  /** Contents of the test file. */
+  contents: string;
+  /** Cases present upstream but absent from `contents`, and why. */
+  omitted: OmittedCase[];
+};
+
+export type LangAdapter = {
+  readonly id: string;
+  readonly displayName: string;
+  /** File the model is asked to write. */
+  readonly solutionFile: string;
+  /** File the generator writes. */
+  readonly testFile: string;
+
+  /**
+   * Render the suite. `only` restricts to a set of case uuids, which the runner
+   * uses to compare arms over an identical case set.
+   */
+  renderTests(task: Task, only?: ReadonlySet<string>): RenderedSuite;
+
+  /** Language-specific half of the prompt: naming, signatures, error style. */
+  renderContract(task: Task): string;
+
+  /** Argv to run the suite, given the directory holding solution + test file. */
+  testCommand(dir: string): { argv: string[]; cwd: string };
+
+  /** Exit-code contract. `load-error` means the suite never ran. */
+  classifyExit(code: number): "pass" | "fail" | "load-error";
+};
+
+/** Cases of a task belonging to one property, in upstream order. */
+export function casesOf(task: Task, property: string): TaskCase[] {
+  return task.cases.filter((c) => c.property === property);
+}
+
+export function propertyOf(task: Task, name: string): TaskProperty {
+  const p = task.properties.find((x) => x.name === name);
+  if (!p) throw new Error(`${task.id}: no property ${name}`);
+  return p;
+}
+
+/**
+ * Positional argument order for a case.
+ *
+ * `input` is a JSON object, so order comes from key insertion order — what
+ * every Exercism track relies on, but not something the data guarantees. When a
+ * case's key order differs from its property's modal order we reorder to the
+ * modal order and append any extra keys, so arity and the common prefix stay
+ * stable across a property's cases. `corpus/ingest-report.json` lists every
+ * property where this mattered.
+ */
+export function orderedArgs(prop: TaskProperty, c: TaskCase): TaskCase["args"] {
+  const remaining = new Map(c.args.map((a) => [a.name, a]));
+  const out: TaskCase["args"] = [];
+  for (const name of prop.argNames) {
+    const a = remaining.get(name);
+    if (a) {
+      out.push(a);
+      remaining.delete(name);
+    }
+  }
+  for (const a of c.args) if (remaining.has(a.name)) out.push(a);
+  return out;
+}

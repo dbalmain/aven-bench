@@ -1,0 +1,405 @@
+{
+  "schemaVersion": 1,
+  "id": "satellite",
+  "title": "Satellite",
+  "blurb": "Rebuild binary trees from pre-order and in-order traversals.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "treeFromTraversals",
+      "argNames": [
+        "preorder",
+        "inorder"
+      ],
+      "arity": 2,
+      "caseCount": 9,
+      "returnsResult": true,
+      "argOrderVariants": [
+        [
+          "preorder",
+          "inorder"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "8df3fa26-811a-4165-9286-ff9ac0850d19",
+      "name": "Empty tree",
+      "group": [],
+      "description": "Empty tree",
+      "property": "treeFromTraversals",
+      "args": [
+        {
+          "name": "preorder",
+          "value": []
+        },
+        {
+          "name": "inorder",
+          "value": []
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {}
+      }
+    },
+    {
+      "uuid": "f945ccfc-05e3-47d7-825b-0270559d43ad",
+      "name": "Tree with one item",
+      "group": [],
+      "description": "Tree with one item",
+      "property": "treeFromTraversals",
+      "args": [
+        {
+          "name": "preorder",
+          "value": [
+            "a"
+          ]
+        },
+        {
+          "name": "inorder",
+          "value": [
+            "a"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "v": "a",
+          "l": {},
+          "r": {}
+        }
+      }
+    },
+    {
+      "uuid": "a0121d5f-37b0-48dd-9c64-cba4c4464135",
+      "name": "Tree with many items",
+      "group": [],
+      "description": "Tree with many items",
+      "property": "treeFromTraversals",
+      "args": [
+        {
+          "name": "preorder",
+          "value": [
+            "a",
+            "i",
+            "x",
+            "f",
+            "r"
+          ]
+        },
+        {
+          "name": "inorder",
+          "value": [
+            "i",
+            "a",
+            "f",
+            "x",
+            "r"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "v": "a",
+          "l": {
+            "v": "i",
+            "l": {},
+            "r": {}
+          },
+          "r": {
+            "v": "x",
+            "l": {
+              "v": "f",
+              "l": {},
+              "r": {}
+            },
+            "r": {
+              "v": "r",
+              "l": {},
+              "r": {}
+            }
+          }
+        }
+      }
+    },
+    {
+      "uuid": "6074041f-4891-4d81-a128-401050c2a3b0",
+      "name": "Reject traversals of different length",
+      "group": [],
+      "description": "Reject traversals of different length",
+      "property": "treeFromTraversals",
+      "args": [
+        {
+          "name": "preorder",
+          "value": [
+            "a",
+            "b"
+          ]
+        },
+        {
+          "name": "inorder",
+          "value": [
+            "b",
+            "a",
+            "r"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "traversals must have the same length"
+      }
+    },
+    {
+      "uuid": "27916ce4-45f3-4d8b-8528-496fedc157ca",
+      "name": "Reject inconsistent traversals of same length",
+      "group": [],
+      "description": "Reject inconsistent traversals of same length",
+      "property": "treeFromTraversals",
+      "args": [
+        {
+          "name": "preorder",
+          "value": [
+            "x",
+            "y",
+            "z"
+          ]
+        },
+        {
+          "name": "inorder",
+          "value": [
+            "a",
+            "b",
+            "c"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "traversals must have the same elements"
+      }
+    },
+    {
+      "uuid": "d86a3d72-76a9-43b5-9d3a-e64cb1216035",
+      "name": "Reject traversals with repeated items",
+      "group": [],
+      "description": "Reject traversals with repeated items",
+      "property": "treeFromTraversals",
+      "args": [
+        {
+          "name": "preorder",
+          "value": [
+            "a",
+            "b",
+            "a"
+          ]
+        },
+        {
+          "name": "inorder",
+          "value": [
+            "b",
+            "a",
+            "a"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "traversals must contain unique items"
+      }
+    },
+    {
+      "uuid": "af31ae02-7e5b-4452-a990-bccb3fca9148",
+      "name": "A degenerate binary tree",
+      "group": [],
+      "description": "A degenerate binary tree",
+      "property": "treeFromTraversals",
+      "args": [
+        {
+          "name": "preorder",
+          "value": [
+            "a",
+            "b",
+            "c",
+            "d"
+          ]
+        },
+        {
+          "name": "inorder",
+          "value": [
+            "d",
+            "c",
+            "b",
+            "a"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "v": "a",
+          "l": {
+            "v": "b",
+            "l": {
+              "v": "c",
+              "l": {
+                "v": "d",
+                "l": {},
+                "r": {}
+              },
+              "r": {}
+            },
+            "r": {}
+          },
+          "r": {}
+        }
+      }
+    },
+    {
+      "uuid": "ee54463d-a719-4aae-ade4-190d30ce7320",
+      "name": "Another degenerate binary tree",
+      "group": [],
+      "description": "Another degenerate binary tree",
+      "property": "treeFromTraversals",
+      "args": [
+        {
+          "name": "preorder",
+          "value": [
+            "a",
+            "b",
+            "c",
+            "d"
+          ]
+        },
+        {
+          "name": "inorder",
+          "value": [
+            "a",
+            "b",
+            "c",
+            "d"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "v": "a",
+          "l": {},
+          "r": {
+            "v": "b",
+            "l": {},
+            "r": {
+              "v": "c",
+              "l": {},
+              "r": {
+                "v": "d",
+                "l": {},
+                "r": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "uuid": "87123c08-c155-4486-90a4-e2f75b0f3e8f",
+      "name": "Tree with many more items",
+      "group": [],
+      "description": "Tree with many more items",
+      "property": "treeFromTraversals",
+      "args": [
+        {
+          "name": "preorder",
+          "value": [
+            "a",
+            "b",
+            "d",
+            "g",
+            "h",
+            "c",
+            "e",
+            "f",
+            "i"
+          ]
+        },
+        {
+          "name": "inorder",
+          "value": [
+            "g",
+            "d",
+            "h",
+            "b",
+            "a",
+            "e",
+            "c",
+            "i",
+            "f"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "v": "a",
+          "l": {
+            "v": "b",
+            "l": {
+              "v": "d",
+              "l": {
+                "v": "g",
+                "l": {},
+                "r": {}
+              },
+              "r": {
+                "v": "h",
+                "l": {},
+                "r": {}
+              }
+            },
+            "r": {}
+          },
+          "r": {
+            "v": "c",
+            "l": {
+              "v": "e",
+              "l": {},
+              "r": {}
+            },
+            "r": {
+              "v": "f",
+              "l": {
+                "v": "i",
+                "l": {},
+                "r": {}
+              },
+              "r": {}
+            }
+          }
+        }
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 9,
+    "errorCaseCount": 3,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "array",
+      "empty-record",
+      "error",
+      "record",
+      "string"
+    ]
+  }
+}

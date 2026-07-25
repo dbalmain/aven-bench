@@ -1,0 +1,324 @@
+{
+  "schemaVersion": 1,
+  "id": "atbash-cipher",
+  "title": "Atbash Cipher",
+  "blurb": "Create an implementation of the Atbash cipher, an ancient encryption system created in the Middle East.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [
+    "The tests are divided into two groups: ",
+    "* Encoding from English to Atbash cipher",
+    "* Decoding from Atbash cipher to all-lowercase-mashed-together English"
+  ],
+  "properties": [
+    {
+      "name": "encode",
+      "argNames": [
+        "phrase"
+      ],
+      "arity": 1,
+      "caseCount": 8,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "phrase"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "decode",
+      "argNames": [
+        "phrase"
+      ],
+      "arity": 1,
+      "caseCount": 6,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "phrase"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "2f47ebe1-eab9-4d6b-b3c6-627562a31c77",
+      "name": "encode > encode yes",
+      "group": [
+        "encode"
+      ],
+      "description": "encode yes",
+      "property": "encode",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "yes"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "bvh"
+      }
+    },
+    {
+      "uuid": "b4ffe781-ea81-4b74-b268-cc58ba21c739",
+      "name": "encode > encode no",
+      "group": [
+        "encode"
+      ],
+      "description": "encode no",
+      "property": "encode",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "no"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "ml"
+      }
+    },
+    {
+      "uuid": "10e48927-24ab-4c4d-9d3f-3067724ace00",
+      "name": "encode > encode OMG",
+      "group": [
+        "encode"
+      ],
+      "description": "encode OMG",
+      "property": "encode",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "OMG"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "lnt"
+      }
+    },
+    {
+      "uuid": "d59b8bc3-509a-4a9a-834c-6f501b98750b",
+      "name": "encode > encode spaces",
+      "group": [
+        "encode"
+      ],
+      "description": "encode spaces",
+      "property": "encode",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "O M G"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "lnt"
+      }
+    },
+    {
+      "uuid": "31d44b11-81b7-4a94-8b43-4af6a2449429",
+      "name": "encode > encode mindblowingly",
+      "group": [
+        "encode"
+      ],
+      "description": "encode mindblowingly",
+      "property": "encode",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "mindblowingly"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "nrmwy oldrm tob"
+      }
+    },
+    {
+      "uuid": "d503361a-1433-48c0-aae0-d41b5baa33ff",
+      "name": "encode > encode numbers",
+      "group": [
+        "encode"
+      ],
+      "description": "encode numbers",
+      "property": "encode",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "Testing,1 2 3, testing."
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "gvhgr mt123 gvhgr mt"
+      }
+    },
+    {
+      "uuid": "79c8a2d5-0772-42d4-b41b-531d0b5da926",
+      "name": "encode > encode deep thought",
+      "group": [
+        "encode"
+      ],
+      "description": "encode deep thought",
+      "property": "encode",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "Truth is fiction."
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "gifgs rhurx grlm"
+      }
+    },
+    {
+      "uuid": "9ca13d23-d32a-4967-a1fd-6100b8742bab",
+      "name": "encode > encode all the letters",
+      "group": [
+        "encode"
+      ],
+      "description": "encode all the letters",
+      "property": "encode",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "The quick brown fox jumps over the lazy dog."
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "gsvjf rxpyi ldmul cqfnk hlevi gsvoz abwlt"
+      }
+    },
+    {
+      "uuid": "bb50e087-7fdf-48e7-9223-284fe7e69851",
+      "name": "decode > decode exercism",
+      "group": [
+        "decode"
+      ],
+      "description": "decode exercism",
+      "property": "decode",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "vcvix rhn"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "exercism"
+      }
+    },
+    {
+      "uuid": "ac021097-cd5d-4717-8907-b0814b9e292c",
+      "name": "decode > decode a sentence",
+      "group": [
+        "decode"
+      ],
+      "description": "decode a sentence",
+      "property": "decode",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "zmlyh gzxov rhlug vmzhg vkkrm thglm v"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "anobstacleisoftenasteppingstone"
+      }
+    },
+    {
+      "uuid": "18729de3-de74-49b8-b68c-025eaf77f851",
+      "name": "decode > decode numbers",
+      "group": [
+        "decode"
+      ],
+      "description": "decode numbers",
+      "property": "decode",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "gvhgr mt123 gvhgr mt"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "testing123testing"
+      }
+    },
+    {
+      "uuid": "0f30325f-f53b-415d-ad3e-a7a4f63de034",
+      "name": "decode > decode all the letters",
+      "group": [
+        "decode"
+      ],
+      "description": "decode all the letters",
+      "property": "decode",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "gsvjf rxpyi ldmul cqfnk hlevi gsvoz abwlt"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "thequickbrownfoxjumpsoverthelazydog"
+      }
+    },
+    {
+      "uuid": "39640287-30c6-4c8c-9bac-9d613d1a5674",
+      "name": "decode > decode with too many spaces",
+      "group": [
+        "decode"
+      ],
+      "description": "decode with too many spaces",
+      "property": "decode",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "vc vix    r hn"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "exercism"
+      }
+    },
+    {
+      "uuid": "b34edf13-34c0-49b5-aa21-0768928000d5",
+      "name": "decode > decode with no spaces",
+      "group": [
+        "decode"
+      ],
+      "description": "decode with no spaces",
+      "property": "decode",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "zmlyhgzxovrhlugvmzhgvkkrmthglmv"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "anobstacleisoftenasteppingstone"
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 14,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "string"
+    ]
+  }
+}

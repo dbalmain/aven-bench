@@ -1,0 +1,441 @@
+{
+  "schemaVersion": 1,
+  "id": "ledger",
+  "title": "Ledger",
+  "blurb": "Refactor a ledger printer.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [
+    "Per the description, this is a refactoring exercise.",
+    "The expectation is that the stub file has a poorly written but working implementation."
+  ],
+  "properties": [
+    {
+      "name": "formatEntries",
+      "argNames": [
+        "currency",
+        "locale",
+        "entries"
+      ],
+      "arity": 3,
+      "caseCount": 11,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "currency",
+          "locale",
+          "entries"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "d131ecae-a30e-436c-b8f3-858039a27234",
+      "name": "empty ledger",
+      "group": [],
+      "description": "empty ledger",
+      "property": "formatEntries",
+      "args": [
+        {
+          "name": "currency",
+          "value": "USD"
+        },
+        {
+          "name": "locale",
+          "value": "en_US"
+        },
+        {
+          "name": "entries",
+          "value": []
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "Date       | Description               | Change       "
+        ]
+      }
+    },
+    {
+      "uuid": "ce4618d2-9379-4eca-b207-9df1c4ec8aaa",
+      "name": "one entry",
+      "group": [],
+      "description": "one entry",
+      "property": "formatEntries",
+      "args": [
+        {
+          "name": "currency",
+          "value": "USD"
+        },
+        {
+          "name": "locale",
+          "value": "en_US"
+        },
+        {
+          "name": "entries",
+          "value": [
+            {
+              "date": "2015-01-01",
+              "description": "Buy present",
+              "amountInCents": -1000
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "Date       | Description               | Change       ",
+          "01/01/2015 | Buy present               |      ($10.00)"
+        ]
+      }
+    },
+    {
+      "uuid": "8d02e9cb-e6ee-4b77-9ce4-e5aec8eb5ccb",
+      "name": "credit and debit",
+      "group": [],
+      "description": "credit and debit",
+      "property": "formatEntries",
+      "args": [
+        {
+          "name": "currency",
+          "value": "USD"
+        },
+        {
+          "name": "locale",
+          "value": "en_US"
+        },
+        {
+          "name": "entries",
+          "value": [
+            {
+              "date": "2015-01-02",
+              "description": "Get present",
+              "amountInCents": 1000
+            },
+            {
+              "date": "2015-01-01",
+              "description": "Buy present",
+              "amountInCents": -1000
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "Date       | Description               | Change       ",
+          "01/01/2015 | Buy present               |      ($10.00)",
+          "01/02/2015 | Get present               |       $10.00 "
+        ]
+      }
+    },
+    {
+      "uuid": "29dd3659-6c2d-4380-94a8-6d96086e28e1",
+      "name": "final order tie breaker is change",
+      "group": [],
+      "description": "final order tie breaker is change",
+      "property": "formatEntries",
+      "args": [
+        {
+          "name": "currency",
+          "value": "USD"
+        },
+        {
+          "name": "locale",
+          "value": "en_US"
+        },
+        {
+          "name": "entries",
+          "value": [
+            {
+              "date": "2015-01-01",
+              "description": "Something",
+              "amountInCents": 0
+            },
+            {
+              "date": "2015-01-01",
+              "description": "Something",
+              "amountInCents": -1
+            },
+            {
+              "date": "2015-01-01",
+              "description": "Something",
+              "amountInCents": 1
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "Date       | Description               | Change       ",
+          "01/01/2015 | Something                 |       ($0.01)",
+          "01/01/2015 | Something                 |        $0.00 ",
+          "01/01/2015 | Something                 |        $0.01 "
+        ]
+      }
+    },
+    {
+      "uuid": "9b9712a6-f779-4f5c-a759-af65615fcbb9",
+      "name": "overlong description is truncated",
+      "group": [],
+      "description": "overlong description is truncated",
+      "property": "formatEntries",
+      "args": [
+        {
+          "name": "currency",
+          "value": "USD"
+        },
+        {
+          "name": "locale",
+          "value": "en_US"
+        },
+        {
+          "name": "entries",
+          "value": [
+            {
+              "date": "2015-01-01",
+              "description": "Freude schoner Gotterfunken",
+              "amountInCents": -123456
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "Date       | Description               | Change       ",
+          "01/01/2015 | Freude schoner Gotterf... |   ($1,234.56)"
+        ]
+      }
+    },
+    {
+      "uuid": "67318aad-af53-4f3d-aa19-1293b4d4c924",
+      "name": "euros",
+      "group": [],
+      "description": "euros",
+      "property": "formatEntries",
+      "args": [
+        {
+          "name": "currency",
+          "value": "EUR"
+        },
+        {
+          "name": "locale",
+          "value": "en_US"
+        },
+        {
+          "name": "entries",
+          "value": [
+            {
+              "date": "2015-01-01",
+              "description": "Buy present",
+              "amountInCents": -1000
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "Date       | Description               | Change       ",
+          "01/01/2015 | Buy present               |      (€10.00)"
+        ]
+      }
+    },
+    {
+      "uuid": "bdc499b6-51f5-4117-95f2-43cb6737208e",
+      "name": "Dutch locale",
+      "group": [],
+      "description": "Dutch locale",
+      "property": "formatEntries",
+      "args": [
+        {
+          "name": "currency",
+          "value": "USD"
+        },
+        {
+          "name": "locale",
+          "value": "nl_NL"
+        },
+        {
+          "name": "entries",
+          "value": [
+            {
+              "date": "2015-03-12",
+              "description": "Buy present",
+              "amountInCents": 123456
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "Datum      | Omschrijving              | Verandering  ",
+          "12-03-2015 | Buy present               |   $ 1.234,56 "
+        ]
+      }
+    },
+    {
+      "uuid": "86591cd4-1379-4208-ae54-0ee2652b4670",
+      "name": "Dutch locale and euros",
+      "group": [],
+      "description": "Dutch locale and euros",
+      "property": "formatEntries",
+      "args": [
+        {
+          "name": "currency",
+          "value": "EUR"
+        },
+        {
+          "name": "locale",
+          "value": "nl_NL"
+        },
+        {
+          "name": "entries",
+          "value": [
+            {
+              "date": "2015-03-12",
+              "description": "Buy present",
+              "amountInCents": 123456
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "Datum      | Omschrijving              | Verandering  ",
+          "12-03-2015 | Buy present               |   € 1.234,56 "
+        ]
+      }
+    },
+    {
+      "uuid": "876bcec8-d7d7-4ba4-82bd-b836ac87c5d2",
+      "name": "Dutch negative number with 3 digits before decimal point",
+      "group": [],
+      "description": "Dutch negative number with 3 digits before decimal point",
+      "property": "formatEntries",
+      "args": [
+        {
+          "name": "currency",
+          "value": "USD"
+        },
+        {
+          "name": "locale",
+          "value": "nl_NL"
+        },
+        {
+          "name": "entries",
+          "value": [
+            {
+              "date": "2015-03-12",
+              "description": "Buy present",
+              "amountInCents": -12345
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "Datum      | Omschrijving              | Verandering  ",
+          "12-03-2015 | Buy present               |    $ -123,45 "
+        ]
+      }
+    },
+    {
+      "uuid": "29670d1c-56be-492a-9c5e-427e4b766309",
+      "name": "American negative number with 3 digits before decimal point",
+      "group": [],
+      "description": "American negative number with 3 digits before decimal point",
+      "property": "formatEntries",
+      "args": [
+        {
+          "name": "currency",
+          "value": "USD"
+        },
+        {
+          "name": "locale",
+          "value": "en_US"
+        },
+        {
+          "name": "entries",
+          "value": [
+            {
+              "date": "2015-03-12",
+              "description": "Buy present",
+              "amountInCents": -12345
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "Date       | Description               | Change       ",
+          "03/12/2015 | Buy present               |     ($123.45)"
+        ]
+      }
+    },
+    {
+      "uuid": "9c70709f-cbbd-4b3b-b367-81d7c6101de4",
+      "name": "multiple entries on same date ordered by description",
+      "group": [],
+      "description": "multiple entries on same date ordered by description",
+      "property": "formatEntries",
+      "args": [
+        {
+          "name": "currency",
+          "value": "USD"
+        },
+        {
+          "name": "locale",
+          "value": "en_US"
+        },
+        {
+          "name": "entries",
+          "value": [
+            {
+              "date": "2015-01-01",
+              "description": "Get present",
+              "amountInCents": 1000
+            },
+            {
+              "date": "2015-01-01",
+              "description": "Buy present",
+              "amountInCents": -1000
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "Date       | Description               | Change       ",
+          "01/01/2015 | Buy present               |      ($10.00)",
+          "01/01/2015 | Get present               |       $10.00 "
+        ]
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 11,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 1,
+    "valueKinds": [
+      "array",
+      "array-of-record",
+      "int",
+      "record",
+      "string"
+    ]
+  }
+}

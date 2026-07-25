@@ -1,0 +1,392 @@
+{
+  "schemaVersion": 1,
+  "id": "flatten-array",
+  "title": "Flatten Array",
+  "blurb": "Take a nested list and return a single list with all values except nil/null.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "introduction.md",
+    "instructions.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "flatten",
+      "argNames": [
+        "array"
+      ],
+      "arity": 1,
+      "caseCount": 11,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "array"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "8c71dabd-da60-422d-a290-4a571471fb14",
+      "name": "empty",
+      "group": [],
+      "description": "empty",
+      "property": "flatten",
+      "args": [
+        {
+          "name": "array",
+          "value": []
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": []
+      }
+    },
+    {
+      "uuid": "d268b919-963c-442d-9f07-82b93f1b518c",
+      "name": "no nesting",
+      "group": [],
+      "description": "no nesting",
+      "property": "flatten",
+      "args": [
+        {
+          "name": "array",
+          "value": [
+            0,
+            1,
+            2
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          0,
+          1,
+          2
+        ]
+      }
+    },
+    {
+      "uuid": "3f15bede-c856-479e-bb71-1684b20c6a30",
+      "name": "flattens a nested array",
+      "group": [],
+      "description": "flattens a nested array",
+      "property": "flatten",
+      "args": [
+        {
+          "name": "array",
+          "value": [
+            [
+              []
+            ]
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": []
+      }
+    },
+    {
+      "uuid": "c84440cc-bb3a-48a6-862c-94cf23f2815d",
+      "name": "flattens array with just integers present",
+      "group": [],
+      "description": "flattens array with just integers present",
+      "property": "flatten",
+      "args": [
+        {
+          "name": "array",
+          "value": [
+            1,
+            [
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ],
+            8
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ]
+      }
+    },
+    {
+      "uuid": "d3d99d39-6be5-44f5-a31d-6037d92ba34f",
+      "name": "5 level nesting",
+      "group": [],
+      "description": "5 level nesting",
+      "property": "flatten",
+      "args": [
+        {
+          "name": "array",
+          "value": [
+            0,
+            2,
+            [
+              [
+                2,
+                3
+              ],
+              8,
+              100,
+              4,
+              [
+                [
+                  [
+                    50
+                  ]
+                ]
+              ]
+            ],
+            -2
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          0,
+          2,
+          2,
+          3,
+          8,
+          100,
+          4,
+          50,
+          -2
+        ]
+      }
+    },
+    {
+      "uuid": "d572bdba-c127-43ed-bdcd-6222ac83d9f7",
+      "name": "6 level nesting",
+      "group": [],
+      "description": "6 level nesting",
+      "property": "flatten",
+      "args": [
+        {
+          "name": "array",
+          "value": [
+            1,
+            [
+              2,
+              [
+                [
+                  3
+                ]
+              ],
+              [
+                4,
+                [
+                  [
+                    5
+                  ]
+                ]
+              ],
+              6,
+              7
+            ],
+            8
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ]
+      }
+    },
+    {
+      "uuid": "0705a8e5-dc86-4cec-8909-150c5e54fa9c",
+      "name": "null values are omitted from the final result",
+      "group": [],
+      "description": "null values are omitted from the final result",
+      "property": "flatten",
+      "args": [
+        {
+          "name": "array",
+          "value": [
+            1,
+            2,
+            null
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1,
+          2
+        ]
+      }
+    },
+    {
+      "uuid": "bc72da10-5f55-4ada-baf3-50e4da02ec8e",
+      "name": "consecutive null values at the front of the array are omitted from the final result",
+      "group": [],
+      "description": "consecutive null values at the front of the array are omitted from the final result",
+      "property": "flatten",
+      "args": [
+        {
+          "name": "array",
+          "value": [
+            null,
+            null,
+            3
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          3
+        ]
+      }
+    },
+    {
+      "uuid": "6991836d-0d9b-4703-80a0-3f1f23eb5981",
+      "name": "consecutive null values in the middle of the array are omitted from the final result",
+      "group": [],
+      "description": "consecutive null values in the middle of the array are omitted from the final result",
+      "property": "flatten",
+      "args": [
+        {
+          "name": "array",
+          "value": [
+            1,
+            null,
+            null,
+            4
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1,
+          4
+        ]
+      }
+    },
+    {
+      "uuid": "dc90a09c-5376-449c-a7b3-c2d20d540069",
+      "name": "6 level nested array with null values",
+      "group": [],
+      "description": "6 level nested array with null values",
+      "property": "flatten",
+      "args": [
+        {
+          "name": "array",
+          "value": [
+            0,
+            2,
+            [
+              [
+                2,
+                3
+              ],
+              8,
+              [
+                [
+                  100
+                ]
+              ],
+              null,
+              [
+                [
+                  null
+                ]
+              ]
+            ],
+            -2
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          0,
+          2,
+          2,
+          3,
+          8,
+          100,
+          -2
+        ]
+      }
+    },
+    {
+      "uuid": "51f5d9af-8f7f-4fb5-a156-69e8282cb275",
+      "name": "all values in nested array are null",
+      "group": [],
+      "description": "all values in nested array are null",
+      "property": "flatten",
+      "args": [
+        {
+          "name": "array",
+          "value": [
+            null,
+            [
+              [
+                [
+                  null
+                ]
+              ]
+            ],
+            null,
+            null,
+            [
+              [
+                null,
+                null
+              ],
+              null
+            ],
+            null
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": []
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 11,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 4,
+    "valueKinds": [
+      "array",
+      "int",
+      "nested-array",
+      "null"
+    ]
+  }
+}

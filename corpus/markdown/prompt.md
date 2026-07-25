@@ -1,0 +1,29 @@
+# Markdown
+
+Refactor a Markdown parser.
+
+# Description
+
+Refactor a Markdown parser.
+
+The markdown exercise is a refactoring exercise.
+There is code that parses a given string with [Markdown syntax][markdown] and returns the associated HTML for that string.
+Even though this code is confusingly written and hard to follow, somehow it works and all the tests are passing!
+Your challenge is to re-write this code to make it easier to read and maintain while still making sure that all the tests keep passing.
+
+It would be helpful if you made notes of what you did in your refactoring in comments so reviewers can see that, but it isn't strictly necessary.
+The most important thing is to make the code better!
+
+[markdown]: https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax
+
+## Notes from the exercise authors
+
+- Markdown is a shorthand for creating HTML from text strings.
+- Per the description, this is a refactoring exercise.
+- The expectation is that the stub file has a poorly written but working implementation.
+
+## Functions to implement
+
+- `parse(markdown)`
+
+<!-- generated from exercism/problem-specifications exercises/markdown (description.md); do not edit -->

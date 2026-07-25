@@ -1,0 +1,309 @@
+{
+  "schemaVersion": 1,
+  "id": "connect",
+  "title": "Connect",
+  "blurb": "Compute the result for a game of Hex / Polygon.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "winner",
+      "argNames": [
+        "board"
+      ],
+      "arity": 1,
+      "caseCount": 12,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "board"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "6eff0df4-3e92-478d-9b54-d3e8b354db56",
+      "name": "an empty board has no winner",
+      "group": [],
+      "description": "an empty board has no winner",
+      "property": "winner",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            ". . . . .",
+            " . . . . .",
+            "  . . . . .",
+            "   . . . . .",
+            "    . . . . ."
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": ""
+      }
+    },
+    {
+      "uuid": "298b94c0-b46d-45d8-b34b-0fa2ea71f0a4",
+      "name": "X can win on a 1x1 board",
+      "group": [],
+      "description": "X can win on a 1x1 board",
+      "property": "winner",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "X"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "X"
+      }
+    },
+    {
+      "uuid": "763bbae0-cb8f-4f28-bc21-5be16a5722dc",
+      "name": "O can win on a 1x1 board",
+      "group": [],
+      "description": "O can win on a 1x1 board",
+      "property": "winner",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "O"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "O"
+      }
+    },
+    {
+      "uuid": "819fde60-9ae2-485e-a024-cbb8ea68751b",
+      "name": "only edges does not make a winner",
+      "group": [],
+      "description": "only edges does not make a winner",
+      "property": "winner",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "O O O X",
+            " X . . X",
+            "  X . . X",
+            "   X O O O"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": ""
+      }
+    },
+    {
+      "uuid": "2c56a0d5-9528-41e5-b92b-499dfe08506c",
+      "name": "illegal diagonal does not make a winner",
+      "group": [],
+      "description": "illegal diagonal does not make a winner",
+      "property": "winner",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "X O . .",
+            " O X X X",
+            "  O X O .",
+            "   . O X .",
+            "    X X O O"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": ""
+      }
+    },
+    {
+      "uuid": "41cce3ef-43ca-4963-970a-c05d39aa1cc1",
+      "name": "nobody wins crossing adjacent angles",
+      "group": [],
+      "description": "nobody wins crossing adjacent angles",
+      "property": "winner",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "X . . .",
+            " . X O .",
+            "  O . X O",
+            "   . O . X",
+            "    . . O ."
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": ""
+      }
+    },
+    {
+      "uuid": "cd61c143-92f6-4a8d-84d9-cb2b359e226b",
+      "name": "X wins crossing from left to right",
+      "group": [],
+      "description": "X wins crossing from left to right",
+      "property": "winner",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            ". O . .",
+            " O X X X",
+            "  O X O .",
+            "   X X O X",
+            "    . O X ."
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "X"
+      }
+    },
+    {
+      "uuid": "495e33ed-30a9-4012-b46e-d7c4d5fe13c3",
+      "name": "X wins with left-hand dead end fork",
+      "group": [],
+      "description": "X wins with left-hand dead end fork",
+      "property": "winner",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            ". . X .",
+            " X X . .",
+            "  . X X X",
+            "   O O O O"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "X"
+      }
+    },
+    {
+      "uuid": "ab167ab0-4a98-4d0f-a1c0-e1cddddc3d58",
+      "name": "X wins with right-hand dead end fork",
+      "group": [],
+      "description": "X wins with right-hand dead end fork",
+      "property": "winner",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            ". . X X",
+            " X X . .",
+            "  . X X .",
+            "   O O O O"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "X"
+      }
+    },
+    {
+      "uuid": "73d1eda6-16ab-4460-9904-b5f5dd401d0b",
+      "name": "O wins crossing from top to bottom",
+      "group": [],
+      "description": "O wins crossing from top to bottom",
+      "property": "winner",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            ". O . .",
+            " O X X X",
+            "  O O O .",
+            "   X X O X",
+            "    . O X ."
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "O"
+      }
+    },
+    {
+      "uuid": "c3a2a550-944a-4637-8b3f-1e1bf1340a3d",
+      "name": "X wins using a convoluted path",
+      "group": [],
+      "description": "X wins using a convoluted path",
+      "property": "winner",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            ". X X . .",
+            " X . X . X",
+            "  . X . X .",
+            "   . X X . .",
+            "    O O O O O"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "X"
+      }
+    },
+    {
+      "uuid": "17e76fa8-f731-4db7-92ad-ed2a285d31f3",
+      "name": "X wins using a spiral path",
+      "group": [],
+      "description": "X wins using a spiral path",
+      "property": "winner",
+      "args": [
+        {
+          "name": "board",
+          "value": [
+            "O X X X X X X X X",
+            " O X O O O O O O O",
+            "  O X O X X X X X O",
+            "   O X O X O O O X O",
+            "    O X O X X X O X O",
+            "     O X O O O X O X O",
+            "      O X X X X X O X O",
+            "       O O O O O O O X O",
+            "        X X X X X X X X O"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "X"
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 12,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "array",
+      "string"
+    ]
+  }
+}

@@ -1,0 +1,841 @@
+{
+  "schemaVersion": 1,
+  "id": "list-ops",
+  "title": "List Ops",
+  "blurb": "Implement basic list operations.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [
+    "Though there are no specifications here for dealing with large lists,",
+    "implementers may add tests for handling large lists to ensure that the",
+    "solutions have thought about performance concerns."
+  ],
+  "properties": [
+    {
+      "name": "append",
+      "argNames": [
+        "list1",
+        "list2"
+      ],
+      "arity": 2,
+      "caseCount": 4,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "list1",
+          "list2"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "concat",
+      "argNames": [
+        "lists"
+      ],
+      "arity": 1,
+      "caseCount": 3,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "lists"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "filter",
+      "argNames": [
+        "list",
+        "function"
+      ],
+      "arity": 2,
+      "caseCount": 2,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "list",
+          "function"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "length",
+      "argNames": [
+        "list"
+      ],
+      "arity": 1,
+      "caseCount": 2,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "list"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "map",
+      "argNames": [
+        "list",
+        "function"
+      ],
+      "arity": 2,
+      "caseCount": 2,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "list",
+          "function"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "foldl",
+      "argNames": [
+        "list",
+        "initial",
+        "function"
+      ],
+      "arity": 3,
+      "caseCount": 3,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "list",
+          "initial",
+          "function"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "foldr",
+      "argNames": [
+        "list",
+        "initial",
+        "function"
+      ],
+      "arity": 3,
+      "caseCount": 3,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "list",
+          "initial",
+          "function"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "reverse",
+      "argNames": [
+        "list"
+      ],
+      "arity": 1,
+      "caseCount": 3,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "list"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "485b9452-bf94-40f7-a3db-c3cf4850066a",
+      "name": "append entries to a list and return the new list > empty lists",
+      "group": [
+        "append entries to a list and return the new list"
+      ],
+      "description": "empty lists",
+      "property": "append",
+      "args": [
+        {
+          "name": "list1",
+          "value": []
+        },
+        {
+          "name": "list2",
+          "value": []
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": []
+      }
+    },
+    {
+      "uuid": "2c894696-b609-4569-b149-8672134d340a",
+      "name": "append entries to a list and return the new list > list to empty list",
+      "group": [
+        "append entries to a list and return the new list"
+      ],
+      "description": "list to empty list",
+      "property": "append",
+      "args": [
+        {
+          "name": "list1",
+          "value": []
+        },
+        {
+          "name": "list2",
+          "value": [
+            1,
+            2,
+            3,
+            4
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1,
+          2,
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "uuid": "e842efed-3bf6-4295-b371-4d67a4fdf19c",
+      "name": "append entries to a list and return the new list > empty list to list",
+      "group": [
+        "append entries to a list and return the new list"
+      ],
+      "description": "empty list to list",
+      "property": "append",
+      "args": [
+        {
+          "name": "list1",
+          "value": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "name": "list2",
+          "value": []
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1,
+          2,
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "uuid": "71dcf5eb-73ae-4a0e-b744-a52ee387922f",
+      "name": "append entries to a list and return the new list > non-empty lists",
+      "group": [
+        "append entries to a list and return the new list"
+      ],
+      "description": "non-empty lists",
+      "property": "append",
+      "args": [
+        {
+          "name": "list1",
+          "value": [
+            1,
+            2
+          ]
+        },
+        {
+          "name": "list2",
+          "value": [
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1,
+          2,
+          2,
+          3,
+          4,
+          5
+        ]
+      }
+    },
+    {
+      "uuid": "28444355-201b-4af2-a2f6-5550227bde21",
+      "name": "concatenate a list of lists > empty list",
+      "group": [
+        "concatenate a list of lists"
+      ],
+      "description": "empty list",
+      "property": "concat",
+      "args": [
+        {
+          "name": "lists",
+          "value": []
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": []
+      }
+    },
+    {
+      "uuid": "331451c1-9573-42a1-9869-2d06e3b389a9",
+      "name": "concatenate a list of lists > list of lists",
+      "group": [
+        "concatenate a list of lists"
+      ],
+      "description": "list of lists",
+      "property": "concat",
+      "args": [
+        {
+          "name": "lists",
+          "value": [
+            [
+              1,
+              2
+            ],
+            [
+              3
+            ],
+            [],
+            [
+              4,
+              5,
+              6
+            ]
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      }
+    },
+    {
+      "uuid": "d6ecd72c-197f-40c3-89a4-aa1f45827e09",
+      "name": "concatenate a list of lists > list of nested lists",
+      "group": [
+        "concatenate a list of lists"
+      ],
+      "description": "list of nested lists",
+      "property": "concat",
+      "args": [
+        {
+          "name": "lists",
+          "value": [
+            [
+              [
+                1
+              ],
+              [
+                2
+              ]
+            ],
+            [
+              [
+                3
+              ]
+            ],
+            [
+              []
+            ],
+            [
+              [
+                4,
+                5,
+                6
+              ]
+            ]
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            1
+          ],
+          [
+            2
+          ],
+          [
+            3
+          ],
+          [],
+          [
+            4,
+            5,
+            6
+          ]
+        ]
+      }
+    },
+    {
+      "uuid": "0524fba8-3e0f-4531-ad2b-f7a43da86a16",
+      "name": "filter list returning only values that satisfy the filter function > empty list",
+      "group": [
+        "filter list returning only values that satisfy the filter function"
+      ],
+      "description": "empty list",
+      "property": "filter",
+      "args": [
+        {
+          "name": "list",
+          "value": []
+        },
+        {
+          "name": "function",
+          "value": "(x) -> x modulo 2 == 1"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": []
+      }
+    },
+    {
+      "uuid": "88494bd5-f520-4edb-8631-88e415b62d24",
+      "name": "filter list returning only values that satisfy the filter function > non-empty list",
+      "group": [
+        "filter list returning only values that satisfy the filter function"
+      ],
+      "description": "non-empty list",
+      "property": "filter",
+      "args": [
+        {
+          "name": "list",
+          "value": [
+            1,
+            2,
+            3,
+            5
+          ]
+        },
+        {
+          "name": "function",
+          "value": "(x) -> x modulo 2 == 1"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          1,
+          3,
+          5
+        ]
+      }
+    },
+    {
+      "uuid": "1cf0b92d-8d96-41d5-9c21-7b3c37cb6aad",
+      "name": "returns the length of a list > empty list",
+      "group": [
+        "returns the length of a list"
+      ],
+      "description": "empty list",
+      "property": "length",
+      "args": [
+        {
+          "name": "list",
+          "value": []
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "d7b8d2d9-2d16-44c4-9a19-6e5f237cb71e",
+      "name": "returns the length of a list > non-empty list",
+      "group": [
+        "returns the length of a list"
+      ],
+      "description": "non-empty list",
+      "property": "length",
+      "args": [
+        {
+          "name": "list",
+          "value": [
+            1,
+            2,
+            3,
+            4
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 4
+      }
+    },
+    {
+      "uuid": "c0bc8962-30e2-4bec-9ae4-668b8ecd75aa",
+      "name": "return a list of elements whose values equal the list value transformed by the mapping function > empty list",
+      "group": [
+        "return a list of elements whose values equal the list value transformed by the mapping function"
+      ],
+      "description": "empty list",
+      "property": "map",
+      "args": [
+        {
+          "name": "list",
+          "value": []
+        },
+        {
+          "name": "function",
+          "value": "(x) -> x + 1"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": []
+      }
+    },
+    {
+      "uuid": "11e71a95-e78b-4909-b8e4-60cdcaec0e91",
+      "name": "return a list of elements whose values equal the list value transformed by the mapping function > non-empty list",
+      "group": [
+        "return a list of elements whose values equal the list value transformed by the mapping function"
+      ],
+      "description": "non-empty list",
+      "property": "map",
+      "args": [
+        {
+          "name": "list",
+          "value": [
+            1,
+            3,
+            5,
+            7
+          ]
+        },
+        {
+          "name": "function",
+          "value": "(x) -> x + 1"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          2,
+          4,
+          6,
+          8
+        ]
+      }
+    },
+    {
+      "uuid": "36549237-f765-4a4c-bfd9-5d3a8f7b07d2",
+      "name": "folds (reduces) the given list from the left with a function > empty list",
+      "group": [
+        "folds (reduces) the given list from the left with a function"
+      ],
+      "description": "empty list",
+      "property": "foldl",
+      "args": [
+        {
+          "name": "list",
+          "value": []
+        },
+        {
+          "name": "initial",
+          "value": 2
+        },
+        {
+          "name": "function",
+          "value": "(acc, el) -> el * acc"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 2
+      }
+    },
+    {
+      "uuid": "7a626a3c-03ec-42bc-9840-53f280e13067",
+      "name": "folds (reduces) the given list from the left with a function > direction independent function applied to non-empty list",
+      "group": [
+        "folds (reduces) the given list from the left with a function"
+      ],
+      "description": "direction independent function applied to non-empty list",
+      "property": "foldl",
+      "args": [
+        {
+          "name": "list",
+          "value": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "name": "initial",
+          "value": 5
+        },
+        {
+          "name": "function",
+          "value": "(acc, el) -> el + acc"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 15
+      }
+    },
+    {
+      "uuid": "d7fcad99-e88e-40e1-a539-4c519681f390",
+      "name": "folds (reduces) the given list from the left with a function > direction dependent function applied to non-empty list",
+      "group": [
+        "folds (reduces) the given list from the left with a function"
+      ],
+      "description": "direction dependent function applied to non-empty list",
+      "property": "foldl",
+      "args": [
+        {
+          "name": "list",
+          "value": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "name": "initial",
+          "value": 24
+        },
+        {
+          "name": "function",
+          "value": "(acc, el) -> el / acc"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 64
+      }
+    },
+    {
+      "uuid": "17214edb-20ba-42fc-bda8-000a5ab525b0",
+      "name": "folds (reduces) the given list from the right with a function > empty list",
+      "group": [
+        "folds (reduces) the given list from the right with a function"
+      ],
+      "description": "empty list",
+      "property": "foldr",
+      "args": [
+        {
+          "name": "list",
+          "value": []
+        },
+        {
+          "name": "initial",
+          "value": 2
+        },
+        {
+          "name": "function",
+          "value": "(acc, el) -> el * acc"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 2
+      }
+    },
+    {
+      "uuid": "e1c64db7-9253-4a3d-a7c4-5273b9e2a1bd",
+      "name": "folds (reduces) the given list from the right with a function > direction independent function applied to non-empty list",
+      "group": [
+        "folds (reduces) the given list from the right with a function"
+      ],
+      "description": "direction independent function applied to non-empty list",
+      "property": "foldr",
+      "args": [
+        {
+          "name": "list",
+          "value": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "name": "initial",
+          "value": 5
+        },
+        {
+          "name": "function",
+          "value": "(acc, el) -> el + acc"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 15
+      }
+    },
+    {
+      "uuid": "8066003b-f2ff-437e-9103-66e6df474844",
+      "name": "folds (reduces) the given list from the right with a function > direction dependent function applied to non-empty list",
+      "group": [
+        "folds (reduces) the given list from the right with a function"
+      ],
+      "description": "direction dependent function applied to non-empty list",
+      "property": "foldr",
+      "args": [
+        {
+          "name": "list",
+          "value": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "name": "initial",
+          "value": 24
+        },
+        {
+          "name": "function",
+          "value": "(acc, el) -> el / acc"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 9
+      }
+    },
+    {
+      "uuid": "94231515-050e-4841-943d-d4488ab4ee30",
+      "name": "reverse the elements of the list > empty list",
+      "group": [
+        "reverse the elements of the list"
+      ],
+      "description": "empty list",
+      "property": "reverse",
+      "args": [
+        {
+          "name": "list",
+          "value": []
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": []
+      }
+    },
+    {
+      "uuid": "fcc03d1e-42e0-4712-b689-d54ad761f360",
+      "name": "reverse the elements of the list > non-empty list",
+      "group": [
+        "reverse the elements of the list"
+      ],
+      "description": "non-empty list",
+      "property": "reverse",
+      "args": [
+        {
+          "name": "list",
+          "value": [
+            1,
+            3,
+            5,
+            7
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          7,
+          5,
+          3,
+          1
+        ]
+      }
+    },
+    {
+      "uuid": "40872990-b5b8-4cb8-9085-d91fc0d05d26",
+      "name": "reverse the elements of the list > list of lists is not flattened",
+      "group": [
+        "reverse the elements of the list"
+      ],
+      "description": "list of lists is not flattened",
+      "property": "reverse",
+      "args": [
+        {
+          "name": "list",
+          "value": [
+            [
+              1,
+              2
+            ],
+            [
+              3
+            ],
+            [],
+            [
+              4,
+              5,
+              6
+            ]
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            4,
+            5,
+            6
+          ],
+          [],
+          [
+            3
+          ],
+          [
+            1,
+            2
+          ]
+        ]
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 22,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 6,
+    "valueKinds": [
+      "array",
+      "int",
+      "nested-array",
+      "string"
+    ]
+  }
+}

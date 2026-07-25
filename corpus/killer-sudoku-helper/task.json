@@ -1,0 +1,416 @@
+{
+  "schemaVersion": 1,
+  "id": "killer-sudoku-helper",
+  "title": "Killer Sudoku Helper",
+  "blurb": "Write a tool that makes it easier to solve Killer Sudokus",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "combinations",
+      "argNames": [
+        "cage"
+      ],
+      "arity": 1,
+      "caseCount": 13,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "cage"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "2aaa8f13-11b5-4054-b95c-a906e4d79fb6",
+      "name": "Trivial 1-digit cages > 1",
+      "group": [
+        "Trivial 1-digit cages"
+      ],
+      "description": "1",
+      "property": "combinations",
+      "args": [
+        {
+          "name": "cage",
+          "value": {
+            "sum": 1,
+            "size": 1,
+            "exclude": []
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            1
+          ]
+        ]
+      }
+    },
+    {
+      "uuid": "4645da19-9fdd-4087-a910-a6ed66823563",
+      "name": "Trivial 1-digit cages > 2",
+      "group": [
+        "Trivial 1-digit cages"
+      ],
+      "description": "2",
+      "property": "combinations",
+      "args": [
+        {
+          "name": "cage",
+          "value": {
+            "sum": 2,
+            "size": 1,
+            "exclude": []
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            2
+          ]
+        ]
+      }
+    },
+    {
+      "uuid": "07cfc704-f8aa-41b2-8f9a-cbefb674cb48",
+      "name": "Trivial 1-digit cages > 3",
+      "group": [
+        "Trivial 1-digit cages"
+      ],
+      "description": "3",
+      "property": "combinations",
+      "args": [
+        {
+          "name": "cage",
+          "value": {
+            "sum": 3,
+            "size": 1,
+            "exclude": []
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            3
+          ]
+        ]
+      }
+    },
+    {
+      "uuid": "22b8b2ba-c4fd-40b3-b1bf-40aa5e7b5f24",
+      "name": "Trivial 1-digit cages > 4",
+      "group": [
+        "Trivial 1-digit cages"
+      ],
+      "description": "4",
+      "property": "combinations",
+      "args": [
+        {
+          "name": "cage",
+          "value": {
+            "sum": 4,
+            "size": 1,
+            "exclude": []
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            4
+          ]
+        ]
+      }
+    },
+    {
+      "uuid": "b75d16e2-ff9b-464d-8578-71f73094cea7",
+      "name": "Trivial 1-digit cages > 5",
+      "group": [
+        "Trivial 1-digit cages"
+      ],
+      "description": "5",
+      "property": "combinations",
+      "args": [
+        {
+          "name": "cage",
+          "value": {
+            "sum": 5,
+            "size": 1,
+            "exclude": []
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            5
+          ]
+        ]
+      }
+    },
+    {
+      "uuid": "bcbf5afc-4c89-4ff6-9357-07ab4d42788f",
+      "name": "Trivial 1-digit cages > 6",
+      "group": [
+        "Trivial 1-digit cages"
+      ],
+      "description": "6",
+      "property": "combinations",
+      "args": [
+        {
+          "name": "cage",
+          "value": {
+            "sum": 6,
+            "size": 1,
+            "exclude": []
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            6
+          ]
+        ]
+      }
+    },
+    {
+      "uuid": "511b3bf8-186f-4e35-844f-c804d86f4a7a",
+      "name": "Trivial 1-digit cages > 7",
+      "group": [
+        "Trivial 1-digit cages"
+      ],
+      "description": "7",
+      "property": "combinations",
+      "args": [
+        {
+          "name": "cage",
+          "value": {
+            "sum": 7,
+            "size": 1,
+            "exclude": []
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            7
+          ]
+        ]
+      }
+    },
+    {
+      "uuid": "bd09a60d-3aca-43bd-b6aa-6ccad01bedda",
+      "name": "Trivial 1-digit cages > 8",
+      "group": [
+        "Trivial 1-digit cages"
+      ],
+      "description": "8",
+      "property": "combinations",
+      "args": [
+        {
+          "name": "cage",
+          "value": {
+            "sum": 8,
+            "size": 1,
+            "exclude": []
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            8
+          ]
+        ]
+      }
+    },
+    {
+      "uuid": "9b539f27-44ea-4ff8-bd3d-c7e136bee677",
+      "name": "Trivial 1-digit cages > 9",
+      "group": [
+        "Trivial 1-digit cages"
+      ],
+      "description": "9",
+      "property": "combinations",
+      "args": [
+        {
+          "name": "cage",
+          "value": {
+            "sum": 9,
+            "size": 1,
+            "exclude": []
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            9
+          ]
+        ]
+      }
+    },
+    {
+      "uuid": "0a8b2078-b3a4-4dbd-be0d-b180f503d5c3",
+      "name": "Cage with sum 45 contains all digits 1:9",
+      "group": [],
+      "description": "Cage with sum 45 contains all digits 1:9",
+      "property": "combinations",
+      "args": [
+        {
+          "name": "cage",
+          "value": {
+            "sum": 45,
+            "size": 9,
+            "exclude": []
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        ]
+      }
+    },
+    {
+      "uuid": "2635d7c9-c716-4da1-84f1-c96e03900142",
+      "name": "Cage with only 1 possible combination",
+      "group": [],
+      "description": "Cage with only 1 possible combination",
+      "property": "combinations",
+      "args": [
+        {
+          "name": "cage",
+          "value": {
+            "sum": 7,
+            "size": 3,
+            "exclude": []
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            1,
+            2,
+            4
+          ]
+        ]
+      }
+    },
+    {
+      "uuid": "a5bde743-e3a2-4a0c-8aac-e64fceea4228",
+      "name": "Cage with several combinations",
+      "group": [],
+      "description": "Cage with several combinations",
+      "property": "combinations",
+      "args": [
+        {
+          "name": "cage",
+          "value": {
+            "sum": 10,
+            "size": 2,
+            "exclude": []
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            1,
+            9
+          ],
+          [
+            2,
+            8
+          ],
+          [
+            3,
+            7
+          ],
+          [
+            4,
+            6
+          ]
+        ]
+      }
+    },
+    {
+      "uuid": "dfbf411c-737d-465a-a873-ca556360c274",
+      "name": "Cage with several combinations that is restricted",
+      "group": [],
+      "description": "Cage with several combinations that is restricted",
+      "property": "combinations",
+      "args": [
+        {
+          "name": "cage",
+          "value": {
+            "sum": 10,
+            "size": 2,
+            "exclude": [
+              1,
+              4
+            ]
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            2,
+            8
+          ],
+          [
+            3,
+            7
+          ]
+        ]
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 13,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "array",
+      "int",
+      "nested-array",
+      "record"
+    ]
+  }
+}

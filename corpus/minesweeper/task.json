@@ -1,0 +1,344 @@
+{
+  "schemaVersion": 1,
+  "id": "minesweeper",
+  "title": "Minesweeper",
+  "blurb": "Add the numbers to a minesweeper board.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "introduction.md",
+    "instructions.md"
+  ],
+  "comments": [
+    " The expected outputs are represented as arrays of strings to   ",
+    " improve readability in this JSON file.                         ",
+    " Your track may choose whether to present the input as a single ",
+    " string (concatenating all the lines) or as the list.           "
+  ],
+  "properties": [
+    {
+      "name": "annotate",
+      "argNames": [
+        "minefield"
+      ],
+      "arity": 1,
+      "caseCount": 12,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "minefield"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "0c5ec4bd-dea7-4138-8651-1203e1cb9f44",
+      "name": "no rows",
+      "group": [],
+      "description": "no rows",
+      "property": "annotate",
+      "args": [
+        {
+          "name": "minefield",
+          "value": []
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": []
+      }
+    },
+    {
+      "uuid": "650ac4c0-ad6b-4b41-acde-e4ea5852c3b8",
+      "name": "no columns",
+      "group": [],
+      "description": "no columns",
+      "property": "annotate",
+      "args": [
+        {
+          "name": "minefield",
+          "value": [
+            ""
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          ""
+        ]
+      }
+    },
+    {
+      "uuid": "6fbf8f6d-a03b-42c9-9a58-b489e9235478",
+      "name": "no mines",
+      "group": [],
+      "description": "no mines",
+      "property": "annotate",
+      "args": [
+        {
+          "name": "minefield",
+          "value": [
+            "   ",
+            "   ",
+            "   "
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "   ",
+          "   ",
+          "   "
+        ]
+      }
+    },
+    {
+      "uuid": "61aff1c4-fb31-4078-acad-cd5f1e635655",
+      "name": "minefield with only mines",
+      "group": [],
+      "description": "minefield with only mines",
+      "property": "annotate",
+      "args": [
+        {
+          "name": "minefield",
+          "value": [
+            "***",
+            "***",
+            "***"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "***",
+          "***",
+          "***"
+        ]
+      }
+    },
+    {
+      "uuid": "84167147-c504-4896-85d7-246b01dea7c5",
+      "name": "mine surrounded by spaces",
+      "group": [],
+      "description": "mine surrounded by spaces",
+      "property": "annotate",
+      "args": [
+        {
+          "name": "minefield",
+          "value": [
+            "   ",
+            " * ",
+            "   "
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "111",
+          "1*1",
+          "111"
+        ]
+      }
+    },
+    {
+      "uuid": "cb878f35-43e3-4c9d-93d9-139012cccc4a",
+      "name": "space surrounded by mines",
+      "group": [],
+      "description": "space surrounded by mines",
+      "property": "annotate",
+      "args": [
+        {
+          "name": "minefield",
+          "value": [
+            "***",
+            "* *",
+            "***"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "***",
+          "*8*",
+          "***"
+        ]
+      }
+    },
+    {
+      "uuid": "7037f483-ddb4-4b35-b005-0d0f4ef4606f",
+      "name": "horizontal line",
+      "group": [],
+      "description": "horizontal line",
+      "property": "annotate",
+      "args": [
+        {
+          "name": "minefield",
+          "value": [
+            " * * "
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "1*2*1"
+        ]
+      }
+    },
+    {
+      "uuid": "e359820f-bb8b-4eda-8762-47b64dba30a6",
+      "name": "horizontal line, mines at edges",
+      "group": [],
+      "description": "horizontal line, mines at edges",
+      "property": "annotate",
+      "args": [
+        {
+          "name": "minefield",
+          "value": [
+            "*   *"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "*1 1*"
+        ]
+      }
+    },
+    {
+      "uuid": "c5198b50-804f-47e9-ae02-c3b42f7ce3ab",
+      "name": "vertical line",
+      "group": [],
+      "description": "vertical line",
+      "property": "annotate",
+      "args": [
+        {
+          "name": "minefield",
+          "value": [
+            " ",
+            "*",
+            " ",
+            "*",
+            " "
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "1",
+          "*",
+          "2",
+          "*",
+          "1"
+        ]
+      }
+    },
+    {
+      "uuid": "0c79a64d-703d-4660-9e90-5adfa5408939",
+      "name": "vertical line, mines at edges",
+      "group": [],
+      "description": "vertical line, mines at edges",
+      "property": "annotate",
+      "args": [
+        {
+          "name": "minefield",
+          "value": [
+            "*",
+            " ",
+            " ",
+            " ",
+            "*"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "*",
+          "1",
+          " ",
+          "1",
+          "*"
+        ]
+      }
+    },
+    {
+      "uuid": "4b098563-b7f3-401c-97c6-79dd1b708f34",
+      "name": "cross",
+      "group": [],
+      "description": "cross",
+      "property": "annotate",
+      "args": [
+        {
+          "name": "minefield",
+          "value": [
+            "  *  ",
+            "  *  ",
+            "*****",
+            "  *  ",
+            "  *  "
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          " 2*2 ",
+          "25*52",
+          "*****",
+          "25*52",
+          " 2*2 "
+        ]
+      }
+    },
+    {
+      "uuid": "04a260f1-b40a-4e89-839e-8dd8525abe0e",
+      "name": "large minefield",
+      "group": [],
+      "description": "large minefield",
+      "property": "annotate",
+      "args": [
+        {
+          "name": "minefield",
+          "value": [
+            " *  * ",
+            "  *   ",
+            "    * ",
+            "   * *",
+            " *  * ",
+            "      "
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "1*22*1",
+          "12*322",
+          " 123*2",
+          "112*4*",
+          "1*22*2",
+          "111111"
+        ]
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 12,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "array",
+      "string"
+    ]
+  }
+}

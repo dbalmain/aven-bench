@@ -1,0 +1,19 @@
+{
+  "name": "aven-bench",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Benchmark harness: drive coding models through a task corpus in Aven and control languages.",
+  "scripts": {
+    "fetch": "scripts/fetch-corpus.sh",
+    "ingest": "bun run ingest/ingest.ts",
+    "split": "bun run ingest/split.ts",
+    "generate": "bun run ingest/generate.ts",
+    "verify": "bun run ingest/verify.ts",
+    "typecheck": "bunx tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.6.0"
+  }
+}

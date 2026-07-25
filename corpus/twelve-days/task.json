@@ -1,0 +1,437 @@
+{
+  "schemaVersion": 1,
+  "id": "twelve-days",
+  "title": "Twelve Days",
+  "blurb": "Output the lyrics to 'The Twelve Days of Christmas'.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [
+    "JSON doesn't allow for multi-line strings, so all verses are presented ",
+    "here as arrays of strings. It's up to the test generator to join the ",
+    "lines together with line breaks."
+  ],
+  "properties": [
+    {
+      "name": "recite",
+      "argNames": [
+        "startVerse",
+        "endVerse"
+      ],
+      "arity": 2,
+      "caseCount": 15,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "startVerse",
+          "endVerse"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "c0b5a5e6-c89d-49b1-a6b2-9f523bff33f7",
+      "name": "verse > first day a partridge in a pear tree",
+      "group": [
+        "verse"
+      ],
+      "description": "first day a partridge in a pear tree",
+      "property": "recite",
+      "args": [
+        {
+          "name": "startVerse",
+          "value": 1
+        },
+        {
+          "name": "endVerse",
+          "value": 1
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "On the first day of Christmas my true love gave to me: a Partridge in a Pear Tree."
+        ]
+      }
+    },
+    {
+      "uuid": "1c64508a-df3d-420a-b8e1-fe408847854a",
+      "name": "verse > second day two turtle doves",
+      "group": [
+        "verse"
+      ],
+      "description": "second day two turtle doves",
+      "property": "recite",
+      "args": [
+        {
+          "name": "startVerse",
+          "value": 2
+        },
+        {
+          "name": "endVerse",
+          "value": 2
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "On the second day of Christmas my true love gave to me: two Turtle Doves, and a Partridge in a Pear Tree."
+        ]
+      }
+    },
+    {
+      "uuid": "a919e09c-75b2-4e64-bb23-de4a692060a8",
+      "name": "verse > third day three french hens",
+      "group": [
+        "verse"
+      ],
+      "description": "third day three french hens",
+      "property": "recite",
+      "args": [
+        {
+          "name": "startVerse",
+          "value": 3
+        },
+        {
+          "name": "endVerse",
+          "value": 3
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "On the third day of Christmas my true love gave to me: three French Hens, two Turtle Doves, and a Partridge in a Pear Tree."
+        ]
+      }
+    },
+    {
+      "uuid": "9bed8631-ec60-4894-a3bb-4f0ec9fbe68d",
+      "name": "verse > fourth day four calling birds",
+      "group": [
+        "verse"
+      ],
+      "description": "fourth day four calling birds",
+      "property": "recite",
+      "args": [
+        {
+          "name": "startVerse",
+          "value": 4
+        },
+        {
+          "name": "endVerse",
+          "value": 4
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "On the fourth day of Christmas my true love gave to me: four Calling Birds, three French Hens, two Turtle Doves, and a Partridge in a Pear Tree."
+        ]
+      }
+    },
+    {
+      "uuid": "cf1024f0-73b6-4545-be57-e9cea565289a",
+      "name": "verse > fifth day five gold rings",
+      "group": [
+        "verse"
+      ],
+      "description": "fifth day five gold rings",
+      "property": "recite",
+      "args": [
+        {
+          "name": "startVerse",
+          "value": 5
+        },
+        {
+          "name": "endVerse",
+          "value": 5
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "On the fifth day of Christmas my true love gave to me: five Gold Rings, four Calling Birds, three French Hens, two Turtle Doves, and a Partridge in a Pear Tree."
+        ]
+      }
+    },
+    {
+      "uuid": "50bd3393-868a-4f24-a618-68df3d02ff04",
+      "name": "verse > sixth day six geese-a-laying",
+      "group": [
+        "verse"
+      ],
+      "description": "sixth day six geese-a-laying",
+      "property": "recite",
+      "args": [
+        {
+          "name": "startVerse",
+          "value": 6
+        },
+        {
+          "name": "endVerse",
+          "value": 6
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "On the sixth day of Christmas my true love gave to me: six Geese-a-Laying, five Gold Rings, four Calling Birds, three French Hens, two Turtle Doves, and a Partridge in a Pear Tree."
+        ]
+      }
+    },
+    {
+      "uuid": "8f29638c-9bf1-4680-94be-e8b84e4ade83",
+      "name": "verse > seventh day seven swans-a-swimming",
+      "group": [
+        "verse"
+      ],
+      "description": "seventh day seven swans-a-swimming",
+      "property": "recite",
+      "args": [
+        {
+          "name": "startVerse",
+          "value": 7
+        },
+        {
+          "name": "endVerse",
+          "value": 7
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "On the seventh day of Christmas my true love gave to me: seven Swans-a-Swimming, six Geese-a-Laying, five Gold Rings, four Calling Birds, three French Hens, two Turtle Doves, and a Partridge in a Pear Tree."
+        ]
+      }
+    },
+    {
+      "uuid": "7038d6e1-e377-47ad-8c37-10670a05bc05",
+      "name": "verse > eighth day eight maids-a-milking",
+      "group": [
+        "verse"
+      ],
+      "description": "eighth day eight maids-a-milking",
+      "property": "recite",
+      "args": [
+        {
+          "name": "startVerse",
+          "value": 8
+        },
+        {
+          "name": "endVerse",
+          "value": 8
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "On the eighth day of Christmas my true love gave to me: eight Maids-a-Milking, seven Swans-a-Swimming, six Geese-a-Laying, five Gold Rings, four Calling Birds, three French Hens, two Turtle Doves, and a Partridge in a Pear Tree."
+        ]
+      }
+    },
+    {
+      "uuid": "37a800a6-7a56-4352-8d72-0f51eb37cfe8",
+      "name": "verse > ninth day nine ladies dancing",
+      "group": [
+        "verse"
+      ],
+      "description": "ninth day nine ladies dancing",
+      "property": "recite",
+      "args": [
+        {
+          "name": "startVerse",
+          "value": 9
+        },
+        {
+          "name": "endVerse",
+          "value": 9
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "On the ninth day of Christmas my true love gave to me: nine Ladies Dancing, eight Maids-a-Milking, seven Swans-a-Swimming, six Geese-a-Laying, five Gold Rings, four Calling Birds, three French Hens, two Turtle Doves, and a Partridge in a Pear Tree."
+        ]
+      }
+    },
+    {
+      "uuid": "10b158aa-49ff-4b2d-afc3-13af9133510d",
+      "name": "verse > tenth day ten lords-a-leaping",
+      "group": [
+        "verse"
+      ],
+      "description": "tenth day ten lords-a-leaping",
+      "property": "recite",
+      "args": [
+        {
+          "name": "startVerse",
+          "value": 10
+        },
+        {
+          "name": "endVerse",
+          "value": 10
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "On the tenth day of Christmas my true love gave to me: ten Lords-a-Leaping, nine Ladies Dancing, eight Maids-a-Milking, seven Swans-a-Swimming, six Geese-a-Laying, five Gold Rings, four Calling Birds, three French Hens, two Turtle Doves, and a Partridge in a Pear Tree."
+        ]
+      }
+    },
+    {
+      "uuid": "08d7d453-f2ba-478d-8df0-d39ea6a4f457",
+      "name": "verse > eleventh day eleven pipers piping",
+      "group": [
+        "verse"
+      ],
+      "description": "eleventh day eleven pipers piping",
+      "property": "recite",
+      "args": [
+        {
+          "name": "startVerse",
+          "value": 11
+        },
+        {
+          "name": "endVerse",
+          "value": 11
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "On the eleventh day of Christmas my true love gave to me: eleven Pipers Piping, ten Lords-a-Leaping, nine Ladies Dancing, eight Maids-a-Milking, seven Swans-a-Swimming, six Geese-a-Laying, five Gold Rings, four Calling Birds, three French Hens, two Turtle Doves, and a Partridge in a Pear Tree."
+        ]
+      }
+    },
+    {
+      "uuid": "0620fea7-1704-4e48-b557-c05bf43967f0",
+      "name": "verse > twelfth day twelve drummers drumming",
+      "group": [
+        "verse"
+      ],
+      "description": "twelfth day twelve drummers drumming",
+      "property": "recite",
+      "args": [
+        {
+          "name": "startVerse",
+          "value": 12
+        },
+        {
+          "name": "endVerse",
+          "value": 12
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "On the twelfth day of Christmas my true love gave to me: twelve Drummers Drumming, eleven Pipers Piping, ten Lords-a-Leaping, nine Ladies Dancing, eight Maids-a-Milking, seven Swans-a-Swimming, six Geese-a-Laying, five Gold Rings, four Calling Birds, three French Hens, two Turtle Doves, and a Partridge in a Pear Tree."
+        ]
+      }
+    },
+    {
+      "uuid": "da8b9013-b1e8-49df-b6ef-ddec0219e398",
+      "name": "lyrics > recites first three verses of the song",
+      "group": [
+        "lyrics"
+      ],
+      "description": "recites first three verses of the song",
+      "property": "recite",
+      "args": [
+        {
+          "name": "startVerse",
+          "value": 1
+        },
+        {
+          "name": "endVerse",
+          "value": 3
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "On the first day of Christmas my true love gave to me: a Partridge in a Pear Tree.",
+          "On the second day of Christmas my true love gave to me: two Turtle Doves, and a Partridge in a Pear Tree.",
+          "On the third day of Christmas my true love gave to me: three French Hens, two Turtle Doves, and a Partridge in a Pear Tree."
+        ]
+      }
+    },
+    {
+      "uuid": "c095af0d-3137-4653-ad32-bfb899eda24c",
+      "name": "lyrics > recites three verses from the middle of the song",
+      "group": [
+        "lyrics"
+      ],
+      "description": "recites three verses from the middle of the song",
+      "property": "recite",
+      "args": [
+        {
+          "name": "startVerse",
+          "value": 4
+        },
+        {
+          "name": "endVerse",
+          "value": 6
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "On the fourth day of Christmas my true love gave to me: four Calling Birds, three French Hens, two Turtle Doves, and a Partridge in a Pear Tree.",
+          "On the fifth day of Christmas my true love gave to me: five Gold Rings, four Calling Birds, three French Hens, two Turtle Doves, and a Partridge in a Pear Tree.",
+          "On the sixth day of Christmas my true love gave to me: six Geese-a-Laying, five Gold Rings, four Calling Birds, three French Hens, two Turtle Doves, and a Partridge in a Pear Tree."
+        ]
+      }
+    },
+    {
+      "uuid": "20921bc9-cc52-4627-80b3-198cbbfcf9b7",
+      "name": "lyrics > recites the whole song",
+      "group": [
+        "lyrics"
+      ],
+      "description": "recites the whole song",
+      "property": "recite",
+      "args": [
+        {
+          "name": "startVerse",
+          "value": 1
+        },
+        {
+          "name": "endVerse",
+          "value": 12
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "On the first day of Christmas my true love gave to me: a Partridge in a Pear Tree.",
+          "On the second day of Christmas my true love gave to me: two Turtle Doves, and a Partridge in a Pear Tree.",
+          "On the third day of Christmas my true love gave to me: three French Hens, two Turtle Doves, and a Partridge in a Pear Tree.",
+          "On the fourth day of Christmas my true love gave to me: four Calling Birds, three French Hens, two Turtle Doves, and a Partridge in a Pear Tree.",
+          "On the fifth day of Christmas my true love gave to me: five Gold Rings, four Calling Birds, three French Hens, two Turtle Doves, and a Partridge in a Pear Tree.",
+          "On the sixth day of Christmas my true love gave to me: six Geese-a-Laying, five Gold Rings, four Calling Birds, three French Hens, two Turtle Doves, and a Partridge in a Pear Tree.",
+          "On the seventh day of Christmas my true love gave to me: seven Swans-a-Swimming, six Geese-a-Laying, five Gold Rings, four Calling Birds, three French Hens, two Turtle Doves, and a Partridge in a Pear Tree.",
+          "On the eighth day of Christmas my true love gave to me: eight Maids-a-Milking, seven Swans-a-Swimming, six Geese-a-Laying, five Gold Rings, four Calling Birds, three French Hens, two Turtle Doves, and a Partridge in a Pear Tree.",
+          "On the ninth day of Christmas my true love gave to me: nine Ladies Dancing, eight Maids-a-Milking, seven Swans-a-Swimming, six Geese-a-Laying, five Gold Rings, four Calling Birds, three French Hens, two Turtle Doves, and a Partridge in a Pear Tree.",
+          "On the tenth day of Christmas my true love gave to me: ten Lords-a-Leaping, nine Ladies Dancing, eight Maids-a-Milking, seven Swans-a-Swimming, six Geese-a-Laying, five Gold Rings, four Calling Birds, three French Hens, two Turtle Doves, and a Partridge in a Pear Tree.",
+          "On the eleventh day of Christmas my true love gave to me: eleven Pipers Piping, ten Lords-a-Leaping, nine Ladies Dancing, eight Maids-a-Milking, seven Swans-a-Swimming, six Geese-a-Laying, five Gold Rings, four Calling Birds, three French Hens, two Turtle Doves, and a Partridge in a Pear Tree.",
+          "On the twelfth day of Christmas my true love gave to me: twelve Drummers Drumming, eleven Pipers Piping, ten Lords-a-Leaping, nine Ladies Dancing, eight Maids-a-Milking, seven Swans-a-Swimming, six Geese-a-Laying, five Gold Rings, four Calling Birds, three French Hens, two Turtle Doves, and a Partridge in a Pear Tree."
+        ]
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 15,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "array",
+      "int",
+      "string"
+    ]
+  }
+}

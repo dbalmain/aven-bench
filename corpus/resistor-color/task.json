@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "id": "resistor-color",
+  "title": "Resistor Color",
+  "blurb": "Convert a resistor band's color to its numeric representation.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "colorCode",
+      "argNames": [
+        "color"
+      ],
+      "arity": 1,
+      "caseCount": 3,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "color"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "colors",
+      "argNames": [],
+      "arity": 0,
+      "caseCount": 1,
+      "returnsResult": false,
+      "argOrderVariants": [
+        []
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "49eb31c5-10a8-4180-9f7f-fea632ab87ef",
+      "name": "Color codes > Black",
+      "group": [
+        "Color codes"
+      ],
+      "description": "Black",
+      "property": "colorCode",
+      "args": [
+        {
+          "name": "color",
+          "value": "black"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "0a4df94b-92da-4579-a907-65040ce0b3fc",
+      "name": "Color codes > White",
+      "group": [
+        "Color codes"
+      ],
+      "description": "White",
+      "property": "colorCode",
+      "args": [
+        {
+          "name": "color",
+          "value": "white"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 9
+      }
+    },
+    {
+      "uuid": "5f81608d-f36f-4190-8084-f45116b6f380",
+      "name": "Color codes > Orange",
+      "group": [
+        "Color codes"
+      ],
+      "description": "Orange",
+      "property": "colorCode",
+      "args": [
+        {
+          "name": "color",
+          "value": "orange"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 3
+      }
+    },
+    {
+      "uuid": "581d68fa-f968-4be2-9f9d-880f2fb73cf7",
+      "name": "Colors",
+      "group": [],
+      "description": "Colors",
+      "property": "colors",
+      "args": [],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "black",
+          "brown",
+          "red",
+          "orange",
+          "yellow",
+          "green",
+          "blue",
+          "violet",
+          "grey",
+          "white"
+        ]
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 4,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "array",
+      "int",
+      "string"
+    ]
+  }
+}

@@ -1,0 +1,415 @@
+{
+  "schemaVersion": 1,
+  "id": "luhn",
+  "title": "Luhn",
+  "blurb": "Given a number determine whether or not it is valid per the Luhn formula.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "introduction.md",
+    "instructions.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "valid",
+      "argNames": [
+        "value"
+      ],
+      "arity": 1,
+      "caseCount": 22,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "value"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "792a7082-feb7-48c7-b88b-bbfec160865e",
+      "name": "single digit strings can not be valid",
+      "group": [],
+      "description": "single digit strings can not be valid",
+      "property": "valid",
+      "args": [
+        {
+          "name": "value",
+          "value": "1"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "uuid": "698a7924-64d4-4d89-8daa-32e1aadc271e",
+      "name": "a single zero is invalid",
+      "group": [],
+      "description": "a single zero is invalid",
+      "property": "valid",
+      "args": [
+        {
+          "name": "value",
+          "value": "0"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "uuid": "73c2f62b-9b10-4c9f-9a04-83cee7367965",
+      "name": "a simple valid SIN that remains valid if reversed",
+      "group": [],
+      "description": "a simple valid SIN that remains valid if reversed",
+      "property": "valid",
+      "args": [
+        {
+          "name": "value",
+          "value": "059"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "9369092e-b095-439f-948d-498bd076be11",
+      "name": "a simple valid SIN that becomes invalid if reversed",
+      "group": [],
+      "description": "a simple valid SIN that becomes invalid if reversed",
+      "property": "valid",
+      "args": [
+        {
+          "name": "value",
+          "value": "59"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "8f9f2350-1faf-4008-ba84-85cbb93ffeca",
+      "name": "a valid Canadian SIN",
+      "group": [],
+      "description": "a valid Canadian SIN",
+      "property": "valid",
+      "args": [
+        {
+          "name": "value",
+          "value": "055 444 285"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "1cdcf269-6560-44fc-91f6-5819a7548737",
+      "name": "invalid Canadian SIN",
+      "group": [],
+      "description": "invalid Canadian SIN",
+      "property": "valid",
+      "args": [
+        {
+          "name": "value",
+          "value": "055 444 286"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "uuid": "656c48c1-34e8-4e60-9a5a-aad8a367810a",
+      "name": "invalid credit card",
+      "group": [],
+      "description": "invalid credit card",
+      "property": "valid",
+      "args": [
+        {
+          "name": "value",
+          "value": "8273 1232 7352 0569"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "uuid": "20e67fad-2121-43ed-99a8-14b5b856adb9",
+      "name": "invalid long number with an even remainder",
+      "group": [],
+      "description": "invalid long number with an even remainder",
+      "property": "valid",
+      "args": [
+        {
+          "name": "value",
+          "value": "1 2345 6789 1234 5678 9012"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "uuid": "7e7c9fc1-d994-457c-811e-d390d52fba5e",
+      "name": "invalid long number with a remainder divisible by 5",
+      "group": [],
+      "description": "invalid long number with a remainder divisible by 5",
+      "property": "valid",
+      "args": [
+        {
+          "name": "value",
+          "value": "1 2345 6789 1234 5678 9013"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "uuid": "ad2a0c5f-84ed-4e5b-95da-6011d6f4f0aa",
+      "name": "valid number with an even number of digits",
+      "group": [],
+      "description": "valid number with an even number of digits",
+      "property": "valid",
+      "args": [
+        {
+          "name": "value",
+          "value": "095 245 88"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "ef081c06-a41f-4761-8492-385e13c8202d",
+      "name": "valid number with an odd number of spaces",
+      "group": [],
+      "description": "valid number with an odd number of spaces",
+      "property": "valid",
+      "args": [
+        {
+          "name": "value",
+          "value": "234 567 891 234"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "bef66f64-6100-4cbb-8f94-4c9713c5e5b2",
+      "name": "valid strings with a non-digit added at the end become invalid",
+      "group": [],
+      "description": "valid strings with a non-digit added at the end become invalid",
+      "property": "valid",
+      "args": [
+        {
+          "name": "value",
+          "value": "059a"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "uuid": "2177e225-9ce7-40f6-b55d-fa420e62938e",
+      "name": "valid strings with punctuation included become invalid",
+      "group": [],
+      "description": "valid strings with punctuation included become invalid",
+      "property": "valid",
+      "args": [
+        {
+          "name": "value",
+          "value": "055-444-285"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "uuid": "ebf04f27-9698-45e1-9afe-7e0851d0fe8d",
+      "name": "valid strings with symbols included become invalid",
+      "group": [],
+      "description": "valid strings with symbols included become invalid",
+      "property": "valid",
+      "args": [
+        {
+          "name": "value",
+          "value": "055# 444$ 285"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "uuid": "08195c5e-ce7f-422c-a5eb-3e45fece68ba",
+      "name": "single zero with space is invalid",
+      "group": [],
+      "description": "single zero with space is invalid",
+      "property": "valid",
+      "args": [
+        {
+          "name": "value",
+          "value": " 0"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "uuid": "12e63a3c-f866-4a79-8c14-b359fc386091",
+      "name": "more than a single zero is valid",
+      "group": [],
+      "description": "more than a single zero is valid",
+      "property": "valid",
+      "args": [
+        {
+          "name": "value",
+          "value": "0000 0"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "ab56fa80-5de8-4735-8a4a-14dae588663e",
+      "name": "input digit 9 is correctly converted to output digit 9",
+      "group": [],
+      "description": "input digit 9 is correctly converted to output digit 9",
+      "property": "valid",
+      "args": [
+        {
+          "name": "value",
+          "value": "091"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "b9887ee8-8337-46c5-bc45-3bcab51bc36f",
+      "name": "very long input is valid",
+      "group": [],
+      "description": "very long input is valid",
+      "property": "valid",
+      "args": [
+        {
+          "name": "value",
+          "value": "9999999999 9999999999 9999999999 9999999999"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "8a7c0e24-85ea-4154-9cf1-c2db90eabc08",
+      "name": "valid luhn with an odd number of digits and non zero first digit",
+      "group": [],
+      "description": "valid luhn with an odd number of digits and non zero first digit",
+      "property": "valid",
+      "args": [
+        {
+          "name": "value",
+          "value": "109"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "uuid": "39a06a5a-5bad-4e0f-b215-b042d46209b1",
+      "name": "using ascii value for non-doubled non-digit isn't allowed",
+      "group": [],
+      "description": "using ascii value for non-doubled non-digit isn't allowed",
+      "property": "valid",
+      "args": [
+        {
+          "name": "value",
+          "value": "055b 444 285"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "uuid": "f94cf191-a62f-4868-bc72-7253114aa157",
+      "name": "using ascii value for doubled non-digit isn't allowed",
+      "group": [],
+      "description": "using ascii value for doubled non-digit isn't allowed",
+      "property": "valid",
+      "args": [
+        {
+          "name": "value",
+          "value": ":9"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "uuid": "8b72ad26-c8be-49a2-b99c-bcc3bf631b33",
+      "name": "non-numeric, non-space char in the middle with a sum that's divisible by 10 isn't allowed",
+      "group": [],
+      "description": "non-numeric, non-space char in the middle with a sum that's divisible by 10 isn't allowed",
+      "property": "valid",
+      "args": [
+        {
+          "name": "value",
+          "value": "59%59"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 22,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "bool",
+      "string"
+    ]
+  }
+}

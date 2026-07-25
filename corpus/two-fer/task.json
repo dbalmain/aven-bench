@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "id": "two-fer",
+  "title": "Two-Fer",
+  "blurb": "Create a sentence of the form \"One for X, one for me.\".",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "introduction.md",
+    "instructions.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "twoFer",
+      "argNames": [
+        "name"
+      ],
+      "arity": 1,
+      "caseCount": 3,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "name"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "1cf3e15a-a3d7-4a87-aeb3-ba1b43bc8dce",
+      "name": "no name given",
+      "group": [],
+      "description": "no name given",
+      "property": "twoFer",
+      "args": [
+        {
+          "name": "name",
+          "value": null
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "One for you, one for me."
+      }
+    },
+    {
+      "uuid": "b4c6dbb8-b4fb-42c2-bafd-10785abe7709",
+      "name": "a name given",
+      "group": [],
+      "description": "a name given",
+      "property": "twoFer",
+      "args": [
+        {
+          "name": "name",
+          "value": "Alice"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "One for Alice, one for me."
+      }
+    },
+    {
+      "uuid": "3549048d-1a6e-4653-9a79-b0bda163e8d5",
+      "name": "another name given",
+      "group": [],
+      "description": "another name given",
+      "property": "twoFer",
+      "args": [
+        {
+          "name": "name",
+          "value": "Bob"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "One for Bob, one for me."
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 3,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "null",
+      "string"
+    ]
+  }
+}

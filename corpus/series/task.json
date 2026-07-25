@@ -1,0 +1,300 @@
+{
+  "schemaVersion": 1,
+  "id": "series",
+  "title": "Series",
+  "blurb": "Given a string of digits, output all the contiguous substrings of length `n` in that string.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "slices",
+      "argNames": [
+        "series",
+        "sliceLength"
+      ],
+      "arity": 2,
+      "caseCount": 11,
+      "returnsResult": true,
+      "argOrderVariants": [
+        [
+          "series",
+          "sliceLength"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "7ae7a46a-d992-4c2a-9c15-a112d125ebad",
+      "name": "slices of one from one",
+      "group": [],
+      "description": "slices of one from one",
+      "property": "slices",
+      "args": [
+        {
+          "name": "series",
+          "value": "1"
+        },
+        {
+          "name": "sliceLength",
+          "value": 1
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "1"
+        ]
+      }
+    },
+    {
+      "uuid": "3143b71d-f6a5-4221-aeae-619f906244d2",
+      "name": "slices of one from two",
+      "group": [],
+      "description": "slices of one from two",
+      "property": "slices",
+      "args": [
+        {
+          "name": "series",
+          "value": "12"
+        },
+        {
+          "name": "sliceLength",
+          "value": 1
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "1",
+          "2"
+        ]
+      }
+    },
+    {
+      "uuid": "dbb68ff5-76c5-4ccd-895a-93dbec6d5805",
+      "name": "slices of two",
+      "group": [],
+      "description": "slices of two",
+      "property": "slices",
+      "args": [
+        {
+          "name": "series",
+          "value": "35"
+        },
+        {
+          "name": "sliceLength",
+          "value": 2
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "35"
+        ]
+      }
+    },
+    {
+      "uuid": "19bbea47-c987-4e11-a7d1-e103442adf86",
+      "name": "slices of two overlap",
+      "group": [],
+      "description": "slices of two overlap",
+      "property": "slices",
+      "args": [
+        {
+          "name": "series",
+          "value": "9142"
+        },
+        {
+          "name": "sliceLength",
+          "value": 2
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "91",
+          "14",
+          "42"
+        ]
+      }
+    },
+    {
+      "uuid": "8e17148d-ba0a-4007-a07f-d7f87015d84c",
+      "name": "slices can include duplicates",
+      "group": [],
+      "description": "slices can include duplicates",
+      "property": "slices",
+      "args": [
+        {
+          "name": "series",
+          "value": "777777"
+        },
+        {
+          "name": "sliceLength",
+          "value": 3
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "777",
+          "777",
+          "777",
+          "777"
+        ]
+      }
+    },
+    {
+      "uuid": "bd5b085e-f612-4f81-97a8-6314258278b0",
+      "name": "slices of a long series",
+      "group": [],
+      "description": "slices of a long series",
+      "property": "slices",
+      "args": [
+        {
+          "name": "series",
+          "value": "918493904243"
+        },
+        {
+          "name": "sliceLength",
+          "value": 5
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "91849",
+          "18493",
+          "84939",
+          "49390",
+          "93904",
+          "39042",
+          "90424",
+          "04243"
+        ]
+      }
+    },
+    {
+      "uuid": "6d235d85-46cf-4fae-9955-14b6efef27cd",
+      "name": "slice length is too large",
+      "group": [],
+      "description": "slice length is too large",
+      "property": "slices",
+      "args": [
+        {
+          "name": "series",
+          "value": "12345"
+        },
+        {
+          "name": "sliceLength",
+          "value": 6
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "slice length cannot be greater than series length"
+      }
+    },
+    {
+      "uuid": "d7957455-346d-4e47-8e4b-87ed1564c6d7",
+      "name": "slice length is way too large",
+      "group": [],
+      "description": "slice length is way too large",
+      "property": "slices",
+      "args": [
+        {
+          "name": "series",
+          "value": "12345"
+        },
+        {
+          "name": "sliceLength",
+          "value": 42
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "slice length cannot be greater than series length"
+      }
+    },
+    {
+      "uuid": "d34004ad-8765-4c09-8ba1-ada8ce776806",
+      "name": "slice length cannot be zero",
+      "group": [],
+      "description": "slice length cannot be zero",
+      "property": "slices",
+      "args": [
+        {
+          "name": "series",
+          "value": "12345"
+        },
+        {
+          "name": "sliceLength",
+          "value": 0
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "slice length cannot be zero"
+      }
+    },
+    {
+      "uuid": "10ab822d-8410-470a-a85d-23fbeb549e54",
+      "name": "slice length cannot be negative",
+      "group": [],
+      "description": "slice length cannot be negative",
+      "property": "slices",
+      "args": [
+        {
+          "name": "series",
+          "value": "123"
+        },
+        {
+          "name": "sliceLength",
+          "value": -1
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "slice length cannot be negative"
+      }
+    },
+    {
+      "uuid": "c7ed0812-0e4b-4bf3-99c4-28cbbfc246a2",
+      "name": "empty series is invalid",
+      "group": [],
+      "description": "empty series is invalid",
+      "property": "slices",
+      "args": [
+        {
+          "name": "series",
+          "value": ""
+        },
+        {
+          "name": "sliceLength",
+          "value": 1
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "series cannot be empty"
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 11,
+    "errorCaseCount": 5,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "array",
+      "error",
+      "int",
+      "string"
+    ]
+  }
+}

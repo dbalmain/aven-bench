@@ -1,0 +1,511 @@
+{
+  "schemaVersion": 1,
+  "id": "anagram",
+  "title": "Anagram",
+  "blurb": "Find the words that use the same letters as another word.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "introduction.md",
+    "instructions.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "findAnagrams",
+      "argNames": [
+        "subject",
+        "candidates"
+      ],
+      "arity": 2,
+      "caseCount": 18,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "subject",
+          "candidates"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "dd40c4d2-3c8b-44e5-992a-f42b393ec373",
+      "name": "no matches",
+      "group": [],
+      "description": "no matches",
+      "property": "findAnagrams",
+      "args": [
+        {
+          "name": "subject",
+          "value": "diaper"
+        },
+        {
+          "name": "candidates",
+          "value": [
+            "hello",
+            "world",
+            "zombies",
+            "pants"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": []
+      }
+    },
+    {
+      "uuid": "03eb9bbe-8906-4ea0-84fa-ffe711b52c8b",
+      "name": "detects two anagrams",
+      "group": [],
+      "description": "detects two anagrams",
+      "property": "findAnagrams",
+      "args": [
+        {
+          "name": "subject",
+          "value": "solemn"
+        },
+        {
+          "name": "candidates",
+          "value": [
+            "lemons",
+            "cherry",
+            "melons"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "lemons",
+          "melons"
+        ]
+      }
+    },
+    {
+      "uuid": "a27558ee-9ba0-4552-96b1-ecf665b06556",
+      "name": "does not detect anagram subsets",
+      "group": [],
+      "description": "does not detect anagram subsets",
+      "property": "findAnagrams",
+      "args": [
+        {
+          "name": "subject",
+          "value": "good"
+        },
+        {
+          "name": "candidates",
+          "value": [
+            "dog",
+            "goody"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": []
+      }
+    },
+    {
+      "uuid": "64cd4584-fc15-4781-b633-3d814c4941a4",
+      "name": "detects anagram",
+      "group": [],
+      "description": "detects anagram",
+      "property": "findAnagrams",
+      "args": [
+        {
+          "name": "subject",
+          "value": "listen"
+        },
+        {
+          "name": "candidates",
+          "value": [
+            "enlists",
+            "google",
+            "inlets",
+            "banana"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "inlets"
+        ]
+      }
+    },
+    {
+      "uuid": "99c91beb-838f-4ccd-b123-935139917283",
+      "name": "detects three anagrams",
+      "group": [],
+      "description": "detects three anagrams",
+      "property": "findAnagrams",
+      "args": [
+        {
+          "name": "subject",
+          "value": "allergy"
+        },
+        {
+          "name": "candidates",
+          "value": [
+            "gallery",
+            "ballerina",
+            "regally",
+            "clergy",
+            "largely",
+            "leading"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "gallery",
+          "regally",
+          "largely"
+        ]
+      }
+    },
+    {
+      "uuid": "78487770-e258-4e1f-a646-8ece10950d90",
+      "name": "detects multiple anagrams with different case",
+      "group": [],
+      "description": "detects multiple anagrams with different case",
+      "property": "findAnagrams",
+      "args": [
+        {
+          "name": "subject",
+          "value": "nose"
+        },
+        {
+          "name": "candidates",
+          "value": [
+            "Eons",
+            "ONES"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "Eons",
+          "ONES"
+        ]
+      }
+    },
+    {
+      "uuid": "1d0ab8aa-362f-49b7-9902-3d0c668d557b",
+      "name": "does not detect non-anagrams with identical checksum",
+      "group": [],
+      "description": "does not detect non-anagrams with identical checksum",
+      "property": "findAnagrams",
+      "args": [
+        {
+          "name": "subject",
+          "value": "mass"
+        },
+        {
+          "name": "candidates",
+          "value": [
+            "last"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": []
+      }
+    },
+    {
+      "uuid": "9e632c0b-c0b1-4804-8cc1-e295dea6d8a8",
+      "name": "detects anagrams case-insensitively",
+      "group": [],
+      "description": "detects anagrams case-insensitively",
+      "property": "findAnagrams",
+      "args": [
+        {
+          "name": "subject",
+          "value": "Orchestra"
+        },
+        {
+          "name": "candidates",
+          "value": [
+            "cashregister",
+            "Carthorse",
+            "radishes"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "Carthorse"
+        ]
+      }
+    },
+    {
+      "uuid": "b248e49f-0905-48d2-9c8d-bd02d8c3e392",
+      "name": "detects anagrams using case-insensitive subject",
+      "group": [],
+      "description": "detects anagrams using case-insensitive subject",
+      "property": "findAnagrams",
+      "args": [
+        {
+          "name": "subject",
+          "value": "Orchestra"
+        },
+        {
+          "name": "candidates",
+          "value": [
+            "cashregister",
+            "carthorse",
+            "radishes"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "carthorse"
+        ]
+      }
+    },
+    {
+      "uuid": "f367325c-78ec-411c-be76-e79047f4bd54",
+      "name": "detects anagrams using case-insensitive possible matches",
+      "group": [],
+      "description": "detects anagrams using case-insensitive possible matches",
+      "property": "findAnagrams",
+      "args": [
+        {
+          "name": "subject",
+          "value": "orchestra"
+        },
+        {
+          "name": "candidates",
+          "value": [
+            "cashregister",
+            "Carthorse",
+            "radishes"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "Carthorse"
+        ]
+      }
+    },
+    {
+      "uuid": "630abb71-a94e-4715-8395-179ec1df9f91",
+      "name": "does not detect an anagram if the original word is repeated",
+      "group": [],
+      "description": "does not detect an anagram if the original word is repeated",
+      "property": "findAnagrams",
+      "args": [
+        {
+          "name": "subject",
+          "value": "go"
+        },
+        {
+          "name": "candidates",
+          "value": [
+            "goGoGO"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": []
+      }
+    },
+    {
+      "uuid": "9878a1c9-d6ea-4235-ae51-3ea2befd6842",
+      "name": "anagrams must use all letters exactly once",
+      "group": [],
+      "description": "anagrams must use all letters exactly once",
+      "property": "findAnagrams",
+      "args": [
+        {
+          "name": "subject",
+          "value": "tapper"
+        },
+        {
+          "name": "candidates",
+          "value": [
+            "patter"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": []
+      }
+    },
+    {
+      "uuid": "68934ed0-010b-4ef9-857a-20c9012d1ebf",
+      "name": "words are not anagrams of themselves",
+      "group": [],
+      "description": "words are not anagrams of themselves",
+      "property": "findAnagrams",
+      "args": [
+        {
+          "name": "subject",
+          "value": "BANANA"
+        },
+        {
+          "name": "candidates",
+          "value": [
+            "BANANA"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": []
+      }
+    },
+    {
+      "uuid": "589384f3-4c8a-4e7d-9edc-51c3e5f0c90e",
+      "name": "words are not anagrams of themselves even if letter case is partially different",
+      "group": [],
+      "description": "words are not anagrams of themselves even if letter case is partially different",
+      "property": "findAnagrams",
+      "args": [
+        {
+          "name": "subject",
+          "value": "BANANA"
+        },
+        {
+          "name": "candidates",
+          "value": [
+            "Banana"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": []
+      }
+    },
+    {
+      "uuid": "ba53e423-7e02-41ee-9ae2-71f91e6d18e6",
+      "name": "words are not anagrams of themselves even if letter case is completely different",
+      "group": [],
+      "description": "words are not anagrams of themselves even if letter case is completely different",
+      "property": "findAnagrams",
+      "args": [
+        {
+          "name": "subject",
+          "value": "BANANA"
+        },
+        {
+          "name": "candidates",
+          "value": [
+            "banana"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": []
+      }
+    },
+    {
+      "uuid": "33d3f67e-fbb9-49d3-a90e-0beb00861da7",
+      "name": "words other than themselves can be anagrams",
+      "group": [],
+      "description": "words other than themselves can be anagrams",
+      "property": "findAnagrams",
+      "args": [
+        {
+          "name": "subject",
+          "value": "LISTEN"
+        },
+        {
+          "name": "candidates",
+          "value": [
+            "LISTEN",
+            "Silent"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "Silent"
+        ]
+      }
+    },
+    {
+      "uuid": "a6854f66-eec1-4afd-a137-62ef2870c051",
+      "name": "handles case of greek letters",
+      "group": [],
+      "description": "handles case of greek letters",
+      "property": "findAnagrams",
+      "args": [
+        {
+          "name": "subject",
+          "value": "ΑΒΓ"
+        },
+        {
+          "name": "candidates",
+          "value": [
+            "ΒΓΑ",
+            "ΒΓΔ",
+            "γβα",
+            "αβγ"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "ΒΓΑ",
+          "γβα"
+        ]
+      },
+      "scenarios": [
+        "unicode"
+      ]
+    },
+    {
+      "uuid": "fd3509e5-e3ba-409d-ac3d-a9ac84d13296",
+      "name": "different characters may have the same bytes",
+      "group": [],
+      "description": "different characters may have the same bytes",
+      "property": "findAnagrams",
+      "args": [
+        {
+          "name": "subject",
+          "value": "a⬂"
+        },
+        {
+          "name": "candidates",
+          "value": [
+            "€a"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": []
+      },
+      "scenarios": [
+        "unicode"
+      ]
+    }
+  ],
+  "stats": {
+    "caseCount": 18,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 4,
+    "valueKinds": [
+      "array",
+      "string"
+    ]
+  }
+}

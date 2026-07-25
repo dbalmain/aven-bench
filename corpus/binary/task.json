@@ -1,0 +1,296 @@
+{
+  "schemaVersion": 1,
+  "id": "binary",
+  "title": "Binary",
+  "blurb": "Convert a binary number, represented as a string (e.g. '101010'), to its decimal equivalent using first principles.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "decimal",
+      "argNames": [
+        "binary"
+      ],
+      "arity": 1,
+      "caseCount": 15,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "binary"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "567fc71e-1013-4915-9285-bca0648c0844",
+      "name": "binary 0 is decimal 0",
+      "group": [],
+      "description": "binary 0 is decimal 0",
+      "property": "decimal",
+      "args": [
+        {
+          "name": "binary",
+          "value": "0"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 0
+      }
+    },
+    {
+      "uuid": "c0824fb1-6a0a-4e9a-a262-c6c00af99fa8",
+      "name": "binary 1 is decimal 1",
+      "group": [],
+      "description": "binary 1 is decimal 1",
+      "property": "decimal",
+      "args": [
+        {
+          "name": "binary",
+          "value": "1"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 1
+      }
+    },
+    {
+      "uuid": "4d2834fb-3cc3-4159-a8fd-da1098def8ed",
+      "name": "binary 10 is decimal 2",
+      "group": [],
+      "description": "binary 10 is decimal 2",
+      "property": "decimal",
+      "args": [
+        {
+          "name": "binary",
+          "value": "10"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 2
+      }
+    },
+    {
+      "uuid": "b7b2b649-4a7c-4808-9eb9-caf00529bac6",
+      "name": "binary 11 is decimal 3",
+      "group": [],
+      "description": "binary 11 is decimal 3",
+      "property": "decimal",
+      "args": [
+        {
+          "name": "binary",
+          "value": "11"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 3
+      }
+    },
+    {
+      "uuid": "de761aff-73cd-43c1-9e1f-0417f07b1e4a",
+      "name": "binary 100 is decimal 4",
+      "group": [],
+      "description": "binary 100 is decimal 4",
+      "property": "decimal",
+      "args": [
+        {
+          "name": "binary",
+          "value": "100"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 4
+      }
+    },
+    {
+      "uuid": "7849a8f7-f4a1-4966-963e-503282d6814c",
+      "name": "binary 1001 is decimal 9",
+      "group": [],
+      "description": "binary 1001 is decimal 9",
+      "property": "decimal",
+      "args": [
+        {
+          "name": "binary",
+          "value": "1001"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 9
+      }
+    },
+    {
+      "uuid": "836a101c-aecb-473b-ba78-962408dcda98",
+      "name": "binary 11010 is decimal 26",
+      "group": [],
+      "description": "binary 11010 is decimal 26",
+      "property": "decimal",
+      "args": [
+        {
+          "name": "binary",
+          "value": "11010"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 26
+      }
+    },
+    {
+      "uuid": "1c6822a4-8584-438b-8dd4-40f0f0b66371",
+      "name": "binary 10001101000 is decimal 1128",
+      "group": [],
+      "description": "binary 10001101000 is decimal 1128",
+      "property": "decimal",
+      "args": [
+        {
+          "name": "binary",
+          "value": "10001101000"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 1128
+      }
+    },
+    {
+      "uuid": "91ffe632-8374-4016-b1d1-d8400d9f940d",
+      "name": "binary ignores leading zeros",
+      "group": [],
+      "description": "binary ignores leading zeros",
+      "property": "decimal",
+      "args": [
+        {
+          "name": "binary",
+          "value": "000011111"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 31
+      }
+    },
+    {
+      "uuid": "44f7d8b1-ddc3-4751-8be3-700a538b421c",
+      "name": "2 is not a valid binary digit",
+      "group": [],
+      "description": "2 is not a valid binary digit",
+      "property": "decimal",
+      "args": [
+        {
+          "name": "binary",
+          "value": "2"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": null
+      }
+    },
+    {
+      "uuid": "c263a24d-6870-420f-b783-628feefd7b6e",
+      "name": "a number containing a non-binary digit is invalid",
+      "group": [],
+      "description": "a number containing a non-binary digit is invalid",
+      "property": "decimal",
+      "args": [
+        {
+          "name": "binary",
+          "value": "01201"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": null
+      }
+    },
+    {
+      "uuid": "8d81305b-0502-4a07-bfba-051c5526d7f2",
+      "name": "a number with trailing non-binary characters is invalid",
+      "group": [],
+      "description": "a number with trailing non-binary characters is invalid",
+      "property": "decimal",
+      "args": [
+        {
+          "name": "binary",
+          "value": "10nope"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": null
+      }
+    },
+    {
+      "uuid": "a7f79b6b-039a-4d42-99b4-fcee56679f03",
+      "name": "a number with leading non-binary characters is invalid",
+      "group": [],
+      "description": "a number with leading non-binary characters is invalid",
+      "property": "decimal",
+      "args": [
+        {
+          "name": "binary",
+          "value": "nope10"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": null
+      }
+    },
+    {
+      "uuid": "9e0ece9d-b8aa-46a0-a22b-3bed2e3f741e",
+      "name": "a number with internal non-binary characters is invalid",
+      "group": [],
+      "description": "a number with internal non-binary characters is invalid",
+      "property": "decimal",
+      "args": [
+        {
+          "name": "binary",
+          "value": "10nope10"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": null
+      }
+    },
+    {
+      "uuid": "46c8dd65-0c32-4273-bb0d-f2b111bccfbd",
+      "name": "a number and a word whitespace separated is invalid",
+      "group": [],
+      "description": "a number and a word whitespace separated is invalid",
+      "property": "decimal",
+      "args": [
+        {
+          "name": "binary",
+          "value": "001 nope"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": null
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 15,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "int",
+      "null",
+      "string"
+    ]
+  }
+}

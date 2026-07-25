@@ -1,0 +1,192 @@
+{
+  "schemaVersion": 1,
+  "id": "acronym",
+  "title": "Acronym",
+  "blurb": "Convert a long phrase to its acronym.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "abbreviate",
+      "argNames": [
+        "phrase"
+      ],
+      "arity": 1,
+      "caseCount": 9,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "phrase"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "1e22cceb-c5e4-4562-9afe-aef07ad1eaf4",
+      "name": "basic",
+      "group": [],
+      "description": "basic",
+      "property": "abbreviate",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "Portable Network Graphics"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "PNG"
+      }
+    },
+    {
+      "uuid": "79ae3889-a5c0-4b01-baf0-232d31180c08",
+      "name": "lowercase words",
+      "group": [],
+      "description": "lowercase words",
+      "property": "abbreviate",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "Ruby on Rails"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "ROR"
+      }
+    },
+    {
+      "uuid": "ec7000a7-3931-4a17-890e-33ca2073a548",
+      "name": "punctuation",
+      "group": [],
+      "description": "punctuation",
+      "property": "abbreviate",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "First In, First Out"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "FIFO"
+      }
+    },
+    {
+      "uuid": "32dd261c-0c92-469a-9c5c-b192e94a63b0",
+      "name": "all caps word",
+      "group": [],
+      "description": "all caps word",
+      "property": "abbreviate",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "GNU Image Manipulation Program"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "GIMP"
+      }
+    },
+    {
+      "uuid": "ae2ac9fa-a606-4d05-8244-3bcc4659c1d4",
+      "name": "punctuation without whitespace",
+      "group": [],
+      "description": "punctuation without whitespace",
+      "property": "abbreviate",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "Complementary metal-oxide semiconductor"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "CMOS"
+      }
+    },
+    {
+      "uuid": "0e4b1e7c-1a6d-48fb-81a7-bf65eb9e69f9",
+      "name": "very long abbreviation",
+      "group": [],
+      "description": "very long abbreviation",
+      "property": "abbreviate",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "Rolling On The Floor Laughing So Hard That My Dogs Came Over And Licked Me"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "ROTFLSHTMDCOALM"
+      }
+    },
+    {
+      "uuid": "6a078f49-c68d-4b7b-89af-33a1a98c28cc",
+      "name": "consecutive delimiters",
+      "group": [],
+      "description": "consecutive delimiters",
+      "property": "abbreviate",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "Something - I made up from thin air"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "SIMUFTA"
+      }
+    },
+    {
+      "uuid": "5118b4b1-4572-434c-8d57-5b762e57973e",
+      "name": "apostrophes",
+      "group": [],
+      "description": "apostrophes",
+      "property": "abbreviate",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "Halley's Comet"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "HC"
+      }
+    },
+    {
+      "uuid": "adc12eab-ec2d-414f-b48c-66a4fc06cdef",
+      "name": "underscore emphasis",
+      "group": [],
+      "description": "underscore emphasis",
+      "property": "abbreviate",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "The Road _Not_ Taken"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "TRNT"
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 9,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "string"
+    ]
+  }
+}

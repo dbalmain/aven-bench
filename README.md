@@ -1,0 +1,214 @@
+# aven-bench
+
+Benchmark harness for [Aven](../aven-lang): drive coding models through a task
+corpus in Aven and in control languages, and use the deltas to steer Aven's
+development. The plan this implements is `../.ai/PLAN-aven-bench.md`.
+
+**Status: the corpus half of Phase 1 is done.** The model runner and the agent
+adapters are not built — see `runner/README.md`.
+
+## Layout
+
+```
+corpus/                 generated, committed. The oracle.
+  index.json            task list, counts, per-task value kinds, skipped exercises
+  split.json            the frozen tune/holdout split
+  ingest-report.json    everything questionable the ingest found
+  <task>/task.json      normalized cases: {property, args[], expected}
+  <task>/prompt.md      the task statement, language-agnostic
+adapters/lang/          one adapter per language: render tests, run them, read exit codes
+  common.ts             the LangAdapter interface
+  aven.ts  python.ts    the two implemented arms
+  py_runner.py          normalizes unittest into `aven test --format json`'s envelope
+ingest/                 vendor/ -> corpus/, plus generate and verify
+references/             hand-written solutions, used only to verify the generators
+runner/                 STUB. schema.ts is the attempt record (§3d); nothing runs yet.
+analysis/               DuckDB queries over data/runs/*.jsonl
+vendor/                 gitignored. Upstream problem-specifications checkout.
+data/                   gitignored. Generated work dirs, run logs, artifacts.
+```
+
+`corpus/` is committed and fully generated. Nothing in it is hand-authored, and
+nothing in the generators is task-specific: a task the generator cannot express
+is reported as omitted, not special-cased.
+
+## Corpus
+
+Spine:
+[`exercism/problem-specifications`](https://github.com/exercism/problem-specifications).
+
+|                                    |                                                                      |
+| ---------------------------------- | -------------------------------------------------------------------- |
+| upstream exercises                 | 151                                                                  |
+| tasks (have `canonical-data.json`) | **142**                                                              |
+| cases                              | **2246** (2310 leaves, 64 superseded via `reimplements` and dropped) |
+| cases expecting an error           | 169 (7.5%)                                                           |
+| prompt layouts                     | 81 legacy `description.md`, 61 `introduction.md` + `instructions.md` |
+| tune / holdout                     | 71 / 71                                                              |
+
+## Running it
+
+```sh
+bun install
+
+scripts/fetch-corpus.sh            # clone/update vendor/problem-specifications
+bun run ingest                     # vendor/ -> corpus/   (regenerates it wholesale)
+bun run split                      # extend corpus/split.json with any new tasks
+bun run generate --lang aven,python --intersect
+bun run verify                     # prove the generated suites are real
+bun test                           # unit tests for the ingest + adapters
+bun run typecheck                  # bunx tsc --noEmit
+```
+
+Set `AVEN_BIN=/path/to/aven` to skip cargo's per-invocation overhead — the
+sweeps are ~10x faster with it. `AVEN_LANG_DIR` overrides where the Aven
+workspace lives (default `../aven-lang`).
+
+### Re-fetching upstream
+
+`scripts/fetch-corpus.sh` does a depth-1 clone (or `fetch` + `reset --hard`)
+into `vendor/`, which is gitignored. Then re-run `bun run ingest` and
+`bun run split`. Ingest wipes and rewrites every task directory, so an exercise
+removed upstream cannot linger as a stale committed task. `split` never moves an
+existing task between arms; it only places new ones. Use
+`bun run split --rewrite` to re-derive from scratch, which invalidates every
+prior A/B.
+
+`corpus/index.json` records the exact upstream commit each generation came from.
+
+### The tune/holdout split
+
+Deterministic, no randomness: sort the task ids, key each by
+`sha256("aven-bench/tune-holdout/v1:" + id)`, sort by that key, first half tune
+and second half holdout. Hashing rather than splitting the sorted ids keeps
+related exercises (`binary`, `binary-search`, `binary-search-tree`) from all
+landing in the same arm. Report holdout only.
+
+## How a suite is generated
+
+The normalized case list is language-agnostic; each adapter turns it into a
+runnable file that imports a solution file the model writes.
+
+Aven — a module whose value is a record of zero-arg thunks returning `Result`:
+
+```aven
+test = import("std/test")
+solution = import("./solution.av")
+
+{
+  "no name given": () => test.expectEq(solution.twoFer(null), "One for you, one for me."),
+  "a name given": () => test.expectEq(solution.twoFer("Alice"), "One for Alice, one for me."),
+}
+```
+
+Python — stdlib `unittest`, `import solution`, snake_case names.
+
+Both are run through the same envelope:
+`{ok, total, passed, failed, errored, cases[]}` and exit `0` all pass / `1` a
+case failed / `2` the suite could not be loaded. Aven gets that from
+`aven test --format json`; Python gets it from `adapters/lang/py_runner.py`.
+
+**Error expectations.** 169 cases expect an error rather than a value. A
+property with any such case is treated as fallible for _all_ its cases: Aven
+compares against `@Ok(v)` and uses `expectErr`, Python uses
+`assertRaises(ValueError)`.
+
+**Argument order.** `input` is a JSON object, so positional order comes from key
+insertion order. `ingest/json.ts` is a hand-rolled JSON reader specifically to
+preserve that (and raw number text), because `JSON.parse` silently reorders
+integer-like keys and collapses `1.0` into `1`. Every property where the order
+looks questionable is listed in `corpus/ingest-report.json`.
+
+## Verifying the generators
+
+`bun run verify` runs four checks and writes `data/verify-report.json`:
+
+1. **Reference check** — every task under `references/` must go green against
+   the generated suite, in every language that has a reference.
+2. **Negative check** — every `references/*/solution.broken.*` fixture must be
+   reported as _failing_. A generator that emitted a vacuous suite would pass
+   check 1 and fail here.
+3. **Load sweep** — all 142 tasks, run against a generated stub solution. The
+   suite must fail (exit 1), never fail to load (exit 2).
+4. **Check sweep** (Aven only) — `aven check` over the same suite+stub.
+   `aven test` only parses and evaluates; `check` is the static gate, and the
+   stricter bar.
+
+### Results as of the first ingest
+
+Upstream `22e2aa465858fc497ef3b6b9dbb82e706ac8569c`.
+
+|                                 | Aven          | Python      |
+| ------------------------------- | ------------- | ----------- |
+| cases rendered                  | 2242 / 2246   | 2246 / 2246 |
+| suites that load (exit ≠ 2)     | **142 / 142** | 142 / 142   |
+| suites `aven check` accepts     | **81 / 142**  | n/a         |
+| reference solutions green       | 7 / 7         | 7 / 7       |
+| broken fixture reported failing | 1 / 1         | 1 / 1       |
+
+The four omitted Aven cases are all integers too large for a 64-bit `Int`
+(`armstrong-numbers` ×2, `grains` square 64 and the board total). `grains`'
+`total` therefore has no testable case in Aven.
+
+The 61 `aven check` rejections split cleanly:
+
+- **44 tasks — `module.uppercase-export-not-type`.** Aven rejects a _quoted_
+  record field name that begins with a capital letter when it appears in a
+  module's export record, so any suite with a case description like
+  `"Zero is an Armstrong number"` is statically invalid. `aven test` accepts the
+  same file and passes. Minimal repro:
+
+  ```aven
+  test = import("std/test")
+  { "Zero is fine at runtime": () => test.pass }
+  ```
+
+  The generator deliberately does not work around this by rewriting descriptions
+  — they are the upstream data, and hiding it would remove the finding.
+
+- **16 tasks — `type.incompatible-match-arms`.** The property's `expected`
+  values have no single Aven type across cases: records of differing width
+  (`word-count`, `etl`, `dot-dsl`, `parallel-letter-frequency`, `satellite`,
+  `tree-building`), `null` mixed with a value (`binary`, `relative-distance`,
+  `binary-search-tree`, `pov`, `word-search`, `zipper`, `alphametics`), or
+  nested arrays of varying element shape (`accumulate`, `list-ops`, `strain`).
+  Attributed to the verification stub rather than the suite — all 16 load and
+  run — but a real solution faces the same modelling question.
+
+- **1 task — `dnd-character`.** Not an example-based exercise: its `expected`
+  values are assertion source text (`"score >= 3 && score <= 18"`). No adapter
+  can make an oracle out of it; consider excluding it from headline numbers.
+
+### Aven ergonomics, from hand-writing the reference solutions
+
+- **`Text` has no length and no character list.** No `length`, no `chars`, no
+  indexing (`"abc"[0]` is a runtime type error), and `"abc".splitOn("")` returns
+  `["abc"]`. The only way to walk a string is `slice(i, i + 1)` until it returns
+  `""`, relying on `slice` clamping out of range —
+  `references/hamming/solution.av` has to define its own `textLength` by
+  recursion. Exercism is full of character-level string work; expect this to
+  dominate the Aven failure tail.
+- **No `\$` escape** (supported: `\\ \" \n \r \t \u{H}`), and `${` opens an
+  interpolation, so a literal `$` has to be emitted as `\u{24}`.
+- **`&&` / `||`, not `and` / `or`** — and `and` inside a `${}` interpolation
+  reports `parse.unsupported-syntax` "this operator cannot appear in this
+  position", which reads as if the operator exists elsewhere.
+- **`Int` is 64-bit, no bignum path.** Four corpus cases are unrepresentable.
+- **No approximate float assertion** in `std/test`, so the 9 float-bearing tasks
+  compare exactly. Python was left comparing exactly too, so the arms stay
+  comparable and are brittle in the same way.
+- Worked first try: `?>` matching, `@Ok`/`@Err`, quoted record fields, ambient
+  array methods (`fold` with no import). The `Result`-shaped `std/test` needed
+  no extra machinery for the 169 error-expecting cases — the §3a bet paid off.
+
+## Attribution and licence
+
+The task corpus under `corpus/` is generated from
+[`exercism/problem-specifications`](https://github.com/exercism/problem-specifications),
+which is distributed under the **MIT License**, Copyright (c) 2014, 2019, 2021
+Exercism. The upstream `LICENSE` text travels with the checkout in `vendor/`
+(gitignored); a copy is kept in `corpus/UPSTREAM-LICENSE` so the committed
+corpus carries its own attribution. Exercise statements (`prompt.md`) and
+canonical test data (`task.json`) are derived works of that repository.
+
+Everything else in this repository is part of the private Aven project.

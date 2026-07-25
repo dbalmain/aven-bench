@@ -1,0 +1,257 @@
+{
+  "schemaVersion": 1,
+  "id": "pythagorean-triplet",
+  "title": "Pythagorean Triplet",
+  "blurb": "Given an integer N, find all Pythagorean triplets for which a + b + c = N.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "introduction.md",
+    "instructions.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "tripletsWithSum",
+      "argNames": [
+        "n"
+      ],
+      "arity": 1,
+      "caseCount": 7,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "n"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "a19de65d-35b8-4480-b1af-371d9541e706",
+      "name": "triplets whose sum is 12",
+      "group": [],
+      "description": "triplets whose sum is 12",
+      "property": "tripletsWithSum",
+      "args": [
+        {
+          "name": "n",
+          "value": 12
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            3,
+            4,
+            5
+          ]
+        ]
+      }
+    },
+    {
+      "uuid": "48b21332-0a3d-43b2-9a52-90b2a6e5c9f5",
+      "name": "triplets whose sum is 108",
+      "group": [],
+      "description": "triplets whose sum is 108",
+      "property": "tripletsWithSum",
+      "args": [
+        {
+          "name": "n",
+          "value": 108
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            27,
+            36,
+            45
+          ]
+        ]
+      }
+    },
+    {
+      "uuid": "dffc1266-418e-4daa-81af-54c3e95c3bb5",
+      "name": "triplets whose sum is 1000",
+      "group": [],
+      "description": "triplets whose sum is 1000",
+      "property": "tripletsWithSum",
+      "args": [
+        {
+          "name": "n",
+          "value": 1000
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            200,
+            375,
+            425
+          ]
+        ]
+      }
+    },
+    {
+      "uuid": "5f86a2d4-6383-4cce-93a5-e4489e79b186",
+      "name": "no matching triplets for 1001",
+      "group": [],
+      "description": "no matching triplets for 1001",
+      "property": "tripletsWithSum",
+      "args": [
+        {
+          "name": "n",
+          "value": 1001
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": []
+      }
+    },
+    {
+      "uuid": "bf17ba80-1596-409a-bb13-343bdb3b2904",
+      "name": "returns all matching triplets",
+      "group": [],
+      "description": "returns all matching triplets",
+      "property": "tripletsWithSum",
+      "args": [
+        {
+          "name": "n",
+          "value": 90
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            9,
+            40,
+            41
+          ],
+          [
+            15,
+            36,
+            39
+          ]
+        ]
+      }
+    },
+    {
+      "uuid": "9d8fb5d5-6c6f-42df-9f95-d3165963ac57",
+      "name": "several matching triplets",
+      "group": [],
+      "description": "several matching triplets",
+      "property": "tripletsWithSum",
+      "args": [
+        {
+          "name": "n",
+          "value": 840
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            40,
+            399,
+            401
+          ],
+          [
+            56,
+            390,
+            394
+          ],
+          [
+            105,
+            360,
+            375
+          ],
+          [
+            120,
+            350,
+            370
+          ],
+          [
+            140,
+            336,
+            364
+          ],
+          [
+            168,
+            315,
+            357
+          ],
+          [
+            210,
+            280,
+            350
+          ],
+          [
+            240,
+            252,
+            348
+          ]
+        ]
+      }
+    },
+    {
+      "uuid": "f5be5734-8aa0-4bd1-99a2-02adcc4402b4",
+      "name": "triplets for large number",
+      "group": [],
+      "description": "triplets for large number",
+      "property": "tripletsWithSum",
+      "args": [
+        {
+          "name": "n",
+          "value": 30000
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            1200,
+            14375,
+            14425
+          ],
+          [
+            1875,
+            14000,
+            14125
+          ],
+          [
+            5000,
+            12000,
+            13000
+          ],
+          [
+            6000,
+            11250,
+            12750
+          ],
+          [
+            7500,
+            10000,
+            12500
+          ]
+        ]
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 7,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "array",
+      "int",
+      "nested-array"
+    ]
+  }
+}

@@ -1,0 +1,234 @@
+{
+  "schemaVersion": 1,
+  "id": "spiral-matrix",
+  "title": "Spiral Matrix",
+  "blurb": "Given the size, return a square matrix of numbers in spiral order.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "introduction.md",
+    "instructions.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "spiralMatrix",
+      "argNames": [
+        "size"
+      ],
+      "arity": 1,
+      "caseCount": 6,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "size"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "8f584201-b446-4bc9-b132-811c8edd9040",
+      "name": "empty spiral",
+      "group": [],
+      "description": "empty spiral",
+      "property": "spiralMatrix",
+      "args": [
+        {
+          "name": "size",
+          "value": 0
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": []
+      }
+    },
+    {
+      "uuid": "e40ae5f3-e2c9-4639-8116-8a119d632ab2",
+      "name": "trivial spiral",
+      "group": [],
+      "description": "trivial spiral",
+      "property": "spiralMatrix",
+      "args": [
+        {
+          "name": "size",
+          "value": 1
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            1
+          ]
+        ]
+      }
+    },
+    {
+      "uuid": "cf05e42d-eb78-4098-a36e-cdaf0991bc48",
+      "name": "spiral of size 2",
+      "group": [],
+      "description": "spiral of size 2",
+      "property": "spiralMatrix",
+      "args": [
+        {
+          "name": "size",
+          "value": 2
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            1,
+            2
+          ],
+          [
+            4,
+            3
+          ]
+        ]
+      }
+    },
+    {
+      "uuid": "1c475667-c896-4c23-82e2-e033929de939",
+      "name": "spiral of size 3",
+      "group": [],
+      "description": "spiral of size 3",
+      "property": "spiralMatrix",
+      "args": [
+        {
+          "name": "size",
+          "value": 3
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            1,
+            2,
+            3
+          ],
+          [
+            8,
+            9,
+            4
+          ],
+          [
+            7,
+            6,
+            5
+          ]
+        ]
+      }
+    },
+    {
+      "uuid": "05ccbc48-d891-44f5-9137-f4ce462a759d",
+      "name": "spiral of size 4",
+      "group": [],
+      "description": "spiral of size 4",
+      "property": "spiralMatrix",
+      "args": [
+        {
+          "name": "size",
+          "value": 4
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            1,
+            2,
+            3,
+            4
+          ],
+          [
+            12,
+            13,
+            14,
+            5
+          ],
+          [
+            11,
+            16,
+            15,
+            6
+          ],
+          [
+            10,
+            9,
+            8,
+            7
+          ]
+        ]
+      }
+    },
+    {
+      "uuid": "f4d2165b-1738-4e0c-bed0-c459045ae50d",
+      "name": "spiral of size 5",
+      "group": [],
+      "description": "spiral of size 5",
+      "property": "spiralMatrix",
+      "args": [
+        {
+          "name": "size",
+          "value": 5
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          [
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          [
+            16,
+            17,
+            18,
+            19,
+            6
+          ],
+          [
+            15,
+            24,
+            25,
+            20,
+            7
+          ],
+          [
+            14,
+            23,
+            22,
+            21,
+            8
+          ],
+          [
+            13,
+            12,
+            11,
+            10,
+            9
+          ]
+        ]
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 6,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "array",
+      "int",
+      "nested-array"
+    ]
+  }
+}

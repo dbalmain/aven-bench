@@ -1,0 +1,481 @@
+{
+  "schemaVersion": 1,
+  "id": "affine-cipher",
+  "title": "Affine Cipher",
+  "blurb": "Create an implementation of the Affine cipher, an ancient encryption algorithm from the Middle East.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [
+    "The test are divided into two groups: ",
+    "* Encoding from English to affine cipher",
+    "* Decoding from affine cipher to all-lowercase-mashed-together English"
+  ],
+  "properties": [
+    {
+      "name": "encode",
+      "argNames": [
+        "phrase",
+        "key"
+      ],
+      "arity": 2,
+      "caseCount": 9,
+      "returnsResult": true,
+      "argOrderVariants": [
+        [
+          "phrase",
+          "key"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    },
+    {
+      "name": "decode",
+      "argNames": [
+        "phrase",
+        "key"
+      ],
+      "arity": 2,
+      "caseCount": 7,
+      "returnsResult": true,
+      "argOrderVariants": [
+        [
+          "phrase",
+          "key"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "2ee1d9af-1c43-416c-b41b-cefd7d4d2b2a",
+      "name": "encode > encode yes",
+      "group": [
+        "encode"
+      ],
+      "description": "encode yes",
+      "property": "encode",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "yes"
+        },
+        {
+          "name": "key",
+          "value": {
+            "a": 5,
+            "b": 7
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "xbt"
+      }
+    },
+    {
+      "uuid": "785bade9-e98b-4d4f-a5b0-087ba3d7de4b",
+      "name": "encode > encode no",
+      "group": [
+        "encode"
+      ],
+      "description": "encode no",
+      "property": "encode",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "no"
+        },
+        {
+          "name": "key",
+          "value": {
+            "a": 15,
+            "b": 18
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "fu"
+      }
+    },
+    {
+      "uuid": "2854851c-48fb-40d8-9bf6-8f192ed25054",
+      "name": "encode > encode OMG",
+      "group": [
+        "encode"
+      ],
+      "description": "encode OMG",
+      "property": "encode",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "OMG"
+        },
+        {
+          "name": "key",
+          "value": {
+            "a": 21,
+            "b": 3
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "lvz"
+      }
+    },
+    {
+      "uuid": "bc0c1244-b544-49dd-9777-13a770be1bad",
+      "name": "encode > encode O M G",
+      "group": [
+        "encode"
+      ],
+      "description": "encode O M G",
+      "property": "encode",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "O M G"
+        },
+        {
+          "name": "key",
+          "value": {
+            "a": 25,
+            "b": 47
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "hjp"
+      }
+    },
+    {
+      "uuid": "381a1a20-b74a-46ce-9277-3778625c9e27",
+      "name": "encode > encode mindblowingly",
+      "group": [
+        "encode"
+      ],
+      "description": "encode mindblowingly",
+      "property": "encode",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "mindblowingly"
+        },
+        {
+          "name": "key",
+          "value": {
+            "a": 11,
+            "b": 15
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "rzcwa gnxzc dgt"
+      }
+    },
+    {
+      "uuid": "6686f4e2-753b-47d4-9715-876fdc59029d",
+      "name": "encode > encode numbers",
+      "group": [
+        "encode"
+      ],
+      "description": "encode numbers",
+      "property": "encode",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "Testing,1 2 3, testing."
+        },
+        {
+          "name": "key",
+          "value": {
+            "a": 3,
+            "b": 4
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "jqgjc rw123 jqgjc rw"
+      }
+    },
+    {
+      "uuid": "ae23d5bd-30a8-44b6-afbe-23c8c0c7faa3",
+      "name": "encode > encode deep thought",
+      "group": [
+        "encode"
+      ],
+      "description": "encode deep thought",
+      "property": "encode",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "Truth is fiction."
+        },
+        {
+          "name": "key",
+          "value": {
+            "a": 5,
+            "b": 17
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "iynia fdqfb ifje"
+      }
+    },
+    {
+      "uuid": "c93a8a4d-426c-42ef-9610-76ded6f7ef57",
+      "name": "encode > encode all the letters",
+      "group": [
+        "encode"
+      ],
+      "description": "encode all the letters",
+      "property": "encode",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "The quick brown fox jumps over the lazy dog."
+        },
+        {
+          "name": "key",
+          "value": {
+            "a": 17,
+            "b": 33
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "swxtj npvyk lruol iejdc blaxk swxmh qzglf"
+      }
+    },
+    {
+      "uuid": "0673638a-4375-40bd-871c-fb6a2c28effb",
+      "name": "encode > encode with a not coprime to m",
+      "group": [
+        "encode"
+      ],
+      "description": "encode with a not coprime to m",
+      "property": "encode",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "This is a test."
+        },
+        {
+          "name": "key",
+          "value": {
+            "a": 6,
+            "b": 17
+          }
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "a and m must be coprime."
+      }
+    },
+    {
+      "uuid": "3f0ac7e2-ec0e-4a79-949e-95e414953438",
+      "name": "decode > decode exercism",
+      "group": [
+        "decode"
+      ],
+      "description": "decode exercism",
+      "property": "decode",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "tytgn fjr"
+        },
+        {
+          "name": "key",
+          "value": {
+            "a": 3,
+            "b": 7
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "exercism"
+      }
+    },
+    {
+      "uuid": "241ee64d-5a47-4092-a5d7-7939d259e077",
+      "name": "decode > decode a sentence",
+      "group": [
+        "decode"
+      ],
+      "description": "decode a sentence",
+      "property": "decode",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "qdwju nqcro muwhn odqun oppmd aunwd o"
+        },
+        {
+          "name": "key",
+          "value": {
+            "a": 19,
+            "b": 16
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "anobstacleisoftenasteppingstone"
+      }
+    },
+    {
+      "uuid": "33fb16a1-765a-496f-907f-12e644837f5e",
+      "name": "decode > decode numbers",
+      "group": [
+        "decode"
+      ],
+      "description": "decode numbers",
+      "property": "decode",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "odpoz ub123 odpoz ub"
+        },
+        {
+          "name": "key",
+          "value": {
+            "a": 25,
+            "b": 7
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "testing123testing"
+      }
+    },
+    {
+      "uuid": "20bc9dce-c5ec-4db6-a3f1-845c776bcbf7",
+      "name": "decode > decode all the letters",
+      "group": [
+        "decode"
+      ],
+      "description": "decode all the letters",
+      "property": "decode",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "swxtj npvyk lruol iejdc blaxk swxmh qzglf"
+        },
+        {
+          "name": "key",
+          "value": {
+            "a": 17,
+            "b": 33
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "thequickbrownfoxjumpsoverthelazydog"
+      }
+    },
+    {
+      "uuid": "623e78c0-922d-49c5-8702-227a3e8eaf81",
+      "name": "decode > decode with no spaces in input",
+      "group": [
+        "decode"
+      ],
+      "description": "decode with no spaces in input",
+      "property": "decode",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "swxtjnpvyklruoliejdcblaxkswxmhqzglf"
+        },
+        {
+          "name": "key",
+          "value": {
+            "a": 17,
+            "b": 33
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "thequickbrownfoxjumpsoverthelazydog"
+      }
+    },
+    {
+      "uuid": "58fd5c2a-1fd9-4563-a80a-71cff200f26f",
+      "name": "decode > decode with too many spaces",
+      "group": [
+        "decode"
+      ],
+      "description": "decode with too many spaces",
+      "property": "decode",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "vszzm    cly   yd cg    qdp"
+        },
+        {
+          "name": "key",
+          "value": {
+            "a": 15,
+            "b": 16
+          }
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": "jollygreengiant"
+      }
+    },
+    {
+      "uuid": "b004626f-c186-4af9-a3f4-58f74cdb86d5",
+      "name": "decode > decode with a not coprime to m",
+      "group": [
+        "decode"
+      ],
+      "description": "decode with a not coprime to m",
+      "property": "decode",
+      "args": [
+        {
+          "name": "phrase",
+          "value": "Test"
+        },
+        {
+          "name": "key",
+          "value": {
+            "a": 13,
+            "b": 5
+          }
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "a and m must be coprime."
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 16,
+    "errorCaseCount": 2,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "error",
+      "int",
+      "record",
+      "string"
+    ]
+  }
+}

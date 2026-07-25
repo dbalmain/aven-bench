@@ -1,0 +1,362 @@
+{
+  "schemaVersion": 1,
+  "id": "word-count",
+  "title": "Word Count",
+  "blurb": "Given a phrase, count the occurrences of each word in that phrase.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "introduction.md",
+    "instructions.md"
+  ],
+  "comments": [
+    "For each word in the input, count the number of times it appears in the",
+    "entire sentence."
+  ],
+  "properties": [
+    {
+      "name": "countWords",
+      "argNames": [
+        "sentence"
+      ],
+      "arity": 1,
+      "caseCount": 14,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "sentence"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "61559d5f-2cad-48fb-af53-d3973a9ee9ef",
+      "name": "count one word",
+      "group": [],
+      "description": "count one word",
+      "property": "countWords",
+      "args": [
+        {
+          "name": "sentence",
+          "value": "word"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "word": 1
+        }
+      }
+    },
+    {
+      "uuid": "5abd53a3-1aed-43a4-a15a-29f88c09cbbd",
+      "name": "count one of each word",
+      "group": [],
+      "description": "count one of each word",
+      "property": "countWords",
+      "args": [
+        {
+          "name": "sentence",
+          "value": "one of each"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "one": 1,
+          "of": 1,
+          "each": 1
+        }
+      }
+    },
+    {
+      "uuid": "2a3091e5-952e-4099-9fac-8f85d9655c0e",
+      "name": "multiple occurrences of a word",
+      "group": [],
+      "description": "multiple occurrences of a word",
+      "property": "countWords",
+      "args": [
+        {
+          "name": "sentence",
+          "value": "one fish two fish red fish blue fish"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "one": 1,
+          "fish": 4,
+          "two": 1,
+          "red": 1,
+          "blue": 1
+        }
+      }
+    },
+    {
+      "uuid": "e81877ae-d4da-4af4-931c-d923cd621ca6",
+      "name": "handles cramped lists",
+      "group": [],
+      "description": "handles cramped lists",
+      "property": "countWords",
+      "args": [
+        {
+          "name": "sentence",
+          "value": "one,two,three"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "one": 1,
+          "two": 1,
+          "three": 1
+        }
+      }
+    },
+    {
+      "uuid": "7349f682-9707-47c0-a9af-be56e1e7ff30",
+      "name": "handles expanded lists",
+      "group": [],
+      "description": "handles expanded lists",
+      "property": "countWords",
+      "args": [
+        {
+          "name": "sentence",
+          "value": "one,\ntwo,\nthree"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "one": 1,
+          "two": 1,
+          "three": 1
+        }
+      }
+    },
+    {
+      "uuid": "a514a0f2-8589-4279-8892-887f76a14c82",
+      "name": "ignore punctuation",
+      "group": [],
+      "description": "ignore punctuation",
+      "property": "countWords",
+      "args": [
+        {
+          "name": "sentence",
+          "value": "car: carpet as java: javascript!!&@$%^&"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "car": 1,
+          "carpet": 1,
+          "as": 1,
+          "java": 1,
+          "javascript": 1
+        }
+      }
+    },
+    {
+      "uuid": "d2e5cee6-d2ec-497b-bdc9-3ebe092ce55e",
+      "name": "include numbers",
+      "group": [],
+      "description": "include numbers",
+      "property": "countWords",
+      "args": [
+        {
+          "name": "sentence",
+          "value": "testing, 1, 2 testing"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "$o": [
+            [
+              "testing",
+              2
+            ],
+            [
+              "1",
+              1
+            ],
+            [
+              "2",
+              1
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "uuid": "dac6bc6a-21ae-4954-945d-d7f716392dbf",
+      "name": "normalize case",
+      "group": [],
+      "description": "normalize case",
+      "property": "countWords",
+      "args": [
+        {
+          "name": "sentence",
+          "value": "go Go GO Stop stop"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "go": 3,
+          "stop": 2
+        }
+      }
+    },
+    {
+      "uuid": "4ff6c7d7-fcfc-43ef-b8e7-34ff1837a2d3",
+      "name": "with apostrophes",
+      "group": [],
+      "description": "with apostrophes",
+      "property": "countWords",
+      "args": [
+        {
+          "name": "sentence",
+          "value": "'First: don't laugh. Then: don't cry. You're getting it.'"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "first": 1,
+          "don't": 2,
+          "laugh": 1,
+          "then": 1,
+          "cry": 1,
+          "you're": 1,
+          "getting": 1,
+          "it": 1
+        }
+      }
+    },
+    {
+      "uuid": "be72af2b-8afe-4337-b151-b297202e4a7b",
+      "name": "with quotations",
+      "group": [],
+      "description": "with quotations",
+      "property": "countWords",
+      "args": [
+        {
+          "name": "sentence",
+          "value": "Joe can't tell between 'large' and large."
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "joe": 1,
+          "can't": 1,
+          "tell": 1,
+          "between": 1,
+          "large": 2,
+          "and": 1
+        }
+      }
+    },
+    {
+      "uuid": "8d6815fe-8a51-4a65-96f9-2fb3f6dc6ed6",
+      "name": "substrings from the beginning",
+      "group": [],
+      "description": "substrings from the beginning",
+      "property": "countWords",
+      "args": [
+        {
+          "name": "sentence",
+          "value": "Joe can't tell between app, apple and a."
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "joe": 1,
+          "can't": 1,
+          "tell": 1,
+          "between": 1,
+          "app": 1,
+          "apple": 1,
+          "and": 1,
+          "a": 1
+        }
+      }
+    },
+    {
+      "uuid": "c5f4ef26-f3f7-4725-b314-855c04fb4c13",
+      "name": "multiple spaces not detected as a word",
+      "group": [],
+      "description": "multiple spaces not detected as a word",
+      "property": "countWords",
+      "args": [
+        {
+          "name": "sentence",
+          "value": " multiple   whitespaces"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "multiple": 1,
+          "whitespaces": 1
+        }
+      }
+    },
+    {
+      "uuid": "50176e8a-fe8e-4f4c-b6b6-aa9cf8f20360",
+      "name": "alternating word separators not detected as a word",
+      "group": [],
+      "description": "alternating word separators not detected as a word",
+      "property": "countWords",
+      "args": [
+        {
+          "name": "sentence",
+          "value": ",\n,one,\n ,two \n 'three'"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "one": 1,
+          "two": 1,
+          "three": 1
+        }
+      }
+    },
+    {
+      "uuid": "6d00f1db-901c-4bec-9829-d20eb3044557",
+      "name": "quotation for word with apostrophe",
+      "group": [],
+      "description": "quotation for word with apostrophe",
+      "property": "countWords",
+      "args": [
+        {
+          "name": "sentence",
+          "value": "can, can't, 'can't'"
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": {
+          "can": 1,
+          "can't": 2
+        }
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 14,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 1,
+    "valueKinds": [
+      "int",
+      "record",
+      "string"
+    ]
+  }
+}

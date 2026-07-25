@@ -1,0 +1,182 @@
+{
+  "schemaVersion": 1,
+  "id": "resistor-color-duo",
+  "title": "Resistor Color Duo",
+  "blurb": "Convert color codes, as used on resistors, to a numeric value.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "value",
+      "argNames": [
+        "colors"
+      ],
+      "arity": 1,
+      "caseCount": 7,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "colors"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "ce11995a-5b93-4950-a5e9-93423693b2fc",
+      "name": "Brown and black",
+      "group": [],
+      "description": "Brown and black",
+      "property": "value",
+      "args": [
+        {
+          "name": "colors",
+          "value": [
+            "brown",
+            "black"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 10
+      }
+    },
+    {
+      "uuid": "7bf82f7a-af23-48ba-a97d-38d59406a920",
+      "name": "Blue and grey",
+      "group": [],
+      "description": "Blue and grey",
+      "property": "value",
+      "args": [
+        {
+          "name": "colors",
+          "value": [
+            "blue",
+            "grey"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 68
+      }
+    },
+    {
+      "uuid": "f1886361-fdfd-4693-acf8-46726fe24e0c",
+      "name": "Yellow and violet",
+      "group": [],
+      "description": "Yellow and violet",
+      "property": "value",
+      "args": [
+        {
+          "name": "colors",
+          "value": [
+            "yellow",
+            "violet"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 47
+      }
+    },
+    {
+      "uuid": "b7a6cbd2-ae3c-470a-93eb-56670b305640",
+      "name": "White and red",
+      "group": [],
+      "description": "White and red",
+      "property": "value",
+      "args": [
+        {
+          "name": "colors",
+          "value": [
+            "white",
+            "red"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 92
+      }
+    },
+    {
+      "uuid": "77a8293d-2a83-4016-b1af-991acc12b9fe",
+      "name": "Orange and orange",
+      "group": [],
+      "description": "Orange and orange",
+      "property": "value",
+      "args": [
+        {
+          "name": "colors",
+          "value": [
+            "orange",
+            "orange"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 33
+      }
+    },
+    {
+      "uuid": "0c4fb44f-db7c-4d03-afa8-054350f156a8",
+      "name": "Ignore additional colors",
+      "group": [],
+      "description": "Ignore additional colors",
+      "property": "value",
+      "args": [
+        {
+          "name": "colors",
+          "value": [
+            "green",
+            "brown",
+            "orange"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 51
+      }
+    },
+    {
+      "uuid": "4a8ceec5-0ab4-4904-88a4-daf953a5e818",
+      "name": "Black and brown, one-digit",
+      "group": [],
+      "description": "Black and brown, one-digit",
+      "property": "value",
+      "args": [
+        {
+          "name": "colors",
+          "value": [
+            "black",
+            "brown"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 1
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 7,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "array",
+      "int",
+      "string"
+    ]
+  }
+}

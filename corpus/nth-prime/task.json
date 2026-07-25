@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "id": "nth-prime",
+  "title": "Nth Prime",
+  "blurb": "Given a number n, determine what the nth prime is.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "prime",
+      "argNames": [
+        "number"
+      ],
+      "arity": 1,
+      "caseCount": 5,
+      "returnsResult": true,
+      "argOrderVariants": [
+        [
+          "number"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "75c65189-8aef-471a-81de-0a90c728160c",
+      "name": "first prime",
+      "group": [],
+      "description": "first prime",
+      "property": "prime",
+      "args": [
+        {
+          "name": "number",
+          "value": 1
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 2
+      }
+    },
+    {
+      "uuid": "2c38804c-295f-4701-b728-56dea34fd1a0",
+      "name": "second prime",
+      "group": [],
+      "description": "second prime",
+      "property": "prime",
+      "args": [
+        {
+          "name": "number",
+          "value": 2
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 3
+      }
+    },
+    {
+      "uuid": "56692534-781e-4e8c-b1f9-3e82c1640259",
+      "name": "sixth prime",
+      "group": [],
+      "description": "sixth prime",
+      "property": "prime",
+      "args": [
+        {
+          "name": "number",
+          "value": 6
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 13
+      }
+    },
+    {
+      "uuid": "fce1e979-0edb-412d-93aa-2c744e8f50ff",
+      "name": "big prime",
+      "group": [],
+      "description": "big prime",
+      "property": "prime",
+      "args": [
+        {
+          "name": "number",
+          "value": 10001
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": 104743
+      }
+    },
+    {
+      "uuid": "bd0a9eae-6df7-485b-a144-80e13c7d55b2",
+      "name": "there is no zeroth prime",
+      "group": [],
+      "description": "there is no zeroth prime",
+      "property": "prime",
+      "args": [
+        {
+          "name": "number",
+          "value": 0
+        }
+      ],
+      "expected": {
+        "kind": "error",
+        "message": "there is no zeroth prime"
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 5,
+    "errorCaseCount": 1,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "error",
+      "int"
+    ]
+  }
+}

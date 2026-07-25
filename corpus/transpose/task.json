@@ -1,0 +1,397 @@
+{
+  "schemaVersion": 1,
+  "id": "transpose",
+  "title": "Transpose",
+  "blurb": "Take input text and output it transposed.",
+  "source": "exercism/problem-specifications",
+  "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
+  "promptFiles": [
+    "description.md"
+  ],
+  "comments": [
+    "JSON doesn't allow for multi-line strings, so all multi-line input is ",
+    "presented here as arrays of strings. It's up to the test generator to join the ",
+    "lines together with line breaks."
+  ],
+  "properties": [
+    {
+      "name": "transpose",
+      "argNames": [
+        "lines"
+      ],
+      "arity": 1,
+      "caseCount": 12,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "lines"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "404b7262-c050-4df0-a2a2-0cb06cd6a821",
+      "name": "empty string",
+      "group": [],
+      "description": "empty string",
+      "property": "transpose",
+      "args": [
+        {
+          "name": "lines",
+          "value": []
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": []
+      }
+    },
+    {
+      "uuid": "a89ce8a3-c940-4703-a688-3ea39412fbcb",
+      "name": "two characters in a row",
+      "group": [],
+      "description": "two characters in a row",
+      "property": "transpose",
+      "args": [
+        {
+          "name": "lines",
+          "value": [
+            "A1"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "A",
+          "1"
+        ]
+      }
+    },
+    {
+      "uuid": "855bb6ae-4180-457c-abd0-ce489803ce98",
+      "name": "two characters in a column",
+      "group": [],
+      "description": "two characters in a column",
+      "property": "transpose",
+      "args": [
+        {
+          "name": "lines",
+          "value": [
+            "A",
+            "1"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "A1"
+        ]
+      }
+    },
+    {
+      "uuid": "5ceda1c0-f940-441c-a244-0ced197769c8",
+      "name": "simple",
+      "group": [],
+      "description": "simple",
+      "property": "transpose",
+      "args": [
+        {
+          "name": "lines",
+          "value": [
+            "ABC",
+            "123"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "A1",
+          "B2",
+          "C3"
+        ]
+      }
+    },
+    {
+      "uuid": "a54675dd-ae7d-4a58-a9c4-0c20e99a7c1f",
+      "name": "single line",
+      "group": [],
+      "description": "single line",
+      "property": "transpose",
+      "args": [
+        {
+          "name": "lines",
+          "value": [
+            "Single line."
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "S",
+          "i",
+          "n",
+          "g",
+          "l",
+          "e",
+          " ",
+          "l",
+          "i",
+          "n",
+          "e",
+          "."
+        ]
+      }
+    },
+    {
+      "uuid": "0dc2ec0b-549d-4047-aeeb-8029fec8d5c5",
+      "name": "first line longer than second line",
+      "group": [],
+      "description": "first line longer than second line",
+      "property": "transpose",
+      "args": [
+        {
+          "name": "lines",
+          "value": [
+            "The fourth line.",
+            "The fifth line."
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "TT",
+          "hh",
+          "ee",
+          "  ",
+          "ff",
+          "oi",
+          "uf",
+          "rt",
+          "th",
+          "h ",
+          " l",
+          "li",
+          "in",
+          "ne",
+          "e.",
+          "."
+        ]
+      }
+    },
+    {
+      "uuid": "984e2ec3-b3d3-4b53-8bd6-96f5ef404102",
+      "name": "second line longer than first line",
+      "group": [],
+      "description": "second line longer than first line",
+      "property": "transpose",
+      "args": [
+        {
+          "name": "lines",
+          "value": [
+            "The first line.",
+            "The second line."
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "TT",
+          "hh",
+          "ee",
+          "  ",
+          "fs",
+          "ie",
+          "rc",
+          "so",
+          "tn",
+          " d",
+          "l ",
+          "il",
+          "ni",
+          "en",
+          ".e",
+          " ."
+        ]
+      }
+    },
+    {
+      "uuid": "eccd3784-45f0-4a3f-865a-360cb323d314",
+      "name": "mixed line length",
+      "group": [],
+      "description": "mixed line length",
+      "property": "transpose",
+      "args": [
+        {
+          "name": "lines",
+          "value": [
+            "The longest line.",
+            "A long line.",
+            "A longer line.",
+            "A line."
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "TAAA",
+          "h   ",
+          "elll",
+          " ooi",
+          "lnnn",
+          "ogge",
+          "n e.",
+          "glr",
+          "ei ",
+          "snl",
+          "tei",
+          " .n",
+          "l e",
+          "i .",
+          "n",
+          "e",
+          "."
+        ]
+      }
+    },
+    {
+      "uuid": "85b96b3f-d00c-4f80-8ca2-c8a5c9216c2d",
+      "name": "square",
+      "group": [],
+      "description": "square",
+      "property": "transpose",
+      "args": [
+        {
+          "name": "lines",
+          "value": [
+            "HEART",
+            "EMBER",
+            "ABUSE",
+            "RESIN",
+            "TREND"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "HEART",
+          "EMBER",
+          "ABUSE",
+          "RESIN",
+          "TREND"
+        ]
+      }
+    },
+    {
+      "uuid": "b9257625-7a53-4748-8863-e08e9d27071d",
+      "name": "rectangle",
+      "group": [],
+      "description": "rectangle",
+      "property": "transpose",
+      "args": [
+        {
+          "name": "lines",
+          "value": [
+            "FRACTURE",
+            "OUTLINED",
+            "BLOOMING",
+            "SEPTETTE"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "FOBS",
+          "RULE",
+          "ATOP",
+          "CLOT",
+          "TIME",
+          "UNIT",
+          "RENT",
+          "EDGE"
+        ]
+      }
+    },
+    {
+      "uuid": "b80badc9-057e-4543-bd07-ce1296a1ea2c",
+      "name": "triangle",
+      "group": [],
+      "description": "triangle",
+      "property": "transpose",
+      "args": [
+        {
+          "name": "lines",
+          "value": [
+            "T",
+            "EE",
+            "AAA",
+            "SSSS",
+            "EEEEE",
+            "RRRRRR"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "TEASER",
+          " EASER",
+          "  ASER",
+          "   SER",
+          "    ER",
+          "     R"
+        ]
+      }
+    },
+    {
+      "uuid": "76acfd50-5596-4d05-89f1-5116328a7dd9",
+      "name": "jagged triangle",
+      "group": [],
+      "description": "jagged triangle",
+      "property": "transpose",
+      "args": [
+        {
+          "name": "lines",
+          "value": [
+            "11",
+            "2",
+            "3333",
+            "444",
+            "555555",
+            "66666"
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "123456",
+          "1 3456",
+          "  3456",
+          "  3 56",
+          "    56",
+          "    5"
+        ]
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 12,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "array",
+      "string"
+    ]
+  }
+}
