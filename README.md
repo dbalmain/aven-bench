@@ -1,8 +1,8 @@
 # aven-bench
 
-Benchmark harness for [Aven](../aven-lang): drive coding models through a task
-corpus in Aven and in control languages, and use the deltas to steer Aven's
-development. The plan this implements is `../.ai/PLAN-aven-bench.md`.
+Benchmark harness for [Aven](https://github.com/dbalmain/aven-lang): drive
+coding models through a task corpus in Aven and in control languages, and use
+the deltas to steer Aven's development.
 
 **Status: the corpus half of Phase 1 is done.** The model runner and the agent
 adapters are not built — see `runner/README.md`.
@@ -211,4 +211,6 @@ Exercism. The upstream `LICENSE` text travels with the checkout in `vendor/`
 corpus carries its own attribution. Exercise statements (`prompt.md`) and
 canonical test data (`task.json`) are derived works of that repository.
 
-Everything else in this repository is part of the private Aven project.
+Everything else in this repository is MIT licensed — see `LICENSE`. It
+benchmarks [aven-lang](https://github.com/dbalmain/aven-lang), which is MIT
+licensed too.
