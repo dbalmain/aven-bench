@@ -10,6 +10,7 @@
     "split": "bun run ingest/split.ts",
     "generate": "bun run ingest/generate.ts",
     "verify": "bun run ingest/verify.ts",
+    "bench": "bun run runner/run.ts",
     "typecheck": "bunx tsc --noEmit"
   },
   "devDependencies": {

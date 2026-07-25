@@ -61,3 +61,38 @@ GROUP BY code ORDER BY rounds_seen DESC LIMIT 30;
 -- `generate --intersect`.
 .print "--- omitted-case check (should be all zero for A/B arms) ---"
 SELECT language, sum(casesOmitted) AS omitted FROM holdout GROUP BY 1;
+
+-- 4. Check/test divergence. The Aven gate is `check` AND `test`, but the two are
+--    recorded separately: rows where the suite went green and the checker still
+--    said no are a language finding, not a scoring detail.
+.print "--- aven: test green but check rejected ---"
+SELECT taskId, modelId, outcome, casesPassed, casesTotal, checkOkSolutionOnly, outcomeDetail
+FROM attempts
+WHERE language = 'aven' AND testOk AND NOT checkOk
+ORDER BY taskId;
+
+-- 5. mypy is recorded, never gating. Two questions it answers: how often a
+--    passing Python solution is untyped-and-wrong by mypy's lights, and how often
+--    mypy was simply unavailable (null).
+.print "--- python: mypy vs the suite ---"
+SELECT
+  count(*) FILTER (WHERE mypyOk IS NULL) AS mypy_unavailable,
+  count(*) FILTER (WHERE mypyOk) AS mypy_clean,
+  count(*) FILTER (WHERE NOT mypyOk) AS mypy_flagged,
+  count(*) FILTER (WHERE NOT mypyOk AND outcome = 'pass') AS mypy_flagged_but_passing
+FROM attempts WHERE language = 'python';
+
+-- 6. Contamination guard. Any nonzero value means the harness read something
+--    outside the attempt's work directory — in this repo that includes
+--    `references/`, i.e. the answers. Such rows are not evidence of anything.
+.print "--- rows that touched files outside the work directory (should be empty) ---"
+SELECT runId, taskId, language, modelId, outcome, outsideWorkdirTouches
+FROM attempts WHERE outsideWorkdirTouches > 0 ORDER BY outsideWorkdirTouches DESC;
+
+-- 7. Compliance with `toolPolicy: 'no-verify'`, from the Aven session log: how
+--    often the model ran the compiler itself despite being told not to.
+.print "--- aven: model-initiated compiler runs per round ---"
+SELECT modelId, sum(r.modelToolInvocations) AS model_runs, count(*) AS rounds
+FROM attempts, unnest(repairRounds) AS t(r)
+WHERE language = 'aven' AND toolPolicy = 'no-verify'
+GROUP BY 1 ORDER BY 2 DESC;

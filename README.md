@@ -4,8 +4,9 @@ Benchmark harness for [Aven](https://github.com/dbalmain/aven-lang): drive
 coding models through a task corpus in Aven and in control languages, and use
 the deltas to steer Aven's development.
 
-**Status: the corpus half of Phase 1 is done.** The model runner and the agent
-adapters are not built — see `runner/README.md`.
+**Status: the corpus (Phase 1) and the model runner (Phase 0c/0d) are built.**
+One agent harness is real (opencode); `pi`, `little-coder` and `ollama` are
+registered stubs. See `runner/README.md`.
 
 ## Layout
 
@@ -20,12 +21,15 @@ adapters/lang/          one adapter per language: render tests, run them, read e
   common.ts             the LangAdapter interface
   aven.ts  python.ts    the two implemented arms
   py_runner.py          normalizes unittest into `aven test --format json`'s envelope
+adapters/agent/         one adapter per agent harness: prompt in, tokens + files out
+  opencode.ts           the implemented harness
+  index.ts              registry; pi / little-coder / ollama are stubs
 ingest/                 vendor/ -> corpus/, plus generate and verify
 references/             hand-written solutions, used only to verify the generators
-runner/                 STUB. schema.ts is the attempt record (§3d); nothing runs yet.
+runner/                 the model runner: prompt -> gate -> repair -> one JSONL row
 analysis/               DuckDB queries over data/runs/*.jsonl
 vendor/                 gitignored. Upstream problem-specifications checkout.
-data/                   gitignored. Generated work dirs, run logs, artifacts.
+data/                   gitignored. Run logs + content-addressed artifacts.
 ```
 
 `corpus/` is committed and fully generated. Nothing in it is hand-authored, and
@@ -56,13 +60,62 @@ bun run ingest                     # vendor/ -> corpus/   (regenerates it wholes
 bun run split                      # extend corpus/split.json with any new tasks
 bun run generate --lang aven,python --intersect
 bun run verify                     # prove the generated suites are real
-bun test                           # unit tests for the ingest + adapters
+bun test                           # unit tests for the ingest, adapters and runner
 bun run typecheck                  # bunx tsc --noEmit
 ```
 
 Set `AVEN_BIN=/path/to/aven` to skip cargo's per-invocation overhead — the
 sweeps are ~10x faster with it. `AVEN_LANG_DIR` overrides where the Aven
 workspace lives (default `../aven-lang`).
+
+### Running models against it
+
+```sh
+bun run bench --help
+
+# one free model, both arms, the same case set on each, two repair rounds
+AVEN_BIN=../aven-lang/target/debug/aven \
+bun run bench --lang aven,python --intersect --rounds 2 --jobs 4 \
+              --model opencode/deepseek-v4-flash-free \
+              --tasks two-fer,leap,acronym --run-id calib-03
+
+bun run bench … --dry-run          # print the plan, write nothing
+```
+
+One JSONL row per attempt lands in `data/runs/<run-id>.jsonl`, append-only, with
+solutions, prompts, harness logs and `AVEN_SESSION_LOG` transcripts
+content-addressed under `data/artifacts/`. Re-running a command skips what is
+already recorded, by natural key. Flags, gates, cost policy, failure taxonomy
+and the acceptance recipe are all in **`runner/README.md`** — read that before
+starting a sweep.
+
+### What the first sweep showed
+
+Four tasks (`two-fer`, `leap`, `hamming`, `raindrops`), both arms, one free model
+(`opencode/deepseek-v4-flash-free`), no Aven skill doc, `--rounds 2`:
+
+|                 | Python | Aven                                    |
+| --------------- | ------ | --------------------------------------- |
+| first-shot pass | 4 / 4  | 1 / 4                                   |
+| eventually green | 4 / 4  | 2 / 4 (one at round 1)                  |
+| other outcomes  | —      | 1 `parse_error` (cap exhausted), 1 `timeout` |
+
+Three findings that matter more than the numbers:
+
+- **The models go looking for Aven examples on disk.** With no documentation,
+  every Aven attempt that failed round 0 started globbing: first `references/` in
+  this repo (the answers), then `/tmp/aven-audit/*.av` and a stray checkout of
+  `crates/aven-host/std/*.av`, then sibling attempts' work directories. See
+  "Contamination" in `runner/README.md` for the three defences and the residual
+  risk — the runner now records `outsideWorkdirTouches` so suspect rows are
+  excludable rather than invisible.
+- **These easy tasks do not discriminate on Python.** A free model passes all of
+  them first shot, so Phase 2's weak-model band has to be found on harder tasks —
+  this end of the corpus tells you nothing about a model.
+- **`aven check` and `aven test` disagree in the field.** One `leap` solution
+  passed 9/9 cases while the checker rejected it
+  (`type.invalid-operator-operands`: `==` is not defined for `?Int` and `Int`).
+  Both verdicts are recorded per round for exactly this reason.
 
 ### Re-fetching upstream
 
