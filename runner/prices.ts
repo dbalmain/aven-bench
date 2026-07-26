@@ -66,8 +66,8 @@ export type PriceTable = {
  *
  * Only entries that can actually be verified locally are listed. The seven
  * `opencode/*` models are the free tier (`opencode models`, and every
- * `step_finish` event they emit reports `cost: 0`); `ollama/*` is local compute,
- * charged at zero because there is no marginal token price. Paid `opencode-go/*`
+ * `step_finish` event they emit reports `cost: 0`). `ollama/*` needs no entries at
+ * all — see `isLocalModel`. Paid `opencode-go/*`
  * models are deliberately **absent**: their per-token rates are not published
  * anywhere this runner can read, and inventing numbers would poison the one axis
  * this table exists to protect. Add them by hand, with a dated note, when you
@@ -85,6 +85,27 @@ export const BUILTIN_PRICES: PriceTable = {
     "opencode/north-mini-code-free": { in: 0, out: 0, note: "opencode free tier" },
   },
 };
+
+/**
+ * Locally-hosted models price at zero *by construction*, not by table entry.
+ *
+ * The rule against fabricating a 0 exists because a made-up zero is
+ * indistinguishable from a genuinely free model. Local inference is the case where
+ * zero is the true marginal token price — the cost is electricity and 24GB of RAM,
+ * neither of which is denominated per token — so recording it is a fact rather than
+ * a fabrication. Matching on the provider prefix instead of listing entries matters
+ * because derived models multiply: `num_ctx` variants alone (`qwen3.6-32k`,
+ * `qwen3.6-64k`, …) would each need a row, and a missed row would silently record
+ * `unknown` for a model whose price is known exactly.
+ *
+ * The real cost of a local arm is wall clock, which `wallMs` already records.
+ */
+const LOCAL_PROVIDERS = ["ollama/"];
+const LOCAL_FREE: PriceEntry = { in: 0, out: 0, note: "local inference; no marginal token price" };
+
+export function isLocalModel(modelId: string): boolean {
+  return LOCAL_PROVIDERS.some((p) => modelId.startsWith(p));
+}
 
 let cached: PriceTable | null = null;
 
@@ -125,7 +146,7 @@ export type TokenCounts = {
  * them here does not double-count.
  */
 export function computeShadowCost(modelId: string, t: TokenCounts, table = priceTable()): ShadowCost {
-  const entry = table.models[modelId];
+  const entry = table.models[modelId] ?? (isLocalModel(modelId) ? LOCAL_FREE : undefined);
   if (!entry) {
     return { shadowCostUsd: null, shadowPriceSource: "unknown", priceTableVersion: table.version };
   }
