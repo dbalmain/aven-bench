@@ -22,6 +22,7 @@ import type { Task } from "../../ingest/task.ts";
 import {
   orderedArgs,
   propertyOf,
+  pseudocodeArgReason,
   type LangAdapter,
   type OmittedCase,
   type RenderedSuite,
@@ -104,6 +105,8 @@ function render(task: Task, only?: ReadonlySet<string>): RenderedSuite {
     if (only && !only.has(c.uuid)) continue;
     const prop = propertyOf(task, c.property);
     try {
+      const pseudocode = pseudocodeArgReason(c);
+      if (pseudocode) throw new Unrenderable(pseudocode);
       const args = orderedArgs(prop, c)
         .map((a) => avenValue(fromPortable(a.value)))
         .join(", ");

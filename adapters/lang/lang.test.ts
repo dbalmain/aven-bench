@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { renderAvenValue, avenAdapter } from "./aven.ts";
 import { pyName, pythonAdapter, snakeCase } from "./python.ts";
-import { orderedArgs } from "./common.ts";
+import { orderedArgs, pseudocodeArgReason } from "./common.ts";
 import { TASK_SCHEMA_VERSION, type Task, type TaskProperty } from "../../ingest/task.ts";
 
 const prop = (over: Partial<TaskProperty> = {}): TaskProperty => ({
@@ -223,5 +223,67 @@ describe("orderedArgs", () => {
       expected: { kind: "value" as const, value: 0 },
     };
     expect(orderedArgs(p, c).map((a) => a.name)).toEqual(["a", "extra"]);
+  });
+});
+
+// --- pseudocode arguments --------------------------------------------------
+
+/**
+ * Upstream sometimes passes a *function* as a string and expects the track's
+ * generator to build a callable from it. A mechanical generator cannot, and
+ * emitting the string verbatim yields a suite no solution can pass — which is how
+ * `accumulate` had all seven free models scoring 0-1/5 and blaming the suite.
+ */
+describe("pseudocode arguments", () => {
+  function withArg(value: unknown) {
+    return {
+      uuid: "u",
+      name: "n",
+      group: [],
+      description: "d",
+      property: "f",
+      args: [{ name: "a", value }],
+      expected: { kind: "value" as const, value: 0 },
+    };
+  }
+
+  test.each([
+    ["(x) => x * x", "arrow lambda, parenthesized"],
+    ["(x) -> x modulo 2 == 1", "dash-arrow with pseudocode operator"],
+    ["(acc, el) -> el + acc", "two parameters"],
+  ])("%s is refused (%s)", (value) => {
+    expect(pseudocodeArgReason(withArg(value))).toContain("pseudocode");
+  });
+
+  test.each([
+    ["a -> b", "graph edge notation is data, not a lambda"],
+    ["x => x * x", "unparenthesized: too close to data to risk deleting"],
+    ["", "empty string"],
+    ["=> nope", "arrow with no parameter list"],
+    ["Hello, world", "ordinary text"],
+    ["(1) => 2", "numeric parameter, not an identifier"],
+  ])("%s is left alone (%s)", (value) => {
+    expect(pseudocodeArgReason(withArg(value))).toBeNull();
+  });
+
+  test("finds pseudocode nested inside a structure", () => {
+    expect(pseudocodeArgReason(withArg({ fn: ["(x) => x"] }))).toContain("pseudocode");
+  });
+
+  test("both arms omit exactly the same cases, so the arms stay comparable", () => {
+    const task: Task = {
+      schemaVersion: TASK_SCHEMA_VERSION,
+      id: "higher-order",
+      title: "Higher order",
+      source: "test",
+      properties: [prop({ name: "f", argNames: ["a"], arity: 1 })],
+      cases: [withArg("(x) => x * x"), { ...withArg(1), uuid: "v" }],
+    } as Task;
+    const py = pythonAdapter.renderTests(task);
+    const av = avenAdapter.renderTests(task);
+    expect(py.omitted.map((o) => o.uuid)).toEqual(["u"]);
+    expect(av.omitted.map((o) => o.uuid)).toEqual(["u"]);
+    expect(py.omitted[0]!.reason).toContain("pseudocode");
+    expect(av.omitted[0]!.reason).toContain("pseudocode");
   });
 });

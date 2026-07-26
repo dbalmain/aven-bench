@@ -76,3 +76,62 @@ export function orderedArgs(prop: TaskProperty, c: TaskCase): TaskCase["args"] {
   for (const a of c.args) if (remaining.has(a.name)) out.push(a);
   return out;
 }
+
+/**
+ * Arrow-form pseudocode: `(x) => x * x`, `(acc, el) -> el + acc`.
+ *
+ * The **parenthesized** parameter list is required, and that is a deliberate bias
+ * rather than laziness. Every one of the 15 affected cases in this corpus writes
+ * one, while a bare `a -> b` is perfectly good data — graph-edge notation, for
+ * instance. The two error directions are not symmetric: a false positive silently
+ * deletes a legitimate case and quietly shrinks the oracle, whereas a false
+ * negative ships an unsolvable suite that announces itself as every arm failing
+ * the same task at once, which is exactly how this class of defect was found.
+ * Prefer the loud failure.
+ */
+const PSEUDOCODE_FUNCTION = /^\s*\(\s*[A-Za-z_]\w*(?:\s*,\s*[A-Za-z_]\w*)*\s*\)\s*(?:=>|->)\s*\S/;
+
+function pseudocodeStrings(value: unknown, out: string[]): void {
+  if (typeof value === "string") {
+    if (PSEUDOCODE_FUNCTION.test(value)) out.push(value);
+  } else if (Array.isArray(value)) {
+    for (const v of value) pseudocodeStrings(v, out);
+  } else if (value && typeof value === "object") {
+    for (const v of Object.values(value)) pseudocodeStrings(v, out);
+  }
+}
+
+/**
+ * Why a case's arguments are pseudocode rather than data, or null if they are not.
+ *
+ * Reports rather than throws so each adapter can raise its own refusal type.
+ *
+ * Some Exercism canonical data passes a *function* by writing it as a string and
+ * leaving conversion to the track's generator: `accumulate` supplies
+ * `"(x) => x * x"` and its own description says "it's up to the test generator to
+ * turn that string into a function declaration". This generator is deliberately
+ * mechanical (§4: task-specific knowledge in an adapter is what makes a corpus
+ * unmaintainable), so it cannot do that, and emitting the string verbatim produces
+ * a suite that *no* solution can pass — `accumulator(x)` raises
+ * `'str' object is not callable`.
+ *
+ * That is worth catching loudly rather than shipping. All seven free models scored
+ * 0–1/5 on `accumulate`, and every one of them correctly blamed the suite in its
+ * exit interview. A case that cannot be passed is not a measurement of the model
+ * or of the language; omitting it keeps the pass rate honest, which is what
+ * `casesOmitted` is for.
+ *
+ * Affects 9 cases in 2 tasks of 142 (`accumulate` 5/5, `list-ops` 4/22). Turning
+ * the pseudocode into real lambdas per language is a possible future upgrade —
+ * it needs its own tiny expression language (`modulo`, `upcase`) — and would
+ * recover a genuinely interesting higher-order-function task.
+ */
+export function pseudocodeArgReason(c: TaskCase): string | null {
+  const found: string[] = [];
+  for (const a of c.args) pseudocodeStrings(a.value, found);
+  if (found.length === 0) return null;
+  return (
+    `argument is pseudocode, not data (${JSON.stringify(found[0])});` +
+    " upstream expects the test generator to build a function from it"
+  );
+}

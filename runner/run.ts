@@ -366,12 +366,37 @@ async function main(): Promise<number> {
   const table = priceTable();
   const resume = loadResumeIndex();
 
+  /**
+   * (task, language) pairs with nothing left to test.
+   *
+   * A suite whose every case was omitted asserts `fail("every case was omitted")`,
+   * so running it scores a model on a task that has no oracle. `accumulate` is the
+   * live example: all five of its cases pass a function as pseudocode text, which a
+   * mechanical generator cannot turn into a callable, so every arm fails it for
+   * reasons that have nothing to do with the model or the language. Excluded from
+   * the plan and reported, rather than silently depressing every pass rate.
+   */
+  const empty: { taskId: string; language: string }[] = [];
+  for (const taskId of taskIds) {
+    const task = await loadTask(CORPUS_DIR, taskId);
+    const only = onlyByTask.get(taskId);
+    for (const language of languages) {
+      const omitted = new Set(adapterFor(language).renderTests(task, only).omitted.map((o) => o.uuid));
+      const renderable = task.cases.filter(
+        (c) => !omitted.has(c.uuid) && (!only || only.has(c.uuid)),
+      ).length;
+      if (renderable === 0) empty.push({ taskId, language });
+    }
+  }
+  const isEmpty = new Set(empty.map((e) => `${e.taskId} ${e.language}`));
+
   type Planned = { spec: AttemptSpec; modelId: string; key: string; done: boolean; outcomes: string[] };
   const planned: Planned[] = [];
   for (const modelId of models.length > 0 ? models : ["(none)"]) {
     for (let sample = 0; sample < samples; sample++) {
       for (const taskId of taskIds) {
         for (const language of languages) {
+          if (isEmpty.has(`${taskId} ${language}`)) continue;
           const only = onlyByTask.get(taskId);
           const spec: AttemptSpec = {
             taskId,
@@ -408,6 +433,12 @@ async function main(): Promise<number> {
     console.log(`aven          commit ${avenCommit ?? "unknown"}  binary ${avenBinary?.slice(0, 12) ?? "(cargo run)"}`);
   }
   console.log(`tasks         ${taskIds.length} (${wantedSet})   samples ${samples}   rounds<=${maxRounds}`);
+  if (empty.length > 0) {
+    console.log(
+      `excluded      ${empty.length} (task, lang) pair(s) with no renderable cases: ` +
+        empty.map((e) => `${e.taskId}/${e.language}`).join(", "),
+    );
+  }
   console.log(
     `policy        toolPolicy=${toolPolicy} suite=${suiteVisibility} sandbox=${sandbox}` +
       ` intersect=${intersect} mypy=${mypy}`,
