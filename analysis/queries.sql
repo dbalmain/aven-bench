@@ -96,6 +96,27 @@ LIMIT 30;
 -- breaker. Both are recoverable by re-running that model — but only if noticed.
 --
 -- Note this reads `attempts`, not `measured`: the excluded rows are the subject.
+-- 2a. Contract generation. Read this before pooling anything.
+--
+-- Schema 6 began stating observed argument and return shapes in the round-0
+-- prompt. That changes what the model is being asked to do — the change exists
+-- precisely because models were burning repair rounds guessing return types — so
+-- rows either side of it answer different questions and must not be averaged
+-- together. The runner enforces this at collection time by putting
+-- `contractGeneration` in the resume key; this query is the reader's half.
+--
+-- `schemaVersion` stands in for the generation deliberately. The honest column is
+-- `contractGeneration`, but duckdb fails to bind a column that no file contains,
+-- so referencing it here would break this whole script against any pre-schema-6
+-- dataset. `analysis/calibrate.ts` does the exact check.
+.print "--- contract generation (more than one row here means do not pool) ---"
+SELECT CASE WHEN schemaVersion >= 6 THEN 'shapes-v1' ELSE 'names-v0' END AS contract_generation,
+       count(*) AS rows_total,
+       count(DISTINCT runId) AS runs
+FROM attempts
+GROUP BY 1
+ORDER BY 1;
+
 .print "--- harness health (excluded rows by model; expect zeros) ---"
 SELECT modelId,
        language,

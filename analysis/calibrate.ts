@@ -75,7 +75,22 @@ type Row = {
   cachedPromptTokens?: number;
   cachedWriteTokens?: number;
   reasoningTokens?: number;
+  /** Schema 6+. Absent means the name-and-arity-only contract, i.e. `names-v0`. */
+  contractGeneration?: string;
 };
+
+/**
+ * Which generation of the generated task contract a row was produced under.
+ *
+ * Schema 6 began stating observed argument and return shapes in the round-0
+ * prompt, which measurably changes what a model is being asked to do — the whole
+ * point of the change was that models were burning rounds guessing return types.
+ * Rows either side of it are answers to different questions, so pooling them
+ * would silently average two experiments. Absent means the older contract.
+ */
+function contractGeneration(r: Row): string {
+  return r.contractGeneration ?? "names-v0";
+}
 
 /**
  * A row where the harness billed nothing at all: the provider never answered, so
@@ -159,6 +174,17 @@ const allTasks = new Set(rows.map((r) => r.taskId));
 const legacy = rows.filter(poisonedLegacy);
 const warnings: string[] = [];
 
+const generations = new Map<string, number>();
+for (const r of rows) generations.set(contractGeneration(r), (generations.get(contractGeneration(r)) ?? 0) + 1);
+if (generations.size > 1) {
+  warnings.push(
+    `rows span ${generations.size} contract generations ` +
+      `(${[...generations].map(([g, n]) => `${g}: ${n}`).join(", ")}).\n` +
+      `    The round-0 prompt differs between them, so these are answers to different\n` +
+      `    questions and the rates below pool two experiments. Filter to one generation.`,
+  );
+}
+
 if (legacy.length > 0) {
   const byRun = new Map<string, number>();
   for (const r of legacy) byRun.set(r.runId, (byRun.get(r.runId) ?? 0) + 1);
@@ -187,7 +213,10 @@ if (warnings.length > 0) {
   console.log("## ⚠ Read before trusting anything below\n");
   for (const w of warnings) console.log(`  - ${w}\n`);
 } else {
-  console.log("preconditions  ok — no partial arms, no legacy zero-token rows\n");
+  console.log(
+    `preconditions  ok — no partial arms, no legacy zero-token rows, ` +
+      `contract ${[...generations.keys()].join("/")}\n`,
+  );
 }
 
 // --- per-model profile -----------------------------------------------------
