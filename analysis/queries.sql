@@ -82,9 +82,9 @@ SELECT
   count(*) FILTER (WHERE NOT mypyOk AND outcome = 'pass') AS mypy_flagged_but_passing
 FROM attempts WHERE language = 'python';
 
--- 6. Contamination guard. Any nonzero value means the harness read something
---    outside the attempt's work directory — in this repo that includes
---    `references/`, i.e. the answers. Such rows are not evidence of anything.
+-- 6. Contamination guard. On unsandboxed rows, any nonzero value means the
+--    harness may have read outside the attempt. On sandboxed rows it means the
+--    model named an outside path; the filesystem boundary makes the access fail.
 .print "--- rows that touched files outside the work directory (should be empty) ---"
 SELECT runId, taskId, language, modelId, outcome, outsideWorkdirTouches
 FROM attempts WHERE outsideWorkdirTouches > 0 ORDER BY outsideWorkdirTouches DESC;
@@ -96,3 +96,13 @@ SELECT modelId, sum(r.modelToolInvocations) AS model_runs, count(*) AS rounds
 FROM attempts, unnest(repairRounds) AS t(r)
 WHERE language = 'aven' AND toolPolicy = 'no-verify'
 GROUP BY 1 ORDER BY 2 DESC;
+
+-- 8. Shell tools are broader than compiler invocations and work on both arms.
+--    Under no-verify these are policy violations even when no absolute path was
+--    recoverable from the command text.
+.print "--- model shell commands under no-verify, by containment mode ---"
+SELECT sandbox, language, modelId, sum(shellCommands) AS shell_commands
+FROM attempts
+WHERE toolPolicy = 'no-verify'
+GROUP BY 1, 2, 3
+ORDER BY 4 DESC;

@@ -29,8 +29,9 @@
  *     `priceTableVersion`, `reportedCostUsd`. Cost is computed from the local
  *     table; a model with no entry records `null`, not a fabricated 0.
  *     `reportedCostUsd` keeps what the harness claimed, for comparison only.
- *   - `toolPolicy` — whether the model was told it may run the compiler itself.
- *     `firstShotPass` means nothing without it.
+ *   - `toolPolicy` / `suiteVisibility` — whether the model was told it may run the
+ *     compiler itself, and whether it could read the generated suite.
+ *     `firstShotPass` means nothing without both.
  *   - `modelToolInvocations` — `aven` invocations the *model* made in a round,
  *     counted from the session log. Measures compliance with `no-verify`.
  *   - `harnessError`, `outcomeDetail`, `timedOut`, `roundsUsed`, `maxRounds`.
@@ -38,9 +39,17 @@
  *     `agentWallMs`, `gateWallMs`, `sessionLogHash`, `promptHash`, `suiteHash`,
  *     `casesExcludedByIntersect`, `cachedPromptTokens`, `reasoningTokens`,
  *     `tokenEstimator`, `agentSessionRef`, `workDir`.
+ * - **3** — containment and the experiment-policy fields needed to audit it:
+ *   - `shellCommands`, per round and summed on the attempt. Structured file-tool
+ *     paths missed the model's filesystem searches through `bash`; this counts
+ *     those invocations even when their effect cannot be reconstructed.
+ *   - `sandbox` records `bubblewrap` or the explicit debugging opt-out `none`.
+ *     Silent fallback is forbidden, so the field says what actually ran.
+ *   - `toolPolicy`, `suiteVisibility` and `sandbox` join the natural key. A row
+ *     produced under one policy must not make resume skip a different experiment.
  */
 
-export const SCHEMA_VERSION = 2 as const;
+export const SCHEMA_VERSION = 3 as const;
 
 /** How `solutionTokens` / `docTokens` were counted. Not a real BPE tokenizer. */
 export const TOKEN_ESTIMATOR = "heuristic-v1" as const;
@@ -66,6 +75,23 @@ export type TaskSource = "exercism" | "design-center" | "rosetta";
  * experiments.
  */
 export type ToolPolicy = "no-verify" | "self-verify";
+
+/**
+ * Whether the model could read the generated suite while it worked.
+ *
+ * `hidden` is the default: the suite is written into the work directory only for
+ * the gate and removed again, so a model cannot pattern-match the expected values
+ * instead of implementing the algorithm. `visible` is what an Exercism user sees.
+ *
+ * Recorded because the two are not comparable — and because hiding is only total
+ * in round 0: from round 1 the repair prompt quotes assertion messages, which name
+ * actual and expected values, and Aven compiler output can quote a generated
+ * suite source line.
+ */
+export type SuiteVisibility = "visible" | "hidden";
+
+/** Filesystem containment applied to the model-driven agent harness. */
+export type SandboxMode = "bubblewrap" | "none";
 
 /** One diagnostic, flattened out of `aven check --format json`. */
 export type GateDiagnostic = {
@@ -168,11 +194,19 @@ export type RepairRound = {
    *
    * Not paranoia. On the first real sweep opencode resolved its project root to
    * the enclosing git repository and read `references/acronym/solution.av` — the
-   * hand-written answer — before "solving" acronym. Any nonzero value here makes
-   * the row suspect; `escapedPaths` keeps a bounded sample for triage.
+   * hand-written answer — before "solving" acronym. On an unsandboxed row any
+   * nonzero value makes the row suspect; on a bubblewrap row it records an
+   * attempted path whose access the namespace denied. `escapedPaths` keeps a
+   * bounded sample for triage.
    */
   outsideWorkdirTouches: number;
   escapedPaths: string[];
+  /**
+   * Shell commands the harness ran this round. Should be 0 under
+   * `toolPolicy: "no-verify"`; on the Aven arm it is routinely not, and a shell
+   * can read anything, so this is the second half of `outsideWorkdirTouches`.
+   */
+  shellCommands: number;
 };
 
 export type AttemptRecord = {
@@ -216,6 +250,9 @@ export type AttemptRecord = {
   temperature: number | null;
   seed: number | null;
   toolPolicy: ToolPolicy;
+  suiteVisibility: SuiteVisibility;
+  /** `none` is reachable only through the explicit `--no-sandbox` debugging flag. */
+  sandbox: SandboxMode;
 
   maxRounds: number;
   roundsUsed: number;
@@ -275,6 +312,8 @@ export type AttemptRecord = {
   workDir: string;
   /** Sum of `repairRounds[].outsideWorkdirTouches`; nonzero means suspect. */
   outsideWorkdirTouches: number;
+  /** Sum of `repairRounds[].shellCommands`; nonzero under `no-verify` is a violation. */
+  shellCommands: number;
 };
 
 /**
@@ -284,7 +323,16 @@ export type AttemptRecord = {
 export function attemptKey(
   r: Pick<
     AttemptRecord,
-    "taskId" | "language" | "modelId" | "agentHarness" | "docId" | "sampleIndex" | "avenCommit"
+    | "taskId"
+    | "language"
+    | "modelId"
+    | "agentHarness"
+    | "docId"
+    | "sampleIndex"
+    | "avenCommit"
+    | "toolPolicy"
+    | "suiteVisibility"
+    | "sandbox"
   >,
 ): string {
   return [
@@ -295,5 +343,8 @@ export function attemptKey(
     r.docId ?? "-",
     r.avenCommit ?? "-",
     r.sampleIndex,
+    r.toolPolicy,
+    r.suiteVisibility,
+    r.sandbox,
   ].join(" ");
 }

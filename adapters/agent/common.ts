@@ -18,9 +18,13 @@
  * - **Respect `timeoutMs`.** The runner's only guarantee against a hung sweep.
  */
 
+import type { SandboxMode } from "../../runner/schema.ts";
+
 export type AgentInvocation = {
   /** Working directory. The solution file must land here. */
   dir: string;
+  /** Language arm, used to expose only its interpreter/compiler in the sandbox. */
+  language: string;
   /** The full prompt text. Adapters must not add task content of their own. */
   prompt: string;
   /** `provider/model`, in the harness's own spelling. */
@@ -30,6 +34,10 @@ export type AgentInvocation = {
   sessionRef: string | null;
   /** Extra environment for the child (e.g. `AVEN_SESSION_LOG`). */
   env: Record<string, string>;
+  /** Filesystem containment for the model-driven harness process. */
+  sandbox: SandboxMode;
+  /** Exact Aven binary to expose read-only on that arm, when configured. */
+  avenBin: string | null;
   temperature: number | null;
   seed: number | null;
 };
@@ -61,6 +69,14 @@ export type AgentResult = {
    * not report tool calls.
    */
   touchedPaths: string[];
+  /**
+   * Shell invocations the harness made on the model's behalf.
+   *
+   * Under `toolPolicy: "no-verify"` this should be zero. It is not: Aven-arm
+   * models ran 28 shell commands in one round, searching the filesystem for
+   * example code. Recorded because an instruction nobody checks is not a control.
+   */
+  shellCommands: number;
 };
 
 export type AgentAdapter = {
@@ -89,6 +105,7 @@ export function emptyResult(overrides: Partial<AgentResult> = {}): AgentResult {
     log: "",
     assistantText: "",
     touchedPaths: [],
+    shellCommands: 0,
     ...overrides,
   };
 }

@@ -8,12 +8,12 @@
  */
 
 import { describe, expect, test } from "bun:test";
-import { mkdtempSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, realpathSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { parseEvents } from "../adapters/agent/opencode.ts";
-import { agentFor, AGENTS } from "../adapters/agent/index.ts";
+import { AGENTS, agentFor, emptyResult, type AgentAdapter } from "../adapters/agent/index.ts";
 import { adapterFor } from "../adapters/lang/index.ts";
 import {
   classifyOutcome,
@@ -25,10 +25,11 @@ import {
   probeMirrors,
 } from "./gate.ts";
 import { computeCost, resetPriceTableCache, type PriceTable } from "./prices.ts";
-import { Semaphore } from "./proc.ts";
-import { buildInitialPrompt, buildRepairPrompt } from "./prompt.ts";
+import { runProcess, Semaphore } from "./proc.ts";
+import { buildInitialPrompt, buildRepairPrompt, summarizeCaseMessage } from "./prompt.ts";
 import { enclosingRepo, parseArgv } from "./run.ts";
-import { DEFAULT_WORK_ROOT, isInside } from "./attempt.ts";
+import { bubblewrapCommand, sandboxAvailability } from "./sandbox.ts";
+import { DEFAULT_WORK_ROOT, isInside, runAttempt, type RunContext } from "./attempt.ts";
 import { REPO_ROOT } from "../ingest/paths.ts";
 import {
   attemptKey,
@@ -91,6 +92,8 @@ function record(over: Partial<AttemptRecord> = {}): AttemptRecord {
     temperature: null,
     seed: null,
     toolPolicy: "no-verify",
+    suiteVisibility: "hidden",
+    sandbox: "bubblewrap",
     maxRounds: 2,
     roundsUsed: 1,
     repairRounds: [],
@@ -129,6 +132,7 @@ function record(over: Partial<AttemptRecord> = {}): AttemptRecord {
     sessionLogHash: null,
     workDir: "/tmp/aven-bench-work/x",
     outsideWorkdirTouches: 0,
+    shellCommands: 0,
     ...over,
   };
 }
@@ -260,6 +264,33 @@ describe("opencode --format json", () => {
       ].join("\n"),
     );
     expect(usage.touchedPaths).toEqual(["/w/s0/solution.av", "/home/dave/w/clex/aven-bench"]);
+  });
+
+  test("shell commands are counted and their absolute path arguments are sampled", () => {
+    const usage = parseEvents(
+      [
+        JSON.stringify({
+          type: "tool_use",
+          part: {
+            type: "tool",
+            tool: "bash",
+            state: { input: { command: "find /home/dave/w/clex -name '*.av'" } },
+          },
+        }),
+        JSON.stringify({
+          type: "tool_use",
+          part: {
+            type: "tool",
+            tool: "bash",
+            state: { input: { command: "cat ../../references/two-fer/solution.av" } },
+          },
+        }),
+      ].join("\n"),
+    );
+    expect(usage.shellCommands).toBe(2);
+    // Relative shell paths cannot be classified from the event alone. The
+    // command count still records that the structured path accounting is blind.
+    expect(usage.touchedPaths).toEqual(["/home/dave/w/clex"]);
   });
 
   test("an error event is surfaced, which is how a bad model id is caught", () => {
@@ -412,7 +443,7 @@ describe("prompts", () => {
     taskPrompt: "Return one for you and one for me.",
     doc: "Aven in one line.",
     toolPolicy: "no-verify" as const,
-    suiteVisibility: "visible" as const,
+    suiteVisibility: "hidden" as const,
     testCommandDisplay: "aven test --format json solution_test.av",
   };
 
@@ -421,7 +452,12 @@ describe("prompts", () => {
     expect(p).toContain("Do not run any commands");
     expect(p).toContain("solution.av");
     expect(p).toContain("Aven in one line.");
-    expect(p).toContain("Read it; do not modify it.");
+  });
+
+  test("the default hides the suite and says so", () => {
+    const p = buildInitialPrompt(base);
+    expect(p).toContain("is not in this directory and you cannot see it");
+    expect(p).not.toContain("Read it; do not modify it.");
   });
 
   test("self-verify offers the real test command instead", () => {
@@ -430,8 +466,10 @@ describe("prompts", () => {
     expect(p).not.toContain("Do not run any commands");
   });
 
-  test("hide-suite says the suite is absent", () => {
-    expect(buildInitialPrompt({ ...base, suiteVisibility: "hidden" })).toContain("not in this directory");
+  test("--show-suite invites the model to read it", () => {
+    const p = buildInitialPrompt({ ...base, suiteVisibility: "visible" });
+    expect(p).toContain("Read it; do not modify it.");
+    expect(p).not.toContain("cannot see it");
   });
 
   test("a resumed repair prompt carries diagnostics and adds no hints of its own", () => {
@@ -454,6 +492,20 @@ describe("prompts", () => {
     expect(p).not.toContain("Aven in one line.");
   });
 
+  test.each([
+    // std/test: one line, already the diagnostic.
+    ['expected "One for you, one for me.", got "nope"', 'expected "One for you, one for me.", got "nope"'],
+    // unittest: a traceback whose first line says nothing and whose last line is
+    // the assertion. Line 1 from both arms would have been "Traceback".
+    [
+      "Traceback (most recent call last):\n  File \"x.py\", line 9, in test_000\n    self.assertEqual(a, b)\nAssertionError: 'nope' != 'One for you, one for me.'",
+      "AssertionError: 'nope' != 'One for you, one for me.'",
+    ],
+    ["", "(no message)"],
+  ])("case messages summarize to the informative line", (message, expected) => {
+    expect(summarizeCaseMessage(message)).toBe(expected);
+  });
+
   test("an unresumed repair prompt restates task and doc, because the model has no memory", () => {
     const p = buildRepairPrompt({
       adapter,
@@ -467,6 +519,110 @@ describe("prompts", () => {
     });
     expect(p).toContain("Return one for you");
     expect(p).toContain("Aven in one line.");
+  });
+});
+
+// --- hidden suite, end to end ----------------------------------------------
+
+/**
+ * The default is `suiteVisibility: "hidden"`, so the path that every future sweep
+ * takes is the one where the suite is on disk only while the gate runs. Two ways
+ * that can go wrong silently: the model can still read the expected values (the
+ * hiding achieves nothing), or the suite fails to execute (which looks exactly
+ * like a model failure). Both are checked here with a fake harness, so the test
+ * needs no network and no model.
+ */
+describe("hidden suite (the default)", () => {
+  /** A harness that records what it can see, then writes `solution`. */
+  function spyAgent(solutions: string[], shellCommands = 0): { adapter: AgentAdapter; seen: string[][] } {
+    const seen: string[][] = [];
+    let round = 0;
+    const adapter: AgentAdapter = {
+      id: "spy",
+      supportsResume: false,
+      version: async () => "spy",
+      available: async () => ({ ok: true, detail: "spy" }),
+      run: async (inv) => {
+        seen.push(readdirSync(inv.dir).sort());
+        const source = solutions[Math.min(round, solutions.length - 1)]!;
+        round++;
+        await Bun.write(join(inv.dir, "solution.py"), source);
+        return emptyResult({ ok: true, promptTokens: 1, completionTokens: 1, shellCommands, wallMs: 1 });
+      },
+    };
+    return { adapter, seen };
+  }
+
+  function context(agent: AgentAdapter, workRoot: string, maxRounds: number): RunContext {
+    return {
+      runId: "test",
+      agent,
+      harnessVersion: "spy",
+      modelId: "spy/model",
+      provider: "spy",
+      quantization: null,
+      avenCommit: null,
+      avenBinarySha256: null,
+      languageVersions: { python: "test" },
+      docId: null,
+      docHash: null,
+      docTokens: null,
+      doc: null,
+      toolPolicy: "no-verify",
+      suiteVisibility: "hidden",
+      sandbox: "none",
+      avenBin: null,
+      maxRounds,
+      agentTimeoutMs: 60_000,
+      toolTimeoutMs: 60_000,
+      mypy: false,
+      temperature: null,
+      seed: null,
+      agentSem: new Semaphore(1),
+      langSem: new Semaphore(1),
+      workRoot,
+      resumeSessions: false,
+      keepWork: true,
+    };
+  }
+
+  const spec = { taskId: "two-fer", language: "python", sampleIndex: 0, taskSet: "holdout" as const };
+
+  test("the model never sees the suite, and the suite still runs", async () => {
+    const workRoot = mkdtempSync(join(tmpdir(), "aven-bench-hidden-"));
+    // Wrong on purpose: round 0 must fail so a round 1 happens at all.
+    const wrong = 'def two_fer(name=None):\n    return "nope"\n';
+    const right = 'def two_fer(name=None):\n    return f"One for {name or \'you\'}, one for me."\n';
+    const { adapter, seen } = spyAgent([wrong, right], 2);
+    const record = await runAttempt(context(adapter, workRoot, 1), spec);
+
+    expect(seen).toHaveLength(2);
+    for (const listing of seen) {
+      // No suite, and no bytecode of it either: a .pyc carries every expected
+      // value as a code constant.
+      expect(listing).not.toContain("solution_test.py");
+      expect(listing).not.toContain("__pycache__");
+    }
+    // The suite ran anyway, both times: 3 real cases, failing then passing.
+    expect(record.repairRounds[0]).toMatchObject({ outcome: "wrong_output", casesPassed: 0, casesTotal: 3 });
+    expect(record.repairRounds[1]).toMatchObject({ outcome: "pass", casesPassed: 3, casesTotal: 3 });
+    expect(record.outcome).toBe("pass");
+    expect(record.firstShotPass).toBe(false);
+    expect(record.roundsToGreen).toBe(1);
+    expect(record.suiteVisibility).toBe("hidden");
+    expect(record.repairRounds.map((r) => r.shellCommands)).toEqual([2, 2]);
+    expect(record.shellCommands).toBe(4);
+    // And nothing is left behind for the next attempt to read.
+    expect(readdirSync(record.workDir)).not.toContain("solution_test.py");
+  });
+
+  test("--show-suite puts it in the directory the model works in", async () => {
+    const workRoot = mkdtempSync(join(tmpdir(), "aven-bench-visible-"));
+    const { adapter, seen } = spyAgent(['def two_fer(name=None):\n    return "nope"\n']);
+    const ctx = { ...context(adapter, workRoot, 0), suiteVisibility: "visible" as const };
+    const record = await runAttempt(ctx, spec);
+    expect(seen[0]).toContain("solution_test.py");
+    expect(record.suiteVisibility).toBe("visible");
   });
 });
 
@@ -514,6 +670,9 @@ describe("store", () => {
     expect(key).toBe(attemptKey(record({ outcome: "wrong_output", casesPassed: 0, wallMs: 999 })));
     expect(key).not.toBe(attemptKey(record({ sampleIndex: 1 })));
     expect(key).not.toBe(attemptKey(record({ language: "aven", avenCommit: "abc" })));
+    expect(key).not.toBe(attemptKey(record({ toolPolicy: "self-verify" })));
+    expect(key).not.toBe(attemptKey(record({ suiteVisibility: "visible" })));
+    expect(key).not.toBe(attemptKey(record({ sandbox: "none" })));
   });
 });
 
@@ -613,6 +772,56 @@ describe("work directory containment", () => {
   });
 });
 
+// --- bubblewrap filesystem boundary ---------------------------------------
+
+describe("bubblewrap filesystem boundary", () => {
+  test("an unavailable bwrap is reported instead of becoming an unsandboxed fallback", async () => {
+    const availability = await sandboxAvailability("/definitely/not/bwrap");
+    expect(availability.ok).toBe(false);
+    expect(availability.detail).toContain("cannot run");
+  });
+
+  test.skipIf(Bun.which("bwrap") === null)("real reads outside the attempt fail", async () => {
+    const root = mkdtempSync(join(tmpdir(), "aven-bench-sandbox-"));
+    const work = join(root, "attempt-a");
+    const sibling = join(root, "attempt-b");
+    mkdirSync(work);
+    mkdirSync(sibling);
+    const siblingSecret = join(sibling, "solution.py");
+    writeFileSync(siblingSecret, "SIBLING_SECRET\n");
+
+    const bash = realpathSync(Bun.which("bash")!);
+    const script = [
+      'if head -c 1 "$1" >/dev/null 2>&1; then echo "reference=READABLE"; else echo "reference=unreachable"; fi',
+      'if ls "$2" >/dev/null 2>&1; then echo "corpus=READABLE"; else echo "corpus=unreachable"; fi',
+      'if head -c 1 "$3" >/dev/null 2>&1; then echo "sibling=READABLE"; else echo "sibling=unreachable"; fi',
+      'printf "attempt-write-ok\\n" > sandbox-write.txt',
+      "cat sandbox-write.txt",
+    ].join("\n");
+    const command = bubblewrapCommand(
+      [
+        bash,
+        "-c",
+        script,
+        "sandbox-probe",
+        join(REPO_ROOT, "references/two-fer/solution.py"),
+        join(REPO_ROOT, "corpus"),
+        siblingSecret,
+      ],
+      { dir: work, language: "python", avenBin: null },
+    );
+    const proc = await runProcess(command, { cwd: work, timeoutMs: 30_000 });
+
+    expect(proc.spawnError).toBeNull();
+    expect(proc.exitCode).toBe(0);
+    expect(proc.stdout).toBe(
+      "reference=unreachable\ncorpus=unreachable\nsibling=unreachable\nattempt-write-ok\n",
+    );
+    expect(await Bun.file(join(work, "sandbox-write.txt")).text()).toBe("attempt-write-ok\n");
+    expect(existsSync(join(work, ".agent-state/data"))).toBe(true);
+  });
+});
+
 // --- argv ------------------------------------------------------------------
 
 describe("argv", () => {
@@ -637,11 +846,14 @@ describe("agent registry", () => {
       expect(availability.detail).toContain("stub");
       const result = await adapter.run({
         dir: "/tmp",
+        language: "python",
         prompt: "x",
         model: "m",
         timeoutMs: 1,
         sessionRef: null,
         env: {},
+        sandbox: "none",
+        avenBin: null,
         temperature: null,
         seed: null,
       });

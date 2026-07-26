@@ -32,6 +32,7 @@ import {
   type GateResult,
   type Outcome,
   type RepairRound,
+  type SandboxMode,
   type TaskSet,
   type TaskSource,
   type ToolPolicy,
@@ -59,6 +60,8 @@ export type RunContext = {
   doc: string | null;
   toolPolicy: ToolPolicy;
   suiteVisibility: SuiteVisibility;
+  sandbox: SandboxMode;
+  avenBin: string | null;
   maxRounds: number;
   agentTimeoutMs: number;
   toolTimeoutMs: number;
@@ -97,6 +100,9 @@ export function attemptIdFor(ctx: RunContext, spec: AttemptSpec): string {
     docId: ctx.docId,
     sampleIndex: spec.sampleIndex,
     avenCommit: spec.language === "aven" ? ctx.avenCommit : null,
+    toolPolicy: ctx.toolPolicy,
+    suiteVisibility: ctx.suiteVisibility,
+    sandbox: ctx.sandbox,
   });
   return `${ctx.runId}-${sha256(key).slice(0, 12)}`;
 }
@@ -120,17 +126,16 @@ export function isInside(dir: string, path: string): boolean {
  * Emptied every time — a stale solution from a previous run would score itself —
  * and made a git repository of its own.
  *
- * The `git init` is the contamination fix. opencode scopes its glob and grep to
- * the nearest enclosing repository, so an attempt directory that is its own repo
- * is the boundary. Verified: with it, `glob **\/*.av` returns only the attempt's
- * own file; without it, the same prompt walked up to aven-bench and read
- * `references/acronym/solution.av`, the hand-written answer.
+ * The `git init` scopes opencode's project glob and grep to the attempt. Verified:
+ * with it, `glob **\/*.av` returns only the attempt's own file; without it, the
+ * same prompt walked up to aven-bench and read a hand-written reference answer.
+ * It is defence in depth, not the boundary — bubblewrap supplies that.
  */
 function freshDir(dir: string): void {
   rmSync(dir, { recursive: true, force: true });
   mkdirSync(dir, { recursive: true });
-  // Failure is not fatal: the work root is outside the repo anyway, and run.ts
-  // refuses a root inside one. This is the second of the two barriers.
+  // Failure is not fatal under bubblewrap. The work-root guard still protects an
+  // explicit --no-sandbox debugging run.
   Bun.spawnSync(["git", "init", "--quiet", "."], { cwd: dir, stdout: "ignore", stderr: "ignore" });
 }
 
@@ -173,17 +178,41 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
   const suiteHash = putArtifact(suite, adapter.testFile.replace(/^.*\./, ""));
   const suitePath = `${dir}/${adapter.testFile}`;
   const writeSuite = async () => Bun.write(suitePath, suite);
+  /**
+   * Undo `writeSuite`, leaving nothing the model can read the answers out of.
+   *
+   * The suite file is the obvious half. `__pycache__` is the other one: running
+   * the Python suite byte-compiles it, and every expected value survives in the
+   * `.pyc` as a code constant — `strings solution_test.cpython-313.pyc` prints
+   * them. Hiding the source and leaving the bytecode would hide nothing.
+   */
+  const unwriteSuite = () => {
+    rmSync(suitePath, { force: true });
+    rmSync(`${dir}/__pycache__`, { recursive: true, force: true });
+    // mypy's cache is gate residue too. It holds no expected values (only
+    // solution.py is analysed) but it tells the model a gate ran, and the
+    // directory is supposed to look untouched between rounds.
+    rmSync(`${dir}/.mypy_cache`, { recursive: true, force: true });
+  };
   if (ctx.suiteVisibility === "visible") await writeSuite();
 
   const taskPrompt = `${(await Bun.file(`${CORPUS_DIR}/${spec.taskId}/prompt.md`).text()).trimEnd()}\n\n${adapter.renderContract(task)}`;
   const { argv } = adapter.testCommand(dir);
+  // Trusted gates use their normal host-side wrappers. A self-verifying model
+  // needs a command made only from binaries and files present in its namespace.
+  const modelTestCommand =
+    ctx.sandbox === "bubblewrap"
+      ? spec.language === "python"
+        ? `python3 ${adapter.testFile}`
+        : `aven test --format json ${adapter.testFile}`
+      : argv.join(" ");
   const initialPrompt = buildInitialPrompt({
     adapter,
     taskPrompt,
     doc: ctx.doc,
     toolPolicy: ctx.toolPolicy,
     suiteVisibility: ctx.suiteVisibility,
-    testCommandDisplay: argv.join(" "),
+    testCommandDisplay: modelTestCommand,
   });
   const promptHash = putArtifact(initialPrompt, "md");
 
@@ -210,11 +239,14 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
     const agentResult = await ctx.agentSem.with(() =>
       ctx.agent.run({
         dir,
+        language: spec.language,
         prompt,
         model: ctx.modelId,
         timeoutMs: ctx.agentTimeoutMs,
         sessionRef: ctx.resumeSessions && ctx.agent.supportsResume ? sessionRef : null,
         env: agentEnv,
+        sandbox: ctx.sandbox,
+        avenBin: spec.language === "aven" ? ctx.avenBin : null,
         temperature: ctx.temperature,
         seed: ctx.seed,
       }),
@@ -229,8 +261,9 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
     const modelRunsThisRound = modelRuns === null ? null : modelRuns - seenModelInvocations;
     if (modelRuns !== null) seenModelInvocations = modelRuns;
 
-    // Anything the harness touched outside the work directory. A pass with a
-    // nonzero count may have been copied from this repo's own references.
+    // Anything the harness named outside the work directory. Without the
+    // sandbox, a pass with a nonzero count may have copied this repo's reference
+    // answer. With bubblewrap, it records the attempt even though access failed.
     const escaped = agentResult.touchedPaths.filter((p) => !isInside(dir, p));
 
     const baseRound = {
@@ -238,6 +271,7 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
       promptHash: round === 0 ? promptHash : putArtifact(prompt, "md"),
       outsideWorkdirTouches: escaped.length,
       escapedPaths: escaped.slice(0, 8),
+      shellCommands: agentResult.shellCommands,
       promptTokens: agentResult.promptTokens,
       completionTokens: agentResult.completionTokens,
       cachedPromptTokens: agentResult.cachedPromptTokens,
@@ -312,7 +346,19 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
     };
     if (ctx.suiteVisibility === "hidden") await writeSuite();
     const gate = await ctx.langSem.with(() => runGate(gateCtx));
-    if (ctx.suiteVisibility === "hidden") rmSync(suitePath, { force: true });
+
+    // The repair text has to be produced *now*, while the suite is still on disk:
+    // `aven check` type-checks the suite, so running it after the file is gone
+    // would report a missing file instead of the model's mistake. Only produced
+    // when another round will actually use it.
+    const anotherRound = !gate.ok && gate.outcome !== "harness_error" && round < ctx.maxRounds;
+    const needsCheckText = anotherRound && gate.probes.some((p) => p.name === "check" && p.ok !== true);
+    const toolOutput = needsCheckText
+      ? await ctx.langSem.with(() => avenCheckText(gateCtx))
+      : (gate.detail ?? "");
+
+    // The next round's agent call must not find it — including the bytecode.
+    if (ctx.suiteVisibility === "hidden") unwriteSuite();
     const gateWallMs = performance.now() - gateStarted;
     lastGate = gate;
 
@@ -348,10 +394,6 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
     if (round === ctx.maxRounds) break;
 
     // Another round: show the model exactly what a human would have seen.
-    const needsCheckText = gate.probes.some((p) => p.name === "check" && p.ok !== true);
-    const toolOutput = needsCheckText
-      ? await ctx.langSem.with(() => avenCheckText(gateCtx))
-      : (gate.detail ?? "");
     const resumed = ctx.resumeSessions && ctx.agent.supportsResume && sessionRef !== null;
     prompt = buildRepairPrompt({
       adapter,
@@ -416,6 +458,8 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
     temperature: ctx.temperature,
     seed: ctx.seed,
     toolPolicy: ctx.toolPolicy,
+    suiteVisibility: ctx.suiteVisibility,
+    sandbox: ctx.sandbox,
 
     maxRounds: ctx.maxRounds,
     roundsUsed: rounds.length,
@@ -451,6 +495,7 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
     solutionTokens: lastSolution?.tokens ?? 0,
     tokenEstimator: TOKEN_ESTIMATOR,
     outsideWorkdirTouches: rounds.reduce((n, r) => n + r.outsideWorkdirTouches, 0),
+    shellCommands: rounds.reduce((n, r) => n + r.shellCommands, 0),
 
     artifactHash: lastSolution?.hash ?? null,
     promptHash,
@@ -477,9 +522,8 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
  *    there by other work. `/tmp` on a dev box is a shared junk drawer.
  *
  * So: a private cache directory, plus a `git init` per attempt (see `freshDir`),
- * plus escape accounting on every round. None of that is a sandbox — an agent can
- * read anything its user can, and `outsideWorkdirTouches` exists precisely because
- * the only honest defence left is to *record* it. `bwrap` is the real fix and is
- * not wired up.
+ * plus escape and shell-command accounting on every round. Those remain useful
+ * defence in depth and make explicit `--no-sandbox` debugging rows diagnosable.
+ * The default model harness now runs inside bubblewrap; see `sandbox.ts`.
  */
 export const DEFAULT_WORK_ROOT = `${process.env["XDG_CACHE_HOME"] ?? `${homedir()}/.cache`}/aven-bench/work`;

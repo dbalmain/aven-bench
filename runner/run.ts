@@ -25,7 +25,7 @@
  *    afterwards instead of being an unexplained step in the numbers.
  */
 
-import { existsSync, statSync } from "node:fs";
+import { existsSync, realpathSync, statSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 import { adapterFor } from "../adapters/lang/index.ts";
 import { agentFor } from "../adapters/agent/index.ts";
@@ -34,7 +34,15 @@ import { loadIndex, loadTask, type Split } from "../ingest/task.ts";
 import { runProcess, Semaphore } from "./proc.ts";
 import { priceTable } from "./prices.ts";
 import type { SuiteVisibility } from "./prompt.ts";
-import { attemptKey, type AttemptRecord, type TaskSet, type ToolPolicy } from "./schema.ts";
+import { sandboxAvailability, sandboxLabel } from "./sandbox.ts";
+import {
+  SCHEMA_VERSION,
+  attemptKey,
+  type AttemptRecord,
+  type SandboxMode,
+  type TaskSet,
+  type ToolPolicy,
+} from "./schema.ts";
 import { appendRecord, isDone, loadResumeIndex, putArtifact, RUNS_DIR, sha256 } from "./store.ts";
 import { approxTokens } from "./tokens.ts";
 import {
@@ -117,13 +125,14 @@ experiment
   --doc PATH                   skill doc to inline into the prompt (Aven arm)
   --doc-id ID                  label for that doc (default: its file name)
   --self-verify                let the model run the compiler/suite itself
-  --hide-suite                 withhold the generated suite from the model
+  --show-suite                 let the model read the generated suite (default: hidden until gate time)
   --intersect                  restrict cases to those every --lang arm can render
   --temperature F  --seed N    recorded; passed through where the harness supports it
   --no-mypy                    skip the (non-gating) mypy probe on the Python arm
   --no-resume-sessions         each repair round starts a fresh harness session
 
 execution
+  --no-sandbox                 run the model harness without bubblewrap (debugging only)
   --jobs N                     attempts in flight (default = --agent-jobs)
   --agent-jobs N               concurrent harness calls (default 3)
   --lang-jobs N                concurrent compiler/interpreter runs (default 8)
@@ -133,7 +142,7 @@ execution
   --run-id ID                  default: timestamp
   --work-root DIR              default ~/.cache/aven-bench/work (must be outside any git repo)
   --keep-work                  keep per-attempt work dirs (default: prune once archived)
-  --allow-repo-workdir         permit a work root inside a repo (contaminates rows)
+  --allow-repo-workdir         permit a work root inside a repo (unsafe with --no-sandbox)
   --retry-harness-errors       re-attempt keys whose only rows are harness_error
   --dry-run                    print the plan, write nothing
 `;
@@ -196,12 +205,18 @@ async function pythonVersion(): Promise<string> {
  * layout the aven-lang checkout can move under a long sweep. Hashing the file is
  * cheap once per run and makes non-comparable A/B halves detectable.
  */
-async function avenBinaryHash(): Promise<string | null> {
-  const bin = process.env["AVEN_BIN"];
-  if (!bin || !existsSync(bin)) return null;
+async function avenBinaryHash(bin: string | null): Promise<string | null> {
+  if (!bin) return null;
   const h = new Bun.CryptoHasher("sha256");
   h.update(await Bun.file(bin).bytes());
   return h.digest("hex");
+}
+
+function avenBinaryPath(): string | null {
+  const configured = process.env["AVEN_BIN"];
+  if (!configured) return null;
+  const path = resolve(configured);
+  return existsSync(path) ? realpathSync(path) : path;
 }
 
 // --- main ------------------------------------------------------------------
@@ -252,7 +267,10 @@ async function main(): Promise<number> {
   const agentTimeoutMs = num(args, "agent-timeout", 900) * 1000;
   const toolTimeoutMs = num(args, "tool-timeout", 120) * 1000;
   const toolPolicy: ToolPolicy = bool(args, "self-verify", false) ? "self-verify" : "no-verify";
-  const suiteVisibility: SuiteVisibility = bool(args, "hide-suite", false) ? "hidden" : "visible";
+  // Hidden by default: a visible suite tempts a model into pattern-matching the
+  // expected values instead of implementing the algorithm (Dave's call).
+  const suiteVisibility: SuiteVisibility = bool(args, "show-suite", false) ? "visible" : "hidden";
+  const sandbox: SandboxMode = sandboxLabel(bool(args, "sandbox", true));
   const intersect = bool(args, "intersect", false);
   const mypy = bool(args, "mypy", true);
   const resumeSessions = bool(args, "resume-sessions", true);
@@ -260,7 +278,7 @@ async function main(): Promise<number> {
   const retryHarnessErrors = bool(args, "retry-harness-errors", false);
   const runId = args.flags.get("run-id") ?? new Date().toISOString().replace(/[:.]/g, "-");
   const outPath = args.flags.get("out") ?? `${RUNS_DIR}/${runId}.jsonl`;
-  const workRoot = args.flags.get("work-root") ?? DEFAULT_WORK_ROOT;
+  const workRoot = resolve(args.flags.get("work-root") ?? DEFAULT_WORK_ROOT);
   const temperature = args.flags.get("temperature") !== undefined ? num(args, "temperature", 0) : null;
   const seed = args.flags.get("seed") !== undefined ? num(args, "seed", 0) : null;
 
@@ -271,8 +289,9 @@ async function main(): Promise<number> {
   const agent = agentFor(harnessId);
   const harnessVersion = await agent.version();
   const avenNeeded = languages.includes("aven");
+  const avenBin = avenNeeded ? avenBinaryPath() : null;
   const avenCommit = avenNeeded ? await gitHead(AVEN_LANG_DIR) : null;
-  const avenBinary = avenNeeded ? await avenBinaryHash() : null;
+  const avenBinary = avenNeeded ? await avenBinaryHash(avenBin) : null;
   const languageVersions: Record<string, string> = {
     python: await pythonVersion(),
     ...(avenNeeded ? { aven: `aven-lang@${(avenCommit ?? "unknown").slice(0, 12)}` } : {}),
@@ -287,13 +306,32 @@ async function main(): Promise<number> {
         "  The agent harness takes the enclosing repo as its project root, which lets the model\n" +
         "  glob and read anything in it — including references/, which holds solutions to corpus\n" +
         "  tasks. Observed for real: opencode read references/acronym/solution.av before answering.\n" +
-        "  Use --work-root outside any repo (the default is os.tmpdir()/aven-bench-work),\n" +
+        `  Use --work-root outside any repo (the default is ${DEFAULT_WORK_ROOT}),\n` +
         "  or --allow-repo-workdir if you truly want contaminated rows.",
     );
     return 2;
   }
 
   if (!dryRun) {
+    if (sandbox === "bubblewrap") {
+      const availability = await sandboxAvailability();
+      if (!availability.ok) {
+        console.error(
+          `sandbox unavailable: ${availability.detail}\n` +
+            "  Refusing to run the model harness without filesystem containment.\n" +
+            "  Install/fix bubblewrap, or pass --no-sandbox deliberately for debugging.",
+        );
+        return 2;
+      }
+      if (avenNeeded && toolPolicy === "self-verify" && !avenBin) {
+        console.error(
+          "sandboxed Aven self-verification requires AVEN_BIN to name a built `aven` binary.\n" +
+            "  The sandbox does not expose the aven-lang checkout or cargo. Set AVEN_BIN,\n" +
+            "  use the default --no-verify policy, or pass --no-sandbox deliberately.",
+        );
+        return 2;
+      }
+    }
     const availability = await agent.available();
     if (!availability.ok) {
       // Nothing to record: no attempt was made. A sweep of harness_error rows
@@ -348,6 +386,9 @@ async function main(): Promise<number> {
             docId,
             sampleIndex: sample,
             avenCommit: language === "aven" ? avenCommit : null,
+            toolPolicy,
+            suiteVisibility,
+            sandbox,
           });
           const { done, outcomes } = isDone(resume, key, retryHarnessErrors);
           planned.push({ spec, modelId, key, done, outcomes });
@@ -366,7 +407,8 @@ async function main(): Promise<number> {
   }
   console.log(`tasks         ${taskIds.length} (${wantedSet})   samples ${samples}   rounds<=${maxRounds}`);
   console.log(
-    `policy        toolPolicy=${toolPolicy} suite=${suiteVisibility} intersect=${intersect} mypy=${mypy}`,
+    `policy        toolPolicy=${toolPolicy} suite=${suiteVisibility} sandbox=${sandbox}` +
+      ` intersect=${intersect} mypy=${mypy}`,
   );
   console.log(`prices        table ${table.version}`);
   console.log(
@@ -414,6 +456,8 @@ async function main(): Promise<number> {
       doc,
       toolPolicy,
       suiteVisibility,
+      sandbox,
+      avenBin,
       maxRounds,
       agentTimeoutMs,
       toolTimeoutMs,
@@ -472,7 +516,7 @@ async function main(): Promise<number> {
 function harnessErrorRecord(ctx: RunContext, spec: AttemptSpec, err: unknown): AttemptRecord {
   const now = new Date().toISOString();
   return {
-    schemaVersion: 2,
+    schemaVersion: SCHEMA_VERSION,
     runId: ctx.runId,
     attemptId: attemptIdFor(ctx, spec),
     runnerVersion: RUNNER_VERSION,
@@ -500,6 +544,8 @@ function harnessErrorRecord(ctx: RunContext, spec: AttemptSpec, err: unknown): A
     temperature: ctx.temperature,
     seed: ctx.seed,
     toolPolicy: ctx.toolPolicy,
+    suiteVisibility: ctx.suiteVisibility,
+    sandbox: ctx.sandbox,
     maxRounds: ctx.maxRounds,
     roundsUsed: 0,
     repairRounds: [],
@@ -533,6 +579,7 @@ function harnessErrorRecord(ctx: RunContext, spec: AttemptSpec, err: unknown): A
     solutionTokens: 0,
     tokenEstimator: "heuristic-v1",
     outsideWorkdirTouches: 0,
+    shellCommands: 0,
     artifactHash: null,
     promptHash: "",
     suiteHash: "",
@@ -570,11 +617,22 @@ function summarize(records: AttemptRecord[]): void {
   console.log(`  tokens         ${tokens}`);
   const escaped = records.filter((r) => r.outsideWorkdirTouches > 0);
   if (escaped.length > 0) {
-    // Loud, because such a row may have read an answer from somewhere on disk.
+    const unsandboxed = escaped.filter((r) => r.sandbox === "none").length;
     console.log(
-      `  !! ${escaped.length} row(s) touched files OUTSIDE their work directory — treat as suspect:\n` +
+      `  !! ${escaped.length} row(s) named paths OUTSIDE their work directory` +
+        (unsandboxed > 0 ? `; ${unsandboxed} unsandboxed row(s) are suspect` : " (sandbox denied access)") +
+        ":\n" +
         escaped
           .map((r) => `       ${r.language} ${r.taskId} s${r.sampleIndex}: ${r.outsideWorkdirTouches} path(s)`)
+          .join("\n"),
+    );
+  }
+  const shellViolations = records.filter((r) => r.toolPolicy === "no-verify" && r.shellCommands > 0);
+  if (shellViolations.length > 0) {
+    console.log(
+      `  !! ${shellViolations.length} row(s) ran shell commands despite toolPolicy=no-verify:\n` +
+        shellViolations
+          .map((r) => `       ${r.language} ${r.taskId} s${r.sampleIndex}: ${r.shellCommands} command(s)`)
           .join("\n"),
     );
   }

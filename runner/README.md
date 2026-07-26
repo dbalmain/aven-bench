@@ -46,16 +46,26 @@ alone.
   compiler, not the docs. Compliance is measured, not assumed: on the Aven arm
   every `aven` the model runs itself lands in the session log and is counted as
   `repairRounds[].modelToolInvocations`. `--self-verify` flips the policy.
-- **`suiteVisibility`** (default `visible`) — the generated suite is in the work
-  directory and the model may read it, which is what an Exercism user sees.
-  `--hide-suite` withholds it until the gate runs. Both are legitimate
-  experiments; pooling them is not.
+- **`suiteVisibility`** (default `hidden`) — in round 0 the generated suite is
+  absent while the model works, then is written only for the trusted gate and
+  removed again (including Python bytecode) before another model turn.
+  `--show-suite` restores the Exercism-like policy where the model may read it.
+  Hidden does not mean "no test feedback": from round 1 onward, the repair prompt
+  includes ordinary assertion output, including the actual and expected values
+  for each failing case shown. An Aven check diagnostic may also quote its source
+  line from the generated suite. That feedback is deliberate; only round 0 hides
+  the entire lookup table. Pooling visible and hidden rows is not valid.
 
 ## Gates and probes
 
 Every tool invocation is recorded as a probe with its own verdict, exit code,
 timing and diagnostics. `gating: false` means recorded-but-not-decisive;
 `ok: null` means the tool could not be run at all.
+
+The agent harness (`opencode run` and every model-requested shell command it
+launches) runs inside bubblewrap by default. The trusted probes in this table run
+outside it: they need the generated suite and are harness verification, not
+model-controlled code.
 
 | language | gating probes             | recorded only |
 | -------- | ------------------------- | ------------- |
@@ -141,27 +151,35 @@ sweep they succeeded twice:
    `/tmp/aven-audit/*.av` and a checkout of `crates/aven-host/std/*.av` left
    there by unrelated work, plus each other's work directories.
 
-Three defences, none of which is a sandbox:
+The default defence is now an OS filesystem sandbox:
 
-- the work root defaults to `~/.cache/aven-bench/work` — outside the repo, and
-  not a shared junk drawer. The runner **refuses** a work root inside a git
-  repository unless `--allow-repo-workdir`;
-- every attempt directory is `git init`-ed, which is what scopes opencode's own
-  glob and grep. Verified: with it, `glob **/*.av` returns only the attempt's own
-  file;
-- every round records `outsideWorkdirTouches` and a sample of `escapedPaths`, and
-  the run summary shouts about any nonzero count.
+- bubblewrap gives `opencode run` a mount namespace containing the current
+  attempt read-write, `/nix/store` and the exact runtime/config/credential files
+  read-only, and private `/tmp`, `/dev` and `/proc` mounts. The repo, aven-lang
+  checkout (apart from an explicitly configured Aven binary), home directory and
+  sibling attempts are absent. `--no-sandbox` is the explicit debugging opt-out;
+  if bubblewrap is missing or cannot create a namespace, the default run refuses
+  to start rather than falling back.
+- network is deliberately shared because the harness calls a cloud API. This is
+  filesystem containment, not an exfiltration or retrieval boundary.
+- the work root still defaults to `~/.cache/aven-bench/work`, and each attempt is
+  still `git init`-ed. Those scope the harness project and reduce accidental
+  discovery on an explicitly unsandboxed debugging run; they are not containment.
+- every round records `shellCommands`, `outsideWorkdirTouches` and a bounded
+  sample of `escapedPaths`. `shellCommands` counts shell tool invocations even
+  when their filesystem effects cannot be reconstructed from the event stream.
 
-An agent can still read anything its user can, so **a row with
-`outsideWorkdirTouches > 0` is evidence of nothing** — `analysis/queries.sql`
-lists them so they can be excluded. A real fix is an OS sandbox (`bwrap` is on
-this box); it is not wired up.
+Every attempt records `sandbox: "bubblewrap" | "none"`, so containment is
+auditable per row. A nonzero escape count on a sandboxed row says the model named
+an outside path, not that the read succeeded; on an unsandboxed row it remains a
+contamination warning.
 
 ## Resume
 
 An attempt is identified by `attemptKey()`: task, language, model, harness,
-`docId`, aven commit, sample index. Resume reads **every** log under
-`data/runs/`, so re-running the same command adds nothing:
+`docId`, aven commit, sample index, tool policy, suite visibility and sandbox
+mode. Resume reads **every** log under `data/runs/`, so re-running the same
+experiment adds nothing while a policy change schedules a distinct attempt:
 
 ```sh
 bun run bench … --run-id calib-03     # 8 attempts
@@ -203,7 +221,9 @@ has nothing to do with the model. `--tool-timeout` defaults to 120s.
 - `AVEN_BIN` should point at a built `aven` (`cargo build -p aven` in
   `aven-lang`; the crate is `aven`, not `aven-cli`). Without it every invocation
   goes through `cargo run`, which is slow and can rebuild mid-sweep — the runner
-  warns. `AVEN_LANG_DIR` overrides where the workspace lives.
+  warns. A sandboxed `--self-verify` Aven run requires it: the exact binary is
+  mounted read-only, while cargo and the aven-lang checkout remain absent.
+  `AVEN_LANG_DIR` overrides where the workspace lives.
 - Each attempt gets `AVEN_SESSION_LOG=<workdir>/session.jsonl` and
   `AVEN_SESSION_TAG=<attemptId>`. The runner's own gate invocations use
   `<attemptId>#gate.r<N>.<probe>`, so the attempt id stays a prefix while the
@@ -217,9 +237,10 @@ has nothing to do with the model. `--tool-timeout` defaults to 120s.
 
 ## Adding a harness
 
-Implement `AgentAdapter` in `adapters/agent/` and register it. The contract is
-three lines: never throw (a failure is `ok: false` plus `harnessError`), always
-report token counts, honour `timeoutMs`. `pi`, `little-coder` and `ollama` are
+Implement `AgentAdapter` in `adapters/agent/` and register it. The contract is:
+never throw (a failure is `ok: false` plus `harnessError`), always report token
+counts and shell-command usage, honour `timeoutMs`, and apply the requested
+sandbox mode to the model-driven process. `pi`, `little-coder` and `ollama` are
 registered as stubs that fail immediately with a reason — raw `ollama` in
 particular is not an agent at all and needs a decision about how much
 scaffolding is fair before it is comparable.

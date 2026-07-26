@@ -26,6 +26,8 @@
  * change what the model is measured on.
  */
 
+import { realpathSync } from "node:fs";
+import { bubblewrapCommand } from "../../runner/sandbox.ts";
 import { runProcess } from "../../runner/proc.ts";
 import { emptyResult, type AgentAdapter, type AgentInvocation, type AgentResult } from "./common.ts";
 
@@ -56,11 +58,29 @@ export type OpencodeUsage = {
   events: number;
   /** Absolute paths the tool calls named, deduplicated in first-seen order. */
   touchedPaths: string[];
+  /** `bash` tool calls. A shell can reach anything, so it is counted separately. */
+  shellCommands: number;
 };
 
 /** Tool inputs that name a filesystem location, across opencode's tool set. */
 const PATH_KEYS = ["filePath", "path", "file", "directory"] as const;
 const MAX_TOUCHED_PATHS = 200;
+
+/**
+ * Absolute paths mentioned anywhere in a shell command.
+ *
+ * The structured path arguments (`read`, `glob`, …) are only half the story: the
+ * Aven arm's models did their searching through `bash`, whose only input is a
+ * command string. `ls /home/…`, `find /home/dave/.cache/aven-bench -name
+ * "solution_test.av"` and `cat …/references/two-fer/solution.av` all appeared in
+ * a real run, and none of them named a path in a field this could read. Scanning
+ * the command text is coarse — it cannot know what the command did — but a run
+ * that mentions a path outside the work directory is exactly what should be
+ * flagged as suspect.
+ */
+function pathsInCommand(command: string): string[] {
+  return [...command.matchAll(/(?<![\w./-])\/[^\s"';|&()<>]+/g)].map((m) => m[0]);
+}
 
 /** Fold the event stream into usage. Exported for tests: this is the fiddly part. */
 export function parseEvents(stdout: string): OpencodeUsage {
@@ -75,6 +95,7 @@ export function parseEvents(stdout: string): OpencodeUsage {
     errors: [],
     events: 0,
     touchedPaths: [],
+    shellCommands: 0,
   };
   const seenPaths = new Set<string>();
   let sawCost = false;
@@ -97,6 +118,17 @@ export function parseEvents(stdout: string): OpencodeUsage {
     }
     if (ev.type === "tool_use") {
       const input = ev.part?.state?.input ?? {};
+      const command = input["command"];
+      if (ev.part?.tool === "bash" || typeof command === "string") {
+        usage.shellCommands++;
+        if (typeof command === "string") {
+          for (const p of pathsInCommand(command)) {
+            if (seenPaths.has(p) || seenPaths.size >= MAX_TOUCHED_PATHS) continue;
+            seenPaths.add(p);
+            usage.touchedPaths.push(p);
+          }
+        }
+      }
       for (const key of PATH_KEYS) {
         const value = input[key];
         if (typeof value !== "string" || value === "") continue;
@@ -143,22 +175,39 @@ export const opencodeAdapter: AgentAdapter = {
   },
 
   async run(inv: AgentInvocation): Promise<AgentResult> {
-    const argv = [
-      OPENCODE_BIN,
-      "run",
-      "--model",
-      inv.model,
-      "--log-level",
-      "ERROR",
-      "--format",
-      "json",
-      "--dir",
-      inv.dir,
-    ];
-    // Continuing the session is what makes a repair round a *conversation*; a
-    // fresh session would measure "can it fix code it has never seen".
-    if (inv.sessionRef) argv.push("--session", inv.sessionRef);
-    argv.push(inv.prompt);
+    let argv: string[];
+    try {
+      const opencodeBin =
+        inv.sandbox === "bubblewrap"
+          ? realpathSync(Bun.which(OPENCODE_BIN) ?? OPENCODE_BIN)
+          : OPENCODE_BIN;
+      const command = [
+        opencodeBin,
+        "run",
+        "--model",
+        inv.model,
+        "--log-level",
+        "ERROR",
+        "--format",
+        "json",
+        "--dir",
+        inv.dir,
+      ];
+      // Continuing the session is what makes a repair round a *conversation*; a
+      // fresh session would measure "can it fix code it has never seen".
+      if (inv.sessionRef) command.push("--session", inv.sessionRef);
+      command.push(inv.prompt);
+      argv =
+        inv.sandbox === "bubblewrap"
+          ? bubblewrapCommand(command, {
+              dir: inv.dir,
+              language: inv.language,
+              avenBin: inv.avenBin,
+            })
+          : command;
+    } catch (err) {
+      return emptyResult({ harnessError: `cannot configure agent sandbox: ${String(err)}` });
+    }
 
     const proc = await runProcess(argv, {
       cwd: inv.dir,
@@ -196,6 +245,7 @@ export const opencodeAdapter: AgentAdapter = {
       log,
       assistantText: usage.assistantText.trim(),
       touchedPaths: usage.touchedPaths,
+      shellCommands: usage.shellCommands,
     };
   },
 };

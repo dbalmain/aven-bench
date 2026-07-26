@@ -11,10 +11,20 @@
  *    Compliance is not assumed: on the Aven arm every `aven` invocation the model
  *    makes lands in the session log with the agent-phase tag, so
  *    `modelToolInvocations` says how often the instruction was ignored.
- *  - **`suiteVisibility`** (default `visible`). The generated suite sits in the
- *    work directory and the model may read it, which is what an Exercism user
- *    sees. `--hide-suite` withholds it until the gate runs, which is a harder and
- *    cleaner test of the prompt+doc alone. Neither is wrong; pooling them is.
+ *  - **`suiteVisibility`** (default `hidden`). The generated suite is written into
+ *    the work directory only for the gate and removed again, so the model never
+ *    sees the expected values and has to implement the algorithm rather than
+ *    pattern-match a table. `--show-suite` leaves it in place, which is what an
+ *    Exercism user sees. Neither is wrong; pooling them is.
+ *
+ *    Hiding the file does not hide everything: from round 1 the repair prompt
+ *    quotes failing-case messages, and both arms' assertions name the expected
+ *    value (`std/test`'s `expectEq` says `expected X, got Y`; `unittest`'s
+ *    `assertEqual` the same). An Aven check failure also includes the compiler's
+ *    plain-text diagnostic, which can quote a source line from the generated
+ *    suite. Round 0 is clean; a repair round can leak the expected values of the
+ *    cases that failed. `--rounds 0` is the only fully clean configuration, and
+ *    that is a property of ordinary tool output, not of this module.
  *
  * The repair prompt is deliberately *just the tooling output*. No hints, no
  * restating of the task, no "you probably meant" — the rounds-to-green metric is
@@ -23,9 +33,9 @@
  */
 
 import type { LangAdapter } from "../adapters/lang/index.ts";
-import type { GateResult, ToolPolicy } from "./schema.ts";
+import type { GateResult, SuiteVisibility, ToolPolicy } from "./schema.ts";
 
-export type SuiteVisibility = "visible" | "hidden";
+export type { SuiteVisibility };
 
 export type PromptInputs = {
   adapter: LangAdapter;
@@ -58,7 +68,8 @@ export function buildInitialPrompt(inputs: PromptInputs): string {
     );
   } else {
     parts.push(
-      `3. The test suite is not in this directory. Work from the task statement below.`,
+      `3. \`${adapter.testFile}\` is not in this directory and you cannot see it: it is run against your` +
+        ` solution after you finish. Work from the task statement below, and do not write a test file of your own.`,
     );
   }
   parts.push(
@@ -97,6 +108,32 @@ export type RepairInputs = {
 
 const MAX_CASES_IN_PROMPT = 12;
 const MAX_TOOL_OUTPUT_CHARS = 8_000;
+const MAX_CASE_MESSAGE_CHARS = 400;
+
+/**
+ * The one line of a failing case worth showing.
+ *
+ * The two arms report failures in shapes that are not equally front-loaded.
+ * `std/test` says it in one line — `expected "…", got "…"`. `unittest` hands back
+ * a whole traceback whose *first* line is the useless `Traceback (most recent
+ * call last):` and whose last line is the actual `AssertionError: 'x' != 'y'`.
+ * Taking line 1 from both, as this did originally, gave Aven a real diagnostic
+ * and Python the word "Traceback" — which would have made rounds-to-green
+ * incomparable across the arms and flattered Aven's repair loop.
+ *
+ * Taking the last line of a traceback also keeps the quoted *suite source line*
+ * out of the prompt, which matters under `suiteVisibility: "hidden"`.
+ */
+export function summarizeCaseMessage(message: string): string {
+  const lines = message
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+  if (lines.length === 0) return "(no message)";
+  const first = lines[0]!;
+  const line = first.startsWith("Traceback (most recent call last)") ? lines[lines.length - 1]! : first;
+  return line.slice(0, MAX_CASE_MESSAGE_CHARS);
+}
 
 export function buildRepairPrompt(inputs: RepairInputs): string {
   const { adapter, gate } = inputs;
@@ -132,7 +169,7 @@ export function buildRepairPrompt(inputs: RepairInputs): string {
 
   if (gate.failedCases.length > 0) {
     const shown = gate.failedCases.slice(0, MAX_CASES_IN_PROMPT);
-    const lines = shown.map((c) => `- **${c.name}** (${c.outcome}): ${c.message.split("\n")[0]}`);
+    const lines = shown.map((c) => `- **${c.name}** (${c.outcome}): ${summarizeCaseMessage(c.message)}`);
     const more =
       gate.failedCases.length > shown.length
         ? `\n\n…and ${gate.failedCases.length - shown.length} more failing cases.`

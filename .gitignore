@@ -11,3 +11,8 @@ node_modules/
 # editors / OS
 .DS_Store
 *.swp
+
+# AI offload prompts and done-notes (local coordination, not part of the harness)
+.ai-prompt-*.md
+.ai-done-*.md
+.ai-log-*.txt

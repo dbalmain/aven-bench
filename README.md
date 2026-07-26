@@ -80,6 +80,7 @@ bun run bench --lang aven,python --intersect --rounds 2 --jobs 4 \
               --tasks two-fer,leap,acronym --run-id calib-03
 
 bun run bench … --dry-run          # print the plan, write nothing
+bun run bench … --no-sandbox       # explicit debugging opt-out; recorded as sandbox: "none"
 ```
 
 One JSONL row per attempt lands in `data/runs/<run-id>.jsonl`, append-only, with
@@ -87,7 +88,9 @@ solutions, prompts, harness logs and `AVEN_SESSION_LOG` transcripts
 content-addressed under `data/artifacts/`. Re-running a command skips what is
 already recorded, by natural key. Flags, gates, cost policy, failure taxonomy
 and the acceptance recipe are all in **`runner/README.md`** — read that before
-starting a sweep.
+starting a sweep. Model-driven harness processes run in a bubblewrap filesystem
+sandbox by default; trusted gates run outside it. The sandbox keeps the network
+because the harness calls a cloud API, so it is not an exfiltration boundary.
 
 ### What the first sweep showed
 
@@ -106,9 +109,9 @@ Three findings that matter more than the numbers:
   every Aven attempt that failed round 0 started globbing: first `references/` in
   this repo (the answers), then `/tmp/aven-audit/*.av` and a stray checkout of
   `crates/aven-host/std/*.av`, then sibling attempts' work directories. See
-  "Contamination" in `runner/README.md` for the three defences and the residual
-  risk — the runner now records `outsideWorkdirTouches` so suspect rows are
-  excludable rather than invisible.
+  "Contamination" in `runner/README.md` for the current bubblewrap boundary and
+  its network limitation. The runner also records `outsideWorkdirTouches`,
+  `escapedPaths`, `shellCommands` and sandbox mode per row.
 - **These easy tasks do not discriminate on Python.** A free model passes all of
   them first shot, so Phase 2's weak-model band has to be found on harder tasks —
   this end of the corpus tells you nothing about a model.
