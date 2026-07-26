@@ -32,9 +32,6 @@ import { inferTaskShapes, membersOf, mergeShapes, type Shape } from "./shapes.ts
 
 const AVEN_TEST_FILE = "solution_test.av";
 
-const I64_MAX = 2n ** 63n - 1n;
-const I64_MIN = -(2n ** 63n);
-
 /** Thrown when a value has no Aven spelling; caught per case and reported. */
 class Unrenderable extends Error {}
 
@@ -59,13 +56,13 @@ function avenText(s: string): string {
 const IDENT = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
 function avenNumber(raw: string): string {
-  if (isIntegerLiteral(raw)) {
-    const v = BigInt(raw);
-    if (v > I64_MAX || v < I64_MIN) {
-      throw new Unrenderable(`integer ${raw} does not fit Aven's 64-bit Int`);
-    }
-    return raw;
-  }
+  // Any integer literal renders. Aven's `Int` became arbitrary precision on
+  // 2026-07-27 (aven-lang `bde5492`), which is what the spec had always said it
+  // was; until then this refused values outside i64 and that refusal was four of
+  // the six cases Aven omitted corpus-wide, across `grains` and
+  // `armstrong-numbers`. Verified against the binary, not just the commit:
+  // `115132219018763992565095597973971522401` evaluates and round-trips.
+  if (isIntegerLiteral(raw)) return raw;
   // Floats: keep the upstream text, but make sure it reads as a Float literal.
   if (/[eE]/.test(raw)) {
     // No exponent-form floats exist in the corpus today; refuse rather than
