@@ -41,6 +41,7 @@ import {
 import { REPO_ROOT } from "../ingest/paths.ts";
 import {
   attemptKey,
+  CONTRACT_GENERATION,
   SCHEMA_VERSION,
   type AttemptRecord,
   type GateProbe,
@@ -73,6 +74,7 @@ function probe(over: Partial<GateProbe> = {}): GateProbe {
 function record(over: Partial<AttemptRecord> = {}): AttemptRecord {
   return {
     schemaVersion: SCHEMA_VERSION,
+    contractGeneration: CONTRACT_GENERATION,
     runId: "r",
     attemptId: "a",
     runnerVersion: "test",
@@ -1076,6 +1078,20 @@ describe("store", () => {
     expect(isDone(index, "nothing here", false).done).toBe(false);
   });
 
+  test("a pre-shapes row does not make resume skip the new contract", () => {
+    const dir = mkdtempSync(join(tmpdir(), "aven-bench-runs-"));
+    const log = join(dir, "legacy.jsonl");
+    const legacy = { ...record() } as Partial<AttemptRecord>;
+    delete legacy.contractGeneration;
+    writeFileSync(log, `${JSON.stringify(legacy)}\n`);
+
+    const index = loadResumeIndex(dir);
+    const legacyKey = attemptKey({ ...record(), contractGeneration: "names-v0" });
+    const currentKey = attemptKey(record());
+    expect(isDone(index, legacyKey, false).done).toBe(true);
+    expect(isDone(index, currentKey, false).done).toBe(false);
+  });
+
   test("a truncated final line is counted, not fatal", () => {
     const dir = mkdtempSync(join(tmpdir(), "aven-bench-runs-"));
     const log = join(dir, "run.jsonl");
@@ -1094,6 +1110,7 @@ describe("store", () => {
     expect(key).not.toBe(attemptKey(record({ toolPolicy: "self-verify" })));
     expect(key).not.toBe(attemptKey(record({ suiteVisibility: "visible" })));
     expect(key).not.toBe(attemptKey(record({ sandbox: "none" })));
+    expect(key).not.toBe(attemptKey({ ...record(), contractGeneration: "names-v0" }));
   });
 });
 

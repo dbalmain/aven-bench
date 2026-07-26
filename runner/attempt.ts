@@ -25,6 +25,7 @@ import { computeShadowCost } from "./prices.ts";
 import { Semaphore } from "./proc.ts";
 import { buildInitialPrompt, buildRepairPrompt, buildSurveyPrompt, type SuiteVisibility } from "./prompt.ts";
 import {
+  CONTRACT_GENERATION,
   SCHEMA_VERSION,
   TOKEN_ESTIMATOR,
   attemptKey,
@@ -155,6 +156,7 @@ export function attemptIdFor(ctx: RunContext, spec: AttemptSpec): string {
     toolPolicy: ctx.toolPolicy,
     suiteVisibility: ctx.suiteVisibility,
     sandbox: ctx.sandbox,
+    contractGeneration: CONTRACT_GENERATION,
   });
   return `${ctx.runId}-${sha256(key).slice(0, 12)}`;
 }
@@ -583,6 +585,7 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
 
   const record: AttemptRecord = {
     schemaVersion: SCHEMA_VERSION,
+    contractGeneration: CONTRACT_GENERATION,
     runId: ctx.runId,
     attemptId,
     runnerVersion: RUNNER_VERSION,

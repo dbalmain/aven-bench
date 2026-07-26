@@ -32,6 +32,13 @@ import {
   renderPseudocode,
   type EmitTarget,
 } from "./pseudocode.ts";
+import {
+  containsShape,
+  inferTaskShapes,
+  membersOf,
+  mergeShapes,
+  type Shape,
+} from "./shapes.ts";
 
 const PY_TEST_FILE = "solution_test.py";
 const PY_RUNNER = new URL("./py_runner.py", import.meta.url).pathname;
@@ -148,22 +155,130 @@ function render(task: Task, only?: ReadonlySet<string>): RenderedSuite {
   return { contents, omitted };
 }
 
+function pythonShape(shape: Shape): string {
+  switch (shape.kind) {
+    case "unknown":
+    case "absent":
+      return "object";
+    case "null":
+      return "None";
+    case "bool":
+      return "bool";
+    case "int":
+      return "int";
+    case "float":
+      return "float";
+    case "text":
+      return "str";
+    case "callable": {
+      if (shape.arity === null) return "Callable[..., object]";
+      const params = Array.from({ length: shape.arity }, () => "object").join(", ");
+      return `Callable[[${params}], object]`;
+    }
+    case "array":
+      return `list[${pythonShape(shape.element)}]`;
+    case "record":
+      // Python has no anonymous keyed-record type. The following prose carries
+      // the keys; pretending dict[str, T] expresses them would be less precise.
+      return shape.keys === "known"
+        ? "dict[str, object]"
+        : `dict[str, ${pythonShape(shape.value)}]`;
+    case "union": {
+      const present = shape.members.filter((member) => member.kind !== "absent");
+      if (present.length === 0) return "object";
+      return [...new Set(present.map(pythonShape))].join(" | ");
+    }
+  }
+}
+
+function pythonShapeDescription(shape: Shape): string {
+  switch (shape.kind) {
+    case "unknown":
+      return "a value whose shape was not observed";
+    case "absent":
+      return "absent";
+    case "null":
+      return "`None`";
+    case "bool":
+      return "`bool`";
+    case "int":
+      return "`int`";
+    case "float":
+      return "`float`";
+    case "text":
+      return "`str`";
+    case "callable":
+      return shape.arity === null
+        ? "a callable of unknown arity"
+        : `a callable accepting ${shape.arity} positional argument${shape.arity === 1 ? "" : "s"}`;
+    case "array":
+      return `a list whose elements are ${pythonShapeDescription(shape.element)}`;
+    case "record": {
+      if (shape.keys === "withheld") {
+        return (
+          "a dict with String keys (not enumerated) and values of shape " +
+          pythonShapeDescription(shape.value)
+        );
+      }
+      if (shape.fields.length === 0) return "a dict with no observed keys";
+      const fields = shape.fields.map((field) => {
+        const members = membersOf(field.shape);
+        const optional = members.some((member) => member.kind === "absent");
+        const value = mergeShapes(members.filter((member) => member.kind !== "absent"));
+        return `\`${field.name}\` (${optional ? "optional; " : ""}${pythonShapeDescription(value)})`;
+      });
+      return `a dict with String keys ${fields.join(", ")}`;
+    }
+    case "union":
+      return `either ${shape.members.map(pythonShapeDescription).join(" or ")}`;
+  }
+}
+
 function contract(task: Task): string {
   const lines = [
     "## Your task",
     "",
     "Write `solution.py` defining these module-level functions:",
     "",
+    "The annotations below are shapes observed across this task's cases, not a complete specification.",
+    "",
   ];
-  for (const p of task.properties) {
-    const args = p.argNames.map(snakeCase).join(", ");
-    if (p.returnsResult) {
+  const shapes = inferTaskShapes(task);
+  for (const observed of shapes) {
+    const p = observed.property;
+    const args = observed.args
+      .map((argument) => `${snakeCase(argument.name)}: ${pythonShape(argument.shape)}`)
+      .join(", ");
+    const error = p.returnsResult
+      ? " — raise `ValueError` when the input is invalid."
+      : "";
+    lines.push(`- \`def ${pyName(p.name)}(${args}) -> ${pythonShape(observed.returns)}:\`${error}`);
+    if (
+      observed.args.some(
+        (argument) =>
+          containsShape(argument.shape, "record") || containsShape(argument.shape, "absent"),
+      ) ||
+      containsShape(observed.returns, "record") ||
+      containsShape(observed.returns, "absent")
+    ) {
       lines.push(
-        `- \`${pyName(p.name)}(${args})\` — raise \`ValueError\` when the input is invalid.`,
+        `  Observed detail: ${observed.args
+          .map(
+            (argument) =>
+              `\`${snakeCase(argument.name)}\` is ${pythonShapeDescription(argument.shape)}`,
+          )
+          .join("; ")}; the successful return is ${pythonShapeDescription(observed.returns)}.`,
       );
-    } else {
-      lines.push(`- \`${pyName(p.name)}(${args})\``);
     }
+  }
+  if (
+    shapes.some(
+      (observed) =>
+        observed.args.some((argument) => containsShape(argument.shape, "callable")) ||
+        containsShape(observed.returns, "callable"),
+    )
+  ) {
+    lines.push("", "`Callable` comes from the standard library: `from collections.abc import Callable`.");
   }
   lines.push(
     "",

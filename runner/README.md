@@ -216,8 +216,9 @@ remains a contamination warning.
 
 An attempt is identified by `attemptKey()`: task, language, model, harness,
 `docId`, aven commit, sample index, tool policy, suite visibility and sandbox
-mode. Resume reads **every** log under `data/runs/`, so re-running the same
-experiment adds nothing while a policy change schedules a distinct attempt:
+mode, plus the generated-contract version. Resume reads **every** log under
+`data/runs/`, so re-running the same experiment adds nothing while a policy or
+contract change schedules a distinct attempt:
 
 ```sh
 bun run bench … --run-id calib-03     # 8 attempts

@@ -28,6 +28,7 @@ import {
 } from "./common.ts";
 import { isPseudocodeFunction, renderPseudocode, type EmitTarget } from "./pseudocode.ts";
 import { AVEN_LANG_DIR } from "../../ingest/paths.ts";
+import { inferTaskShapes, membersOf, mergeShapes, type Shape } from "./shapes.ts";
 
 const AVEN_TEST_FILE = "solution_test.av";
 
@@ -188,22 +189,155 @@ function render(task: Task, only?: ReadonlySet<string>): RenderedSuite {
   return { contents: [...header, ...body].join("\n"), omitted };
 }
 
+function avenFieldName(name: string): string {
+  return IDENT.test(name) ? name : avenText(name);
+}
+
+/**
+ * A valid Aven type spelling, or null when Aven has no such type expression.
+ *
+ * Aven's `|` is for literal and tagged unions, not a general untagged union of
+ * base types. Rendering `Int | Text` would therefore turn an observation into a
+ * false signature. Those shapes fall back to prose made from valid type
+ * fragments below.
+ */
+function avenShape(shape: Shape, absentAsOptional = false): string | null {
+  switch (shape.kind) {
+    case "unknown":
+      return null;
+    case "absent":
+      return "Undefined";
+    case "null":
+      return "Null";
+    case "bool":
+      return "Bool";
+    case "int":
+      return "Int";
+    case "float":
+      return "Float";
+    case "text":
+      return "Text";
+    case "callable":
+      // Arity alone cannot honestly supply the parameter and result types.
+      return null;
+    case "array": {
+      const element = avenShape(shape.element);
+      return element === null ? null : `Array(${element})`;
+    }
+    case "record": {
+      if (shape.keys === "withheld") return null;
+      if (shape.fields.length === 0) return "{}";
+      const fields = shape.fields.map((field) => {
+        const value = avenShape(field.shape, true);
+        return value === null ? null : `${avenFieldName(field.name)}: ${value}`;
+      });
+      return fields.some((field) => field === null)
+        ? null
+        : `{ ${fields.join(", ")} }`;
+    }
+    case "union": {
+      const absent = shape.members.some((member) => member.kind === "absent");
+      const nullable = shape.members.some((member) => member.kind === "null");
+      const values = shape.members.filter(
+        (member) => member.kind !== "absent" && member.kind !== "null",
+      );
+      // Prefix `?T` is the right spelling for an omittable record field, but it
+      // does not turn a positional parameter into a defaulted argument.
+      if (absent && !absentAsOptional) return null;
+      if (values.length === 0) {
+        if (absent && nullable) return "?Null";
+        return absent ? "Undefined" : "Null";
+      }
+      if (values.length !== 1) return null;
+      const value = avenShape(values[0]!);
+      return value === null ? null : `${absent ? "?" : ""}${value}${nullable ? "?" : ""}`;
+    }
+  }
+}
+
+function avenShapeDescription(shape: Shape): string {
+  const exact = avenShape(shape);
+  if (exact !== null) return `\`${exact}\``;
+  switch (shape.kind) {
+    case "unknown":
+      return "a value whose shape was not observed";
+    case "callable":
+      return shape.arity === null
+        ? "a function of unknown arity"
+        : `a function accepting ${shape.arity} positional argument${shape.arity === 1 ? "" : "s"}` +
+            " (its parameter and return shapes were not inferred)";
+    case "array":
+      return `an \`Array\` whose elements are ${avenShapeDescription(shape.element)}`;
+    case "record": {
+      if (shape.keys === "withheld") {
+        return (
+          "a record with keys not enumerated by this contract and values of shape " +
+          avenShapeDescription(shape.value)
+        );
+      }
+      if (shape.fields.length === 0) return "a record with no observed keys";
+      const fields = shape.fields.map((field) => {
+        const members = membersOf(field.shape);
+        const optional = members.some((member) => member.kind === "absent");
+        const value = mergeShapes(members.filter((member) => member.kind !== "absent"));
+        return `\`${field.name}\` (${optional ? "optional; " : ""}${avenShapeDescription(value)})`;
+      });
+      return `a record with observed keys ${fields.join(", ")}`;
+    }
+    case "union":
+      return `either ${shape.members.map(avenShapeDescription).join(" or ")}`;
+    // Every other shape has an exact spelling and returned above.
+    default:
+      return "a value whose shape could not be expressed";
+  }
+}
+
 function contract(task: Task): string {
   const lines = [
     "## Your task",
     "",
     "Write `solution.av`. Its module value must be a record exporting these functions:",
     "",
+    "The types and shapes below are observed across this task's cases, not a complete specification.",
+    "",
   ];
-  for (const p of task.properties) {
-    const args = p.argNames.join(", ");
-    if (p.returnsResult) {
+  for (const observed of inferTaskShapes(task)) {
+    const p = observed.property;
+    const args = observed.args.map((argument) => argument.name).join(", ");
+    const argumentTypes = observed.args.map((argument) => avenShape(argument.shape));
+    const returnType = avenShape(observed.returns);
+    const successType =
+      returnType === null ? null : p.returnsResult ? `Result(${returnType}, Text)` : returnType;
+    if (argumentTypes.every((type) => type !== null) && successType !== null) {
+      const inputType =
+        argumentTypes.length === 0
+          ? "()"
+          : argumentTypes.length === 1
+            ? argumentTypes[0]!
+            : `(${argumentTypes.join(", ")})`;
+      const error = p.returnsResult
+        ? " Return `@Ok(value)` on success and `@Err(message)` when the input is invalid."
+        : "";
       lines.push(
-        `- \`${p.name}(${args})\` — returns \`Result(_, Text)\`: \`@Ok(value)\` on success,` +
-          " `@Err(message)` when the input is invalid.",
+        `- \`${p.name}(${args})\` — observed type \`${inputType} -> ${successType}\`.${error}`,
       );
     } else {
-      lines.push(`- \`${p.name}(${args})\``);
+      const argumentsDescription =
+        observed.args.length === 0
+          ? "no arguments"
+          : `observed arguments: ${observed.args
+              .map(
+                (argument) =>
+                  `\`${argument.name}\` is ${avenShapeDescription(argument.shape)}`,
+              )
+              .join("; ")}`;
+      const error = p.returnsResult
+        ? " Return `@Ok(value)` on success and `@Err(message)` when the input is invalid."
+        : "";
+      lines.push(
+        `- \`${p.name}(${args})\` — ${argumentsDescription}; observed successful return:` +
+          ` ${avenShapeDescription(observed.returns)}.${error}`,
+      );
     }
   }
   const exportList = task.properties.map((p) => p.name).join(", ");

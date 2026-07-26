@@ -4,7 +4,17 @@ import { PY_EMIT, pyName, pythonAdapter } from "./python.ts";
 import { RB_EMIT, rbName, renderRubyValue, rubyAdapter } from "./ruby.ts";
 import { orderedArgs, snakeCase } from "./common.ts";
 import { isPseudocodeFunction, renderPseudocode } from "./pseudocode.ts";
-import { TASK_SCHEMA_VERSION, type Task, type TaskProperty } from "../../ingest/task.ts";
+import { inferPropertyShapes } from "./shapes.ts";
+import { fromPortable, isIntegerLiteral, toPortable, type JVal } from "../../ingest/json.ts";
+import { CORPUS_DIR } from "../../ingest/paths.ts";
+import {
+  loadAllTasks,
+  loadTask,
+  TASK_SCHEMA_VERSION,
+  type Expected,
+  type Task,
+  type TaskProperty,
+} from "../../ingest/task.ts";
 
 const prop = (over: Partial<TaskProperty> = {}): TaskProperty => ({
   name: "f",
@@ -41,6 +51,212 @@ const caseWithArg = (value: unknown) => ({
   property: "f",
   args: [{ name: "a", value }],
   expected: { kind: "value" as const, value: 0 },
+});
+
+function changedValue(value: JVal): JVal {
+  switch (value.kind) {
+    case "null":
+      return value;
+    case "bool":
+      return { kind: "bool", value: !value.value };
+    case "number":
+      return {
+        kind: "number",
+        raw: isIntegerLiteral(value.raw) ? "314159" : "2718.5",
+      };
+    case "string":
+      return { kind: "string", value: "changed expected literal" };
+    case "array":
+      return { kind: "array", items: value.items.map(changedValue) };
+    case "object":
+      return {
+        kind: "object",
+        entries: value.entries.map((entry, index) => ({
+          key: `changed_expected_key_${index}`,
+          value: changedValue(entry.value),
+        })),
+      };
+  }
+}
+
+function changeExpected(expected: Expected): Expected {
+  return expected.kind === "error"
+    ? { kind: "error", message: "changed error literal" }
+    : { kind: "value", value: toPortable(changedValue(fromPortable(expected.value))) };
+}
+
+describe("observed contract shapes", () => {
+  test("joins array elements and record keys, marking keys absent in some records", () => {
+    const property = prop({
+      argNames: ["operations"],
+      arity: 1,
+      returnsResult: true,
+    });
+    const t = task({
+      properties: [property],
+      cases: [
+        {
+          ...caseWithArg([{ kind: "credit", amount: 10 }]),
+          uuid: "one",
+          expected: { kind: "value", value: 10 },
+        },
+        {
+          ...caseWithArg([{ kind: "balance" }]),
+          uuid: "two",
+          expected: { kind: "error", message: "invalid" },
+        },
+        {
+          ...caseWithArg([]),
+          uuid: "three",
+          expected: { kind: "value", value: 0 },
+        },
+      ],
+    });
+
+    expect(inferPropertyShapes(t, property)).toEqual({
+      property,
+      args: [
+        {
+          name: "operations",
+          shape: {
+            kind: "array",
+            element: {
+              kind: "record",
+              keys: "known",
+              fields: [
+                {
+                  name: "amount",
+                  shape: {
+                    kind: "union",
+                    members: [{ kind: "absent" }, { kind: "int" }],
+                  },
+                },
+                { name: "kind", shape: { kind: "text" } },
+              ],
+            },
+          },
+        },
+      ],
+      // The error case describes only the failure path.
+      returns: { kind: "int" },
+    });
+  });
+
+  test("keeps primitive disagreements as a value-free union", () => {
+    const property = prop({ argNames: ["value"], arity: 1 });
+    const values = [null, true, 1, { $n: "1.5" }, "a private literal"];
+    const t = task({
+      properties: [property],
+      cases: values.map((value, index) => ({
+        ...caseWithArg(value),
+        uuid: String(index),
+      })),
+    });
+    expect(inferPropertyShapes(t, property).args[0]!.shape).toEqual({
+      kind: "union",
+      members: [
+        { kind: "null" },
+        { kind: "bool" },
+        { kind: "int" },
+        { kind: "float" },
+        { kind: "text" },
+      ],
+    });
+  });
+
+  test("describes pseudocode inputs as callables, never as their encoded text", () => {
+    const property = prop({ argNames: ["function"], arity: 1 });
+    const t = task({
+      properties: [property],
+      cases: [caseWithArg("(left, right) -> left + right")],
+    });
+    expect(inferPropertyShapes(t, property).args[0]!.shape).toEqual({
+      kind: "callable",
+      arity: 2,
+    });
+  });
+
+  test("does not turn small observed input string sets into literal unions", () => {
+    const property = prop({ argNames: ["mode"], arity: 1 });
+    const literals = ["private-alpha", "private-beta", "private-gamma"];
+    const t = task({
+      properties: [property],
+      cases: literals.map((value, index) => ({
+        ...caseWithArg(value),
+        uuid: String(index),
+      })),
+    });
+    expect(inferPropertyShapes(t, property).args[0]!.shape).toEqual({ kind: "text" });
+    for (const adapter of [pythonAdapter, rubyAdapter, avenAdapter]) {
+      const contract = adapter.renderContract(t);
+      for (const literal of literals) expect(contract).not.toContain(literal);
+    }
+  });
+
+  test("every corpus contract is invariant under value and key changes to expected values", async () => {
+    // This exercises successful scalars, arrays, records and error messages over
+    // real tasks. Return-record keys are deliberately withheld because dynamic
+    // keys are values in tasks such as word-count. Equality is stronger than
+    // checking a hand-picked literal: any value-dependent rendering changes the
+    // whole contract and fails the test.
+    for (const original of await loadAllTasks(CORPUS_DIR)) {
+      const changed: Task = {
+        ...original,
+        cases: original.cases.map((testCase) => ({
+          ...testCase,
+          expected: changeExpected(testCase.expected),
+        })),
+      };
+      for (const adapter of [pythonAdapter, rubyAdapter, avenAdapter]) {
+        expect(adapter.renderContract(changed)).toBe(adapter.renderContract(original));
+      }
+    }
+  });
+
+  test("renders equivalent bank-account record keys and list-ops callable arities", async () => {
+    const bank = await loadTask(CORPUS_DIR, "bank-account");
+    const pyBank = pythonAdapter.renderContract(bank);
+    const rbBank = rubyAdapter.renderContract(bank);
+    const avBank = avenAdapter.renderContract(bank);
+    expect(pyBank).toContain("operations: list[dict[str, object]]) -> int");
+    expect(rbBank).toContain("`amount` (optional; an `Integer`)");
+    expect(avBank).toContain(
+      "Array({ amount: ?Int, number: ?Int, operation: Text," +
+        " operations: ?Array({ amount: Int, operation: Text }) }) -> Result(Int, Text)",
+    );
+    for (const contract of [pyBank, rbBank, avBank]) {
+      for (const key of ["amount", "number", "operation", "operations"]) {
+        expect(contract).toContain(key);
+      }
+      for (const literal of ["deposit", "withdraw", "concurrent"]) {
+        expect(contract).not.toContain(literal);
+      }
+    }
+
+    const listOps = await loadTask(CORPUS_DIR, "list-ops");
+    const pyList = pythonAdapter.renderContract(listOps);
+    const rbList = rubyAdapter.renderContract(listOps);
+    const avList = avenAdapter.renderContract(listOps);
+    expect(pyList).toContain("function: Callable[[object, object], object]");
+    expect(rbList).toContain("lambda accepting 2 positional arguments");
+    expect(avList).toContain("function accepting 2 positional arguments");
+  });
+
+  test("withholds dynamic record keys from both inputs and expected records", async () => {
+    const cases = [
+      { id: "relative-distance", concreteKeys: ["Aditi", "Xiomara"] },
+      { id: "word-count", concreteKeys: ["javascript", "whitespaces"] },
+      { id: "word-search", concreteKeys: ["clojure", "ecmascript"] },
+    ];
+    for (const { id, concreteKeys } of cases) {
+      const corpusTask = await loadTask(CORPUS_DIR, id);
+      for (const adapter of [pythonAdapter, rubyAdapter, avenAdapter]) {
+        const contract = adapter.renderContract(corpusTask);
+        expect(contract).toContain("not enumerated");
+        for (const key of concreteKeys) expect(contract).not.toContain(key);
+      }
+    }
+  });
 });
 
 describe("Aven value rendering", () => {
@@ -318,10 +534,14 @@ describe("Ruby adapter", () => {
   });
 
   test("the contract names the Hash key spelling only where records occur", () => {
-    const withRecords = task({ stats: { caseCount: 0, errorCaseCount: 0, droppedCaseCount: 0, valueKinds: ["record"] } });
+    const withRecords = task({
+      properties: [oneArg()],
+      cases: [caseWithArg({ key: 1 })],
+      stats: { caseCount: 1, errorCaseCount: 0, droppedCaseCount: 0, valueKinds: ["record"] },
+    });
     expect(rubyAdapter.renderContract(withRecords)).toContain("String keys");
     // Ruby is the one arm where `{"a" => 1}` and `{a: 1}` are different values,
-    // so the note is worth its prompt tokens — but only when it can matter.
+    // so the key spelling belongs in the observed shape — but only when it occurs.
     expect(rubyAdapter.renderContract(task())).not.toContain("String keys");
   });
 

@@ -43,6 +43,7 @@ import { priceTable } from "./prices.ts";
 import type { SuiteVisibility } from "./prompt.ts";
 import { sandboxAvailability, sandboxLabel } from "./sandbox.ts";
 import {
+  CONTRACT_GENERATION,
   SCHEMA_VERSION,
   attemptKey,
   type AttemptRecord,
@@ -672,6 +673,7 @@ async function main(): Promise<number> {
             toolPolicy,
             suiteVisibility,
             sandbox,
+            contractGeneration: CONTRACT_GENERATION,
           });
           const { done, outcomes } = isDone(resume, key, retryHarnessErrors);
           planned.push({ spec, modelId, key, done, outcomes });
@@ -829,6 +831,7 @@ function harnessErrorRecord(ctx: RunContext, spec: AttemptSpec, err: unknown): A
   const now = new Date().toISOString();
   return {
     schemaVersion: SCHEMA_VERSION,
+    contractGeneration: CONTRACT_GENERATION,
     runId: ctx.runId,
     attemptId: attemptIdFor(ctx, spec),
     runnerVersion: RUNNER_VERSION,

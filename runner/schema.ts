@@ -87,9 +87,19 @@
  *     `timedOut` still records that the process was killed, so the process-level
  *     truth is not lost. A refusal keeps its own outcome: a model that answers in
  *     prose bills tokens, and only the genuinely empty turn is reclassified.
+ * - **6** — generated contracts state observed argument and successful-return
+ *   shapes:
+ *   - `contractGeneration` distinguishes the old name-and-arity-only prompt from
+ *     `shapes-v1`. A calibration sweep already exists under the old contract, so
+ *     commit dates are not an adequate provenance boundary.
+ *   - The field joins the natural key. Otherwise resume would treat an old-prompt
+ *     row as completion of the new experiment and silently skip it.
  */
 
-export const SCHEMA_VERSION = 5 as const;
+export const SCHEMA_VERSION = 6 as const;
+
+/** Generated task-contract policy embedded in every round-0 prompt. */
+export const CONTRACT_GENERATION = "shapes-v1" as const;
 
 /** How `solutionTokens` / `docTokens` were counted. Not a real BPE tokenizer. */
 export const TOKEN_ESTIMATOR = "heuristic-v1" as const;
@@ -285,6 +295,7 @@ export type RepairRound = {
 
 export type AttemptRecord = {
   schemaVersion: typeof SCHEMA_VERSION;
+  contractGeneration: typeof CONTRACT_GENERATION;
   runId: string;
   attemptId: string;
   runnerVersion: string;
@@ -453,7 +464,7 @@ export function attemptKey(
     | "toolPolicy"
     | "suiteVisibility"
     | "sandbox"
-  >,
+  > & { contractGeneration: string },
 ): string {
   return [
     r.taskId,
@@ -466,5 +477,8 @@ export function attemptKey(
     r.toolPolicy,
     r.suiteVisibility,
     r.sandbox,
+    // Rows written before schema 6 have no field at runtime. Naming that legacy
+    // generation keeps their resume keys stable and distinct from shapes-v1.
+    r.contractGeneration ?? "names-v0",
   ].join(" ");
 }

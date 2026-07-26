@@ -42,6 +42,7 @@ import {
   renderPseudocode,
   type EmitTarget,
 } from "./pseudocode.ts";
+import { inferTaskShapes, membersOf, mergeShapes, type Shape } from "./shapes.ts";
 
 const RB_TEST_FILE = "solution_test.rb";
 const RB_RUNNER = new URL("./rb_runner.rb", import.meta.url).pathname;
@@ -201,6 +202,49 @@ function render(task: Task, only?: ReadonlySet<string>): RenderedSuite {
   return { contents, omitted };
 }
 
+function rubyShapeDescription(shape: Shape): string {
+  switch (shape.kind) {
+    case "unknown":
+      return "a value whose shape was not observed";
+    case "absent":
+      return "absent";
+    case "null":
+      return "`nil`";
+    case "bool":
+      return "a `true` or `false` value";
+    case "int":
+      return "an `Integer`";
+    case "float":
+      return "a `Float`";
+    case "text":
+      return "a `String`";
+    case "callable":
+      return shape.arity === null
+        ? "a `Proc` or lambda of unknown arity"
+        : `a \`Proc\` or lambda accepting ${shape.arity} positional argument${shape.arity === 1 ? "" : "s"}`;
+    case "array":
+      return `an \`Array\` whose elements are ${rubyShapeDescription(shape.element)}`;
+    case "record": {
+      if (shape.keys === "withheld") {
+        return (
+          "a `Hash` with String keys (not enumerated) and values of shape " +
+          rubyShapeDescription(shape.value)
+        );
+      }
+      if (shape.fields.length === 0) return "a `Hash` with no observed keys";
+      const fields = shape.fields.map((field) => {
+        const members = membersOf(field.shape);
+        const optional = members.some((member) => member.kind === "absent");
+        const value = mergeShapes(members.filter((member) => member.kind !== "absent"));
+        return `\`${field.name}\` (${optional ? "optional; " : ""}${rubyShapeDescription(value)})`;
+      });
+      return `a \`Hash\` with String keys ${fields.join(", ")}`;
+    }
+    case "union":
+      return `either ${shape.members.map(rubyShapeDescription).join(" or ")}`;
+  }
+}
+
 function contract(task: Task): string {
   const lines = [
     "## Your task",
@@ -208,23 +252,30 @@ function contract(task: Task): string {
     `Write \`solution.rb\` defining a module \`${RB_MODULE}\` with these module methods`,
     `(\`module ${RB_MODULE}\` … \`def self.name(…)\`):`,
     "",
+    "The shapes below are observed across this task's cases, not a complete specification.",
+    "",
   ];
-  for (const p of task.properties) {
-    const args = p.argNames.map(snakeCase).join(", ");
-    if (p.returnsResult) {
-      lines.push(
-        `- \`${RB_MODULE}.${rbName(p.name)}(${args})\` — raise \`ArgumentError\` when the input is invalid.`,
-      );
-    } else {
-      lines.push(`- \`${RB_MODULE}.${rbName(p.name)}(${args})\``);
-    }
+  for (const observed of inferTaskShapes(task)) {
+    const p = observed.property;
+    const args = observed.args.map((argument) => snakeCase(argument.name)).join(", ");
+    const argumentsDescription =
+      observed.args.length === 0
+        ? "no arguments"
+        : `observed arguments: ${observed.args
+            .map(
+              (argument) =>
+                `\`${snakeCase(argument.name)}\` is ${rubyShapeDescription(argument.shape)}`,
+            )
+            .join("; ")}`;
+    const ending = p.returnsResult
+      ? "; raise `ArgumentError` when the input is invalid."
+      : ".";
+    lines.push(
+      `- \`${RB_MODULE}.${rbName(p.name)}(${args})\` — ${argumentsDescription};` +
+        ` observed successful return: ${rubyShapeDescription(observed.returns)}${ending}`,
+    );
   }
   lines.push("", "Names are snake_case even where the task statement uses lowerCamelCase.");
-  // Only said when it can matter: Ruby is the one arm where a record has two
-  // plausible spellings and the suite compares against exactly one of them.
-  if (task.stats.valueKinds.includes("record")) {
-    lines.push('Records are Hashes with String keys (`{"key" => value}`), not Symbol keys.');
-  }
   lines.push(
     `The suite in \`${RB_TEST_FILE}\` does \`require_relative "solution"\`. Do not edit the suite.`,
   );
