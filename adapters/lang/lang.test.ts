@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { renderAvenValue, avenAdapter } from "./aven.ts";
-import { pyName, pythonAdapter, snakeCase } from "./python.ts";
-import { orderedArgs, pseudocodeArgReason } from "./common.ts";
+import { PY_EMIT, pyName, pythonAdapter, snakeCase } from "./python.ts";
+import { orderedArgs } from "./common.ts";
+import { isPseudocodeFunction, renderPseudocode } from "./pseudocode.ts";
 import { TASK_SCHEMA_VERSION, type Task, type TaskProperty } from "../../ingest/task.ts";
 
 const prop = (over: Partial<TaskProperty> = {}): TaskProperty => ({
@@ -28,6 +29,17 @@ const task = (over: Partial<Task> = {}): Task => ({
   cases: [],
   stats: { caseCount: 0, errorCaseCount: 0, droppedCaseCount: 0, valueKinds: [] },
   ...over,
+});
+
+/** A one-argument case whose argument is `value`. */
+const caseWithArg = (value: unknown) => ({
+  uuid: "u",
+  name: "n",
+  group: [],
+  description: "d",
+  property: "f",
+  args: [{ name: "a", value }],
+  expected: { kind: "value" as const, value: 0 },
 });
 
 describe("Aven value rendering", () => {
@@ -226,61 +238,96 @@ describe("orderedArgs", () => {
   });
 });
 
-// --- pseudocode arguments --------------------------------------------------
+// --- pseudocode expression language ----------------------------------------
 
 /**
- * Upstream sometimes passes a *function* as a string and expects the track's
- * generator to build a callable from it. A mechanical generator cannot, and
- * emitting the string verbatim yields a suite no solution can pass — which is how
- * `accumulate` had all seven free models scoring 0-1/5 and blaming the suite.
+ * Upstream passes a *function* as text and leaves the conversion to each track's
+ * generator. The expected values are all present, so the oracle is fine — only the
+ * input needed rendering. Emitting the text verbatim gave suites where every case
+ * died on `'str' object is not callable`, which is how all seven free models came
+ * to score 0-1/5 on `accumulate`.
  */
-describe("pseudocode arguments", () => {
-  function withArg(value: unknown) {
-    return {
-      uuid: "u",
-      name: "n",
-      group: [],
-      description: "d",
-      property: "f",
-      args: [{ name: "a", value }],
-      expected: { kind: "value" as const, value: 0 },
-    };
-  }
+describe("pseudocode expressions", () => {
+  const props = new Set(["accumulate", "foldl"]);
 
   test.each([
-    ["(x) => x * x", "arrow lambda, parenthesized"],
-    ["(x) -> x modulo 2 == 1", "dash-arrow with pseudocode operator"],
-    ["(acc, el) -> el + acc", "two parameters"],
-  ])("%s is refused (%s)", (value) => {
-    expect(pseudocodeArgReason(withArg(value))).toContain("pseudocode");
+    ["(x) => x * x", "lambda x: (x * x)"],
+    ["(x) -> x + 1", "lambda x: (x + 1)"],
+    ["(acc, el) -> el * acc", "lambda acc, el: (el * acc)"],
+    ["(x) -> x modulo 2 == 1", "lambda x: ((x % 2) == 1)"],
+    ["(x) => upcase(x)", "lambda x: (x).upper()"],
+    ["(x) => reverse(x)", "lambda x: (x)[::-1]"],
+  ])("python renders %s", (src, want) => {
+    expect(renderPseudocode(src, PY_EMIT, props)).toBe(want);
+  });
+
+  /** Closes over `x` and calls the solution's own function. The hard one. */
+  test("python renders a nested lambda that recurses through the solution", () => {
+    expect(renderPseudocode('(x) => accumulate(["1", "2"], (y) => x + y)', PY_EMIT, props)).toBe(
+      'lambda x: solution.accumulate(["1", "2"], lambda y: (x + y))',
+    );
+  });
+
+  test("a task's own property wins over a same-named pseudocode builtin", () => {
+    // `list-ops` really does have a `reverse` property, so resolving builtins
+    // first would silently call text-reversal instead of the solution.
+    expect(renderPseudocode("(x) => reverse(x)", PY_EMIT, new Set(["reverse"]))).toBe(
+      "lambda x: solution.reverse(x)",
+    );
   });
 
   test.each([
-    ["a -> b", "graph edge notation is data, not a lambda"],
-    ["x => x * x", "unparenthesized: too close to data to risk deleting"],
-    ["", "empty string"],
-    ["=> nope", "arrow with no parameter list"],
-    ["Hello, world", "ordinary text"],
-    ["(1) => 2", "numeric parameter, not an identifier"],
-  ])("%s is left alone (%s)", (value) => {
-    expect(pseudocodeArgReason(withArg(value))).toBeNull();
+    ["(x) => x $ 2", "unknown operator"],
+    ["(x) => nope(x)", "unknown function"],
+    ["(x) => 1.5", "non-integer literal"],
+    ["(x) => (", "truncated"],
+  ])("refuses %s (%s) rather than mis-translating", (src) => {
+    expect(() => renderPseudocode(src, PY_EMIT, props)).toThrow();
   });
 
-  test("finds pseudocode nested inside a structure", () => {
-    expect(pseudocodeArgReason(withArg({ fn: ["(x) => x"] }))).toContain("pseudocode");
+  test.each([
+    ["(x) => x * x", true],
+    ["(acc, el) -> el / acc", true],
+    ["a -> b", false],
+    ["x => x * x", false],
+    ["Hello, world", false],
+    ["", false],
+  ])("isPseudocodeFunction(%s) is %s", (src, want) => {
+    expect(isPseudocodeFunction(src)).toBe(want);
   });
 
-  test("both arms omit exactly the same cases, so the arms stay comparable", () => {
+  /**
+   * The division asymmetry. Upstream's `/` is float division — the only reading
+   * under which `foldl((acc, el) -> el / acc, [1,2,3,4], 24)` yields 64 — and
+   * Python's `/` matches it, while Aven's `Int / Int` is integer division that
+   * would hit `2 / 0` on the second step.
+   */
+  test("float division renders in python and is refused in aven", () => {
     const t = task({
-      id: "higher-order",
-      properties: [prop({ name: "f", argNames: ["a"], arity: 1 })],
-      cases: [withArg("(x) => x * x"), { ...withArg(1), uuid: "v" }],
+      id: "list-ops",
+      properties: [prop({ name: "foldl", argNames: ["a"], arity: 1 })],
+      cases: [
+        { ...caseWithArg("(acc, el) -> el / acc"), property: "foldl" },
+        { ...caseWithArg("(acc, el) -> el + acc"), uuid: "v", property: "foldl" },
+      ],
     });
     const py = pythonAdapter.renderTests(t);
     const av = avenAdapter.renderTests(t);
-    expect(py.omitted.map((o) => o.uuid)).toEqual(["u"]);
+    expect(py.omitted).toEqual([]);
+    expect(py.contents).toContain("lambda acc, el: (el / acc)");
     expect(av.omitted.map((o) => o.uuid)).toEqual(["u"]);
-    expect(py.omitted[0]!.reason).toContain("pseudocode");
-    expect(av.omitted[0]!.reason).toContain("pseudocode");
+    expect(av.omitted[0]!.reason).toContain("integer division");
+    expect(av.contents).toContain("(acc, el) => (el + acc)");
+  });
+
+  test("aven renders the non-division forms", () => {
+    const t = task({
+      id: "accumulate",
+      properties: [prop({ name: "accumulate", argNames: ["a"], arity: 1 })],
+      cases: [{ ...caseWithArg("(x) => upcase(x)"), property: "accumulate" }],
+    });
+    const av = avenAdapter.renderTests(t);
+    expect(av.omitted).toEqual([]);
+    expect(av.contents).toContain("(x) => (x).toUpper()");
   });
 });

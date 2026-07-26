@@ -22,11 +22,11 @@ import type { Task } from "../../ingest/task.ts";
 import {
   orderedArgs,
   propertyOf,
-  pseudocodeArgReason,
   type LangAdapter,
   type OmittedCase,
   type RenderedSuite,
 } from "./common.ts";
+import { isPseudocodeFunction, renderPseudocode, type EmitTarget } from "./pseudocode.ts";
 import { AVEN_LANG_DIR } from "../../ingest/paths.ts";
 
 const AVEN_TEST_FILE = "solution_test.av";
@@ -97,6 +97,55 @@ function avenValue(v: JVal): string {
   }
 }
 
+/**
+ * Aven rendering of the pseudocode expression language (`pseudocode.ts`).
+ *
+ * One operator cannot be rendered. Upstream's `/` is float division — that is the
+ * only reading under which `foldl((acc, el) -> el / acc, [1,2,3,4], 24)` gives the
+ * expected 64 — while Aven's `Int / Int` is integer division, measured: `1 / 24`
+ * evaluates to `0` and `2 / 0` is `runtime.division-by-zero`. So the same
+ * expression over the same Int inputs computes a different function and then dies.
+ *
+ * Emitting `.toFloat()` around the operands would not rescue it either: the fold's
+ * accumulator would become a Float while the expected value upstream is the
+ * integer 64, and `expectEq` would be comparing across types. The honest answer is
+ * that these two cases are not expressible in Aven with this case data, which is a
+ * finding about Aven's numeric tower rather than a gap in this file — so it is
+ * refused with that reason and reported as an omitted case.
+ */
+const AVEN_EMIT: EmitTarget = {
+  lambda: (params, body) => `(${params.join(", ")}) => ${body}`,
+  binary: (op, left, right) => {
+    if (op === "/") {
+      throw new Unrenderable(
+        "pseudocode `/` is float division (upstream's expected values only follow" +
+          " under it), but Aven's `Int / Int` is integer division and `2 / 0` is a" +
+          " runtime error, so this case cannot be expressed over Int inputs",
+      );
+    }
+    return `(${left} ${op === "modulo" ? "%" : op} ${right})`;
+  },
+  builtin: (name, args) => {
+    const [x] = args;
+    if (name === "upcase") return `(${x}).toUpper()`;
+    if (name === "downcase") return `(${x}).toLower()`;
+    if (name === "reverse") return `(${x}).reverse()`;
+    throw new Unrenderable(`no Aven rendering for pseudocode builtin '${name}'`);
+  },
+  solutionCall: (property, args) => `solution.${property}(${args.join(", ")})`,
+  int: (v) => v,
+  text: (v) => avenText(v),
+  array: (items) => `[${items.join(", ")}]`,
+};
+
+/** An argument: pseudocode functions become real lambdas, everything else is data. */
+function renderAvenArg(task: Task, value: unknown): string {
+  if (typeof value === "string" && isPseudocodeFunction(value)) {
+    return renderPseudocode(value, AVEN_EMIT, new Set(task.properties.map((p) => p.name)));
+  }
+  return avenValue(fromPortable(value as Portable));
+}
+
 function render(task: Task, only?: ReadonlySet<string>): RenderedSuite {
   const omitted: OmittedCase[] = [];
   const lines: string[] = [];
@@ -105,10 +154,8 @@ function render(task: Task, only?: ReadonlySet<string>): RenderedSuite {
     if (only && !only.has(c.uuid)) continue;
     const prop = propertyOf(task, c.property);
     try {
-      const pseudocode = pseudocodeArgReason(c);
-      if (pseudocode) throw new Unrenderable(pseudocode);
       const args = orderedArgs(prop, c)
-        .map((a) => avenValue(fromPortable(a.value)))
+        .map((a) => renderAvenArg(task, a.value))
         .join(", ");
       const call = `solution.${c.property}(${args})`;
       const assertion =

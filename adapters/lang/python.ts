@@ -21,11 +21,16 @@ import type { Task } from "../../ingest/task.ts";
 import {
   orderedArgs,
   propertyOf,
-  pseudocodeArgReason,
   type LangAdapter,
   type OmittedCase,
   type RenderedSuite,
 } from "./common.ts";
+import {
+  PseudocodeError,
+  isPseudocodeFunction,
+  renderPseudocode,
+  type EmitTarget,
+} from "./pseudocode.ts";
 
 const PY_TEST_FILE = "solution_test.py";
 const PY_RUNNER = new URL("./py_runner.py", import.meta.url).pathname;
@@ -56,6 +61,41 @@ function methodName(index: number, caseName: string): string {
   return `test_${String(index).padStart(3, "0")}_${slug.slice(0, 80) || "case"}`;
 }
 
+/**
+ * Python rendering of the pseudocode expression language (`pseudocode.ts`).
+ *
+ * Python needs no special handling for `/`: upstream's `/` is float division and
+ * so is Python's, which is what makes `foldl((acc, el) -> el / acc, [1,2,3,4], 24)`
+ * come out at 64. The expected value is the integer `64` and Python computes
+ * `64.0`, which `assertEqual` accepts.
+ */
+export const PY_EMIT: EmitTarget = {
+  lambda: (params, body) => `lambda ${params.join(", ")}: ${body}`,
+  binary: (op, left, right) => {
+    const sym = op === "modulo" ? "%" : op;
+    return `(${left} ${sym} ${right})`;
+  },
+  builtin: (name, args) => {
+    const [x] = args;
+    if (name === "upcase") return `(${x}).upper()`;
+    if (name === "downcase") return `(${x}).lower()`;
+    if (name === "reverse") return `(${x})[::-1]`;
+    throw new PseudocodeError(`no Python rendering for pseudocode builtin '${name}'`);
+  },
+  solutionCall: (property, args) => `solution.${pyName(property)}(${args.join(", ")})`,
+  int: (v) => v,
+  text: (v) => JSON.stringify(v),
+  array: (items) => `[${items.join(", ")}]`,
+};
+
+/** An argument: pseudocode functions become real lambdas, everything else is data. */
+function renderArg(task: Task, value: unknown): string {
+  if (typeof value === "string" && isPseudocodeFunction(value)) {
+    return renderPseudocode(value, PY_EMIT, new Set(task.properties.map((p) => p.name)));
+  }
+  return fromPythonSafe(fromPortable(value as Parameters<typeof fromPortable>[0]));
+}
+
 function render(task: Task, only?: ReadonlySet<string>): RenderedSuite {
   const omitted: OmittedCase[] = [];
   const body: string[] = [];
@@ -65,10 +105,8 @@ function render(task: Task, only?: ReadonlySet<string>): RenderedSuite {
     if (only && !only.has(c.uuid)) continue;
     const prop = propertyOf(task, c.property);
     try {
-      const pseudocode = pseudocodeArgReason(c);
-      if (pseudocode) throw new Error(pseudocode);
       const args = orderedArgs(prop, c)
-        .map((a) => fromPythonSafe(fromPortable(a.value)))
+        .map((a) => renderArg(task, a.value))
         .join(", ");
       const call = `solution.${pyName(c.property)}(${args})`;
       body.push(`    def ${methodName(index, c.name)}(self):`);
