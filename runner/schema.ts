@@ -72,9 +72,24 @@
  *     excluded from the attempt totals: the survey is not part of solving the
  *     task, and pooling it would move the token-ratio and cost axes it exists to
  *     help explain.
+ * - **5** — telling a dead provider apart from a failing model:
+ *   - `harnessErrorKind` names the cause of a `harness_error` when the runner
+ *     recognises it. Forced by a real sweep: mid-run, `opencode/big-pickle` went
+ *     dead on the gateway and every remaining attempt came back
+ *     `outcome: "timeout"`, `roundsUsed: 1`, `wallMs≈420000`, **zero tokens in
+ *     both directions** — ten rows that look exactly like a model failing ten
+ *     tasks slowly. They are indistinguishable in the dataset without a field
+ *     that says so, and pass-rate deltas are the whole point of the benchmark.
+ *   - The classification changed with it: a turn that returned no tokens at all
+ *     *and* wrote no solution is now `harness_error` (kind `agent-no-tokens`)
+ *     rather than `timeout` or `refusal`. It measured nothing, so it belongs
+ *     outside the capability denominator and inside `--retry-harness-errors`.
+ *     `timedOut` still records that the process was killed, so the process-level
+ *     truth is not lost. A refusal keeps its own outcome: a model that answers in
+ *     prose bills tokens, and only the genuinely empty turn is reclassified.
  */
 
-export const SCHEMA_VERSION = 4 as const;
+export const SCHEMA_VERSION = 5 as const;
 
 /** How `solutionTokens` / `docTokens` were counted. Not a real BPE tokenizer. */
 export const TOKEN_ESTIMATOR = "heuristic-v1" as const;
@@ -88,6 +103,18 @@ export type Outcome =
   | "timeout"
   | "refusal"
   | "harness_error";
+
+/**
+ * Recognised cause of a `harness_error`, or null when the runner cannot name one.
+ *
+ * `agent-no-tokens` is the one that forced this field into existence: the agent
+ * turn billed nothing in any token category and left no solution, so nothing about
+ * the model was measured. Usually a provider that has gone dead — a hung gateway
+ * model, or a model id that does not exist. It is also the signal the per-model
+ * circuit breaker counts, and matching on `harnessError` prose would be a fragile
+ * way to find these rows in the dataset.
+ */
+export type HarnessErrorKind = "agent-no-tokens" | "agent-failed" | "gate-unavailable" | "runner-exception";
 
 export type TaskSet = "tune" | "holdout";
 export type TaskSource = "exercism" | "design-center" | "rosetta";
@@ -308,6 +335,9 @@ export type AttemptRecord = {
   outcome: Outcome;
   outcomeDetail: string | null;
   harnessError: string | null;
+  /** Recognised cause, when there is one. Null on every non-`harness_error` row. */
+  harnessErrorKind: HarnessErrorKind | null;
+  /** True whenever a process was killed on its timeout, whatever the outcome says. */
   timedOut: boolean;
   /** The two headline metrics. */
   firstShotPass: boolean;

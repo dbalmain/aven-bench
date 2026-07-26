@@ -30,6 +30,7 @@ import {
   attemptKey,
   type AttemptRecord,
   type GateResult,
+  type HarnessErrorKind,
   type HarnessSessionTokens,
   type Outcome,
   type RepairRound,
@@ -96,6 +97,42 @@ export type RunContext = {
    */
   keepWork: boolean;
 };
+
+/**
+ * Prose for a turn that billed nothing. `run.ts` and the dataset both key off
+ * `harnessErrorKind`, not this string; it exists so a human scanning the log or
+ * the row knows immediately where to look.
+ */
+export const NO_TOKENS_DETAIL = "agent returned no tokens (provider unreachable?)";
+
+/**
+ * Did this turn produce any evidence about the model at all?
+ *
+ * The condition is every token category, not just input and output. A dead
+ * provider bills zero everywhere; a live turn whose prompt was served entirely
+ * from the provider's cache reports `cachedPromptTokens` and still answers with
+ * output tokens, and reasoning models bill `reasoningTokens` before their first
+ * visible token. Requiring all five to be zero is the narrow reading, and narrow
+ * is what this needs to be: a **refusal is a real measured outcome** — a model
+ * answering "I would rather not" in prose bills tokens for saying so — and
+ * swallowing refusals into `harness_error` would quietly inflate every pass rate
+ * by shrinking the denominator.
+ */
+export function agentMeasuredNothing(r: {
+  promptTokens: number;
+  completionTokens: number;
+  cachedPromptTokens: number;
+  cachedWriteTokens: number;
+  reasoningTokens: number;
+}): boolean {
+  return (
+    r.promptTokens === 0 &&
+    r.completionTokens === 0 &&
+    r.cachedPromptTokens === 0 &&
+    r.cachedWriteTokens === 0 &&
+    r.reasoningTokens === 0
+  );
+}
 
 export type AttemptSpec = {
   taskId: string;
@@ -214,13 +251,10 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
   const taskPrompt = `${(await Bun.file(`${CORPUS_DIR}/${spec.taskId}/prompt.md`).text()).trimEnd()}\n\n${adapter.renderContract(task)}`;
   const { argv } = adapter.testCommand(dir);
   // Trusted gates use their normal host-side wrappers. A self-verifying model
-  // needs a command made only from binaries and files present in its namespace.
-  const modelTestCommand =
-    ctx.sandbox === "bubblewrap"
-      ? spec.language === "python"
-        ? `python3 ${adapter.testFile}`
-        : `aven test --format json ${adapter.testFile}`
-      : argv.join(" ");
+  // needs a command made only from binaries and files present in its namespace,
+  // which is what the adapter's `modelTestCommand` is. Unsandboxed, the model and
+  // the gate share a filesystem, so the real argv is both accurate and simpler.
+  const modelTestCommand = ctx.sandbox === "bubblewrap" ? adapter.modelTestCommand() : argv.join(" ");
   const initialPrompt = buildInitialPrompt({
     adapter,
     taskPrompt,
@@ -241,6 +275,7 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
   let outcome: Outcome = "harness_error";
   let outcomeDetail: string | null = null;
   let harnessError: string | null = null;
+  let harnessErrorKind: HarnessErrorKind | null = null;
   let timedOut = false;
   let roundsToGreen: number | null = null;
   let sessionRef: string | null = null;
@@ -301,10 +336,24 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
     if (!agentResult.ok) {
       // The harness, not the model. Record it and stop; §3c forbids folding this
       // into a model failure or retrying it silently.
-      outcome = agentResult.timedOut ? "timeout" : "harness_error";
+      //
+      // A timeout normally *is* about the model — a slow or looping one — so it
+      // keeps `outcome: "timeout"`. A timeout that billed nothing is not: it is a
+      // provider that never answered, and a sweep of those rows reads as a model
+      // failing every remaining task slowly (observed: ten consecutive
+      // 420s/zero-token rows after `opencode/big-pickle` went dead mid-run).
+      const measuredNothing = agentMeasuredNothing(agentResult);
+      outcome = agentResult.timedOut && !measuredNothing ? "timeout" : "harness_error";
       timedOut = agentResult.timedOut;
-      harnessError = agentResult.harnessError;
-      outcomeDetail = agentResult.harnessError;
+      harnessError = measuredNothing
+        ? `${NO_TOKENS_DETAIL}: ${agentResult.harnessError ?? "harness reported no error"}`
+        : agentResult.harnessError;
+      harnessErrorKind = measuredNothing
+        ? "agent-no-tokens"
+        : outcome === "harness_error"
+          ? "agent-failed"
+          : null;
+      outcomeDetail = harnessError;
       rounds.push({
         ...baseRound,
         diagnosticCodes: [],
@@ -315,7 +364,7 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
         wallMs: performance.now() - roundStarted,
         gateWallMs: 0,
         timedOut: agentResult.timedOut,
-        harnessError: agentResult.harnessError,
+        harnessError,
         artifactHash: null,
         solutionBytes: 0,
         solutionLoc: 0,
@@ -328,9 +377,20 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
     if (solution.exists) lastSolution = solution;
     if (!solution.exists) {
       // The harness ran and wrote nothing. That is a refusal (or a model that
-      // answered in prose), not a wrong answer.
-      outcome = "refusal";
-      outcomeDetail = agentResult.assistantText.slice(0, 300) || "no solution file was written";
+      // answered in prose), not a wrong answer — *if* the model said anything at
+      // all. A turn that reported success, billed nothing and wrote nothing said
+      // nothing, so it is the provider's failure and not a measurement of the
+      // model. Refusals bill tokens for the prose they refuse in, which is what
+      // keeps them on their own side of this line.
+      const measuredNothing = agentMeasuredNothing(agentResult);
+      outcome = measuredNothing ? "harness_error" : "refusal";
+      if (measuredNothing) {
+        harnessError = `${NO_TOKENS_DETAIL}: the harness reported success, no tokens and no solution file`;
+        harnessErrorKind = "agent-no-tokens";
+        outcomeDetail = harnessError;
+      } else {
+        outcomeDetail = agentResult.assistantText.slice(0, 300) || "no solution file was written";
+      }
       rounds.push({
         ...baseRound,
         diagnosticCodes: [],
@@ -341,7 +401,7 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
         wallMs: performance.now() - roundStarted,
         gateWallMs: 0,
         timedOut: false,
-        harnessError: null,
+        harnessError,
         artifactHash: null,
         solutionBytes: 0,
         solutionLoc: 0,
@@ -401,6 +461,7 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
     if (gate.outcome === "harness_error") {
       // A tool that could not run at all: same rule as a harness failure.
       harnessError = gate.detail ?? "gate tooling unavailable";
+      harnessErrorKind = "gate-unavailable";
       break;
     }
     if (gate.ok) {
@@ -565,6 +626,7 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
     outcome,
     outcomeDetail,
     harnessError,
+    harnessErrorKind: outcome === "harness_error" ? harnessErrorKind : null,
     timedOut,
     firstShotPass: rounds[0]?.outcome === "pass",
     roundsToGreen,

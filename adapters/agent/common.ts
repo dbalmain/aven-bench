@@ -21,6 +21,10 @@
  * - **`sessionLedger` is optional.** Implement it when the harness keeps its own
  *   cumulative cost, so the runner can cross-check its event parsing against a
  *   figure it did not compute.
+ * - **`probeModel` is optional.** Implement it when a single model's liveness can
+ *   be asked about cheaply, so the runner can drop dead models before planning
+ *   instead of paying the agent timeout on every task (see `preflight` in
+ *   `run.ts`). An adapter without it simply gets no preflight.
  */
 
 import type { HarnessSessionTokens, SandboxMode } from "../../runner/schema.ts";
@@ -99,6 +103,31 @@ export type SessionLedgerQuery = {
   sandbox: SandboxMode;
 };
 
+export type ModelProbe = {
+  /** `provider/model`, in the harness's own spelling. */
+  model: string;
+  /** Short by design: this is a liveness question, not a task. */
+  timeoutMs: number;
+};
+
+/**
+ * The result of one liveness probe.
+ *
+ * Tokens and cost are reported so the runner can account for them **out of band**,
+ * the way the survey turn is: a probe is not part of solving any task, so it must
+ * never reach an attempt record or the run's cost total.
+ */
+export type ModelProbeResult = {
+  /** Did the model answer at all? Nothing to do with *what* it answered. */
+  ok: boolean;
+  /** Why not, when `ok` is false; the reply's first line when it is. */
+  detail: string;
+  promptTokens: number;
+  completionTokens: number;
+  costUsd: number | null;
+  wallMs: number;
+};
+
 export type AgentAdapter = {
   readonly id: string;
   /** Can a later round continue the same conversation? */
@@ -116,6 +145,18 @@ export type AgentAdapter = {
    * to fail an attempt that otherwise succeeded.
    */
   sessionLedger?(query: SessionLedgerQuery): Promise<SessionLedger | null>;
+  /**
+   * One trivial turn against one model, to find out whether it is alive.
+   *
+   * `available()` answers a different question: it checks the *harness*, and a
+   * working `opencode` happily accepts a model whose provider has gone dead. Two
+   * models on the gateway did exactly that mid-sweep — every call hung until the
+   * agent timeout — so the runner asks per model before it plans anything.
+   *
+   * Like every adapter method this must not throw; an unreachable model is
+   * `ok: false` with a reason.
+   */
+  probeModel?(probe: ModelProbe): Promise<ModelProbeResult>;
 };
 
 export function emptyResult(overrides: Partial<AgentResult> = {}): AgentResult {

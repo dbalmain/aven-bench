@@ -23,15 +23,22 @@
  *    the `aven` binary in use, the Python version and the harness version all go
  *    into every row. A sweep whose compiler changed underneath it is detectable
  *    afterwards instead of being an unexplained step in the numbers.
+ *  - **A model can die mid-sweep, so the runner watches for it.** Two defences,
+ *    both bought with 45 minutes of wasted wall clock: every model is probed once
+ *    before planning (`preflightModels`), and a model whose attempts come back
+ *    with no tokens at all three times running is dropped for the rest of the run
+ *    (`ModelBreaker`). Without them a dead gateway model is handed all 71 tasks and
+ *    charges the full agent timeout for each, writing rows that look exactly like
+ *    genuine slow failures.
  */
 
 import { existsSync, realpathSync, statSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 import { adapterFor } from "../adapters/lang/index.ts";
-import { agentFor } from "../adapters/agent/index.ts";
+import { agentFor, type AgentAdapter } from "../adapters/agent/index.ts";
 import { AVEN_LANG_DIR, CORPUS_DIR } from "../ingest/paths.ts";
 import { loadIndex, loadTask, type Split } from "../ingest/task.ts";
-import { runProcess, Semaphore } from "./proc.ts";
+import { pool, runProcess, Semaphore } from "./proc.ts";
 import { priceTable } from "./prices.ts";
 import type { SuiteVisibility } from "./prompt.ts";
 import { sandboxAvailability, sandboxLabel } from "./sandbox.ts";
@@ -139,6 +146,9 @@ execution
   --lang-jobs N                concurrent compiler/interpreter runs (default 8)
   --agent-timeout SEC          per harness call (default 900; cold opencode start is ~2min)
   --tool-timeout SEC           per compiler/test invocation (default 120)
+  --no-preflight               skip the one-turn liveness probe per model
+  --preflight-timeout SEC      per liveness probe (default 120)
+  --breaker-threshold N        drop a model after N zero-token attempts in a row (default 3; 0 disables)
   --out PATH                   run log (default data/runs/<run-id>.jsonl)
   --run-id ID                  default: timestamp
   --work-root DIR              default ~/.cache/aven-bench/work (must be outside any git repo)
@@ -220,6 +230,125 @@ function avenBinaryPath(): string | null {
   return existsSync(path) ? realpathSync(path) : path;
 }
 
+// --- model health ----------------------------------------------------------
+
+export type ProbeOutcome = {
+  modelId: string;
+  ok: boolean;
+  detail: string;
+  wallMs: number;
+};
+
+export type PreflightReport = {
+  results: ProbeOutcome[];
+  /** Out-of-band spend, reported separately and never folded into any row. */
+  costUsd: number | null;
+  promptTokens: number;
+  completionTokens: number;
+};
+
+/**
+ * Ask each requested model one trivial question before the run plans anything.
+ *
+ * Null when the harness has no `probeModel` — no preflight is better than a
+ * fabricated verdict about a model nobody asked.
+ *
+ * This exists because `agent.available()` answers about the *harness*: `opencode
+ * --version` was perfectly happy while two of its gateway models silently stopped
+ * answering, and the sweep then paid a 420s timeout on every remaining task for
+ * each of them. One cheap call per model buys back hours, and a model that fails
+ * the probe is dropped rather than measured, because a row it produced would not
+ * be a measurement of anything.
+ *
+ * The probe's tokens and cost are returned for separate reporting — the same rule
+ * the survey turn follows. Nothing here may reach an attempt record.
+ */
+export async function preflightModels(
+  agent: AgentAdapter,
+  models: string[],
+  timeoutMs: number,
+  jobs: number,
+): Promise<PreflightReport | null> {
+  const probeModel = agent.probeModel?.bind(agent);
+  if (!probeModel) return null;
+  const report: PreflightReport = { results: [], costUsd: null, promptTokens: 0, completionTokens: 0 };
+  const probed = await pool(models, jobs, async (modelId) => {
+    // The adapter contract says probes do not throw, but a preflight that crashed
+    // the run would be worse than the problem it is here to prevent.
+    try {
+      return { modelId, result: await probeModel({ model: modelId, timeoutMs }) };
+    } catch (err) {
+      return {
+        modelId,
+        result: {
+          ok: false,
+          detail: `probe threw: ${String(err)}`,
+          promptTokens: 0,
+          completionTokens: 0,
+          costUsd: null,
+          wallMs: 0,
+        },
+      };
+    }
+  });
+  for (const { modelId, result } of probed) {
+    report.results.push({ modelId, ok: result.ok, detail: result.detail, wallMs: result.wallMs });
+    report.promptTokens += result.promptTokens;
+    report.completionTokens += result.completionTokens;
+    if (result.costUsd !== null) report.costUsd = (report.costUsd ?? 0) + result.costUsd;
+  }
+  return report;
+}
+
+/**
+ * Per-model circuit breaker over consecutive zero-token attempts.
+ *
+ * The failure it exists for, from `phase2-calibration-02`: at 12:20 the model
+ * `opencode/big-pickle` stopped answering, and the next ten attempts were all
+ * `roundsUsed: 1`, `wallMs≈420000`, zero tokens both directions. The harness had
+ * no idea and would have kept going for another two hours at four jobs.
+ *
+ * Only `agent-no-tokens` attempts count. A genuine timeout that burned tokens, a
+ * refusal and a wrong answer all reset the streak, because all three are the model
+ * working: this must never be able to stop measuring a model that is merely bad.
+ * Threshold 0 disables it entirely, for deliberately investigating a flaky
+ * provider.
+ */
+export class ModelBreaker {
+  private readonly streak = new Map<string, number>();
+  private readonly open = new Map<string, { after: number; skipped: number }>();
+
+  constructor(private readonly threshold: number) {}
+
+  /** Fold one finished attempt in. True only on the call that trips the breaker. */
+  observe(modelId: string, noTokens: boolean): boolean {
+    if (!noTokens) {
+      this.streak.set(modelId, 0);
+      return false;
+    }
+    const streak = (this.streak.get(modelId) ?? 0) + 1;
+    this.streak.set(modelId, streak);
+    if (this.threshold <= 0 || streak < this.threshold || this.open.has(modelId)) return false;
+    this.open.set(modelId, { after: streak, skipped: 0 });
+    return true;
+  }
+
+  isOpen(modelId: string): boolean {
+    return this.open.has(modelId);
+  }
+
+  /** Count one planned attempt the breaker refused to dispatch. */
+  skip(modelId: string): void {
+    const entry = this.open.get(modelId);
+    if (entry) entry.skipped++;
+  }
+
+  /** Tripped models, for the progress line and the end-of-run summary. */
+  report(): { modelId: string; after: number; skipped: number }[] {
+    return [...this.open].map(([modelId, e]) => ({ modelId, after: e.after, skipped: e.skipped }));
+  }
+}
+
 // --- main ------------------------------------------------------------------
 
 async function main(): Promise<number> {
@@ -267,6 +396,14 @@ async function main(): Promise<number> {
   const jobs = num(args, "jobs", agentJobs);
   const agentTimeoutMs = num(args, "agent-timeout", 900) * 1000;
   const toolTimeoutMs = num(args, "tool-timeout", 120) * 1000;
+  const preflight = bool(args, "preflight", true);
+  // 60s, not the agent timeout: the probe is one sentence with no tool calls, and
+  // the whole point is to find a dead model in seconds instead of in 15 minutes.
+  // 120s, not 60s: a healthy probe answers in ~20s warm, but a cold opencode start
+  // runs to ~2 minutes, so a 60s budget drops a live model for being cold. Two minutes
+  // per dead model is a rounding error against the two hours the breaker exists to save.
+  const preflightTimeoutMs = num(args, "preflight-timeout", 120) * 1000;
+  const breakerThreshold = num(args, "breaker-threshold", 3);
   const toolPolicy: ToolPolicy = bool(args, "self-verify", false) ? "self-verify" : "no-verify";
   // Hidden by default: a visible suite tempts a model into pattern-matching the
   // expected values instead of implementing the algorithm (Dave's call).
@@ -349,6 +486,35 @@ async function main(): Promise<number> {
     }
   }
 
+  // Preflight, before anything is planned: a model that cannot answer one sentence
+  // must not be handed 71 tasks at a 900s timeout each. Skipped on a dry run, which
+  // is meant to cost nothing.
+  let liveModels = models;
+  let preflightReport: PreflightReport | null = null;
+  const dropped: ProbeOutcome[] = [];
+  if (!dryRun && preflight && models.length > 0) {
+    preflightReport = await preflightModels(agent, models, preflightTimeoutMs, agentJobs);
+    if (preflightReport === null) {
+      console.log(`preflight     skipped: harness '${harnessId}' does not implement a model probe`);
+    } else {
+      for (const r of preflightReport.results) {
+        console.log(
+          `preflight     ${r.modelId.padEnd(34)} ${r.ok ? "ok  " : "DEAD"} ${Math.round(r.wallMs)}ms  ${r.detail.slice(0, 90)}`,
+        );
+      }
+      dropped.push(...preflightReport.results.filter((r) => !r.ok));
+      liveModels = preflightReport.results.filter((r) => r.ok).map((r) => r.modelId);
+      if (liveModels.length === 0) {
+        console.error(
+          "refusing to run: no requested model answered its preflight probe.\n" +
+            dropped.map((r) => `  ${r.modelId}: ${r.detail}`).join("\n") +
+            "\n  Check the provider, name a different --model, or pass --no-preflight to run anyway.",
+        );
+        return 2;
+      }
+    }
+  }
+
   // Intersected case sets, computed once per task rather than per attempt.
   const onlyByTask = new Map<string, ReadonlySet<string>>();
   if (intersect && languages.length > 1) {
@@ -388,15 +554,20 @@ async function main(): Promise<number> {
       if (renderable === 0) empty.push({ taskId, language });
     }
   }
-  const isEmpty = new Set(empty.map((e) => `${e.taskId} ${e.language}`));
+  // The key separator is written as an escape, never as a literal NUL byte: an actual
+  // NUL in the source makes grep classify the file as binary and skip it silently,
+  // which breaks code search for every tool and agent that reads this repo.
+  const isEmpty = new Set(empty.map((e) => `${e.taskId}\u0000${e.language}`));
 
   type Planned = { spec: AttemptSpec; modelId: string; key: string; done: boolean; outcomes: string[] };
   const planned: Planned[] = [];
-  for (const modelId of models.length > 0 ? models : ["(none)"]) {
+  // Only models that survived preflight are planned at all: a dropped model has no
+  // attempts, so a later run picks it up cleanly once its provider is back.
+  for (const modelId of liveModels.length > 0 ? liveModels : ["(none)"]) {
     for (let sample = 0; sample < samples; sample++) {
       for (const taskId of taskIds) {
         for (const language of languages) {
-          if (isEmpty.has(`${taskId} ${language}`)) continue;
+          if (isEmpty.has(`${taskId}\u0000${language}`)) continue;
           const only = onlyByTask.get(taskId);
           const spec: AttemptSpec = {
             taskId,
@@ -427,7 +598,10 @@ async function main(): Promise<number> {
 
   console.log(`run-id        ${runId}`);
   console.log(`harness       ${harnessId} ${harnessVersion}`);
-  console.log(`models        ${models.join(", ") || "(none)"}`);
+  console.log(
+    `models        ${liveModels.join(", ") || "(none)"}` +
+      (dropped.length > 0 ? `   (dropped by preflight: ${dropped.map((d) => d.modelId).join(", ")})` : ""),
+  );
   console.log(`languages     ${languages.join(", ")}   versions: ${JSON.stringify(languageVersions)}`);
   if (avenNeeded) {
     console.log(`aven          commit ${avenCommit ?? "unknown"}  binary ${avenBinary?.slice(0, 12) ?? "(cargo run)"}`);
@@ -442,6 +616,10 @@ async function main(): Promise<number> {
   console.log(
     `policy        toolPolicy=${toolPolicy} suite=${suiteVisibility} sandbox=${sandbox}` +
       ` intersect=${intersect} mypy=${mypy}`,
+  );
+  console.log(
+    `health        preflight=${preflight ? `${preflightTimeoutMs / 1000}s` : "off"}` +
+      ` breaker=${breakerThreshold > 0 ? `${breakerThreshold} zero-token attempts` : "off"}`,
   );
   console.log(`prices        table ${table.version}`);
   console.log(
@@ -511,12 +689,21 @@ async function main(): Promise<number> {
 
   // Attempt-level parallelism; the semaphores above are what actually bound the
   // harness and the toolchain.
+  const breaker = new ModelBreaker(breakerThreshold);
   let next = 0;
   const worker = async (): Promise<void> => {
     for (;;) {
       const i = next++;
       if (i >= todo.length) return;
       const p = todo[i]!;
+      // A model the breaker has given up on is skipped, not recorded. Writing a
+      // row per skipped attempt would assert an attempt that never happened, and
+      // resume counts `harness_error` rows as present — so the next run would need
+      // `--retry-harness-errors` to pick up work this run simply never did.
+      if (breaker.isOpen(p.modelId)) {
+        breaker.skip(p.modelId);
+        continue;
+      }
       const ctx = contextFor(p.modelId);
       let record: AttemptRecord;
       try {
@@ -538,11 +725,17 @@ async function main(): Promise<number> {
           ` ${Math.round(record.wallMs)}ms` +
           (record.harnessError ? `  !! ${record.harnessError.slice(0, 120)}` : ""),
       );
+      if (breaker.observe(p.modelId, record.harnessErrorKind === "agent-no-tokens")) {
+        console.log(
+          `[breaker] ${p.modelId} returned no tokens on ${breakerThreshold} attempt(s) in a row` +
+            " — its remaining attempts are skipped, not recorded. Other models continue.",
+        );
+      }
     }
   };
   await Promise.all(Array.from({ length: Math.max(1, Math.min(jobs, todo.length)) }, worker));
 
-  summarize(records);
+  summarize(records, { breaker: breaker.report(), dropped, preflight: preflightReport });
   console.log(`\nwrote ${records.length} record(s) -> ${outPath}`);
   return records.some((r) => r.outcome === "harness_error") ? 1 : 0;
 }
@@ -586,6 +779,7 @@ function harnessErrorRecord(ctx: RunContext, spec: AttemptSpec, err: unknown): A
     outcome: "harness_error",
     outcomeDetail: String(err).slice(0, 500),
     harnessError: String(err).slice(0, 500),
+    harnessErrorKind: "runner-exception",
     timedOut: false,
     firstShotPass: false,
     roundsToGreen: null,
@@ -635,10 +829,32 @@ function harnessErrorRecord(ctx: RunContext, spec: AttemptSpec, err: unknown): A
   };
 }
 
-function summarize(records: AttemptRecord[]): void {
-  if (records.length === 0) return;
+/**
+ * Model health, reported alongside the outcomes.
+ *
+ * These belong in the summary rather than only in the scrollback: a dead model is
+ * the one failure mode that silently corrupts the pass-rate deltas the benchmark
+ * exists to produce, and 45 minutes of it went unnoticed once already.
+ */
+type HealthSummary = {
+  breaker: { modelId: string; after: number; skipped: number }[];
+  dropped: ProbeOutcome[];
+  preflight: PreflightReport | null;
+};
+
+function summarize(records: AttemptRecord[], health: HealthSummary): void {
+  // Health is reported even when nothing ran — a fully resumed sweep still has to
+  // say that a model was dropped, because that is why its rows are missing.
+  if (records.length === 0) {
+    if (health.dropped.length > 0 || health.breaker.length > 0) console.log("\n--- summary ---");
+    summarizeHealth(health);
+    return;
+  }
   const byOutcome = new Map<string, number>();
   for (const r of records) byOutcome.set(r.outcome, (byOutcome.get(r.outcome) ?? 0) + 1);
+  // Harness errors are already outside the capability denominator; zero-token rows
+  // are the subset of them that measured nothing at all.
+  const noTokens = records.filter((r) => r.harnessErrorKind === "agent-no-tokens").length;
   const scored = records.filter((r) => r.outcome !== "harness_error");
   const green = records.filter((r) => r.roundsToGreen !== null);
   const cost = records.reduce((n, r) => n + (r.costUsd ?? 0), 0);
@@ -679,6 +895,12 @@ function summarize(records: AttemptRecord[]): void {
   if (drifted > 0) {
     console.log(`  !! ${drifted} row(s) disagree with the harness's own session total — check event parsing`);
   }
+  if (noTokens > 0) {
+    console.log(
+      `  !! ${noTokens} row(s) returned no tokens at all (harness_error, kind agent-no-tokens):` +
+        " the provider, not the model. Excluded from the rates above; --retry-harness-errors re-attempts them.",
+    );
+  }
   const tokens = records.reduce((n, r) => n + r.promptTokens + r.completionTokens, 0);
   console.log(`  tokens         ${tokens}`);
   const escaped = records.filter((r) => r.outsideWorkdirTouches > 0);
@@ -699,6 +921,35 @@ function summarize(records: AttemptRecord[]): void {
       `  !! ${shellViolations.length} row(s) ran shell commands despite toolPolicy=no-verify:\n` +
         shellViolations
           .map((r) => `       ${r.language} ${r.taskId} s${r.sampleIndex}: ${r.shellCommands} command(s)`)
+          .join("\n"),
+    );
+  }
+  summarizeHealth(health);
+}
+
+function summarizeHealth(health: HealthSummary): void {
+  const probe = health.preflight;
+  if (probe && probe.promptTokens + probe.completionTokens > 0) {
+    console.log(
+      `  preflight      $${(probe.costUsd ?? 0).toFixed(6)}  ${probe.results.length} probe(s),` +
+        ` ${probe.promptTokens + probe.completionTokens} token(s)  (not included in cost above)`,
+    );
+  }
+  if (health.dropped.length > 0) {
+    console.log(
+      `  !! ${health.dropped.length} model(s) dropped by preflight and never attempted:\n` +
+        health.dropped.map((d) => `       ${d.modelId}: ${d.detail.slice(0, 100)}`).join("\n"),
+    );
+  }
+  if (health.breaker.length > 0) {
+    console.log(
+      `  !! ${health.breaker.length} model(s) tripped the circuit breaker mid-run — treat their rows as partial:\n` +
+        health.breaker
+          .map(
+            (b) =>
+              `       ${b.modelId}: ${b.after} zero-token attempt(s) in a row,` +
+              ` ${b.skipped} planned attempt(s) skipped (re-run to pick them up)`,
+          )
           .join("\n"),
     );
   }

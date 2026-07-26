@@ -193,5 +193,8 @@ export const pythonAdapter: LangAdapter = {
     argv: ["python3", PY_RUNNER, "solution_test", dir],
     cwd: dir,
   }),
+  // `py_runner.py` lives in this repo, which the sandbox does not mount, so a
+  // self-verifying model runs the suite directly and reads unittest's own output.
+  modelTestCommand: () => `python3 ${PY_TEST_FILE}`,
   classifyExit: (code) => (code === 0 ? "pass" : code === 1 ? "fail" : "load-error"),
 };

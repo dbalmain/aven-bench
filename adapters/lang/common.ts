@@ -38,6 +38,18 @@ export type LangAdapter = {
   /** Argv to run the suite, given the directory holding solution + test file. */
   testCommand(dir: string): { argv: string[]; cwd: string };
 
+  /**
+   * The command a self-verifying model runs *inside the sandbox*, as one line.
+   *
+   * Not the same command as `testCommand`, and deliberately so: the trusted gate
+   * runs on the host and may reach a `cargo run` fallback or the `py_runner.py`
+   * wrapper, neither of which exists in the model's mount namespace. This one is
+   * built only from binaries and files the sandbox profile actually puts there.
+   * Lives on the adapter because the alternative — a language ternary at the one
+   * call site — becomes a chain the moment a third arm is added.
+   */
+  modelTestCommand(): string;
+
   /** Exit-code contract. `load-error` means the suite never ran. */
   classifyExit(code: number): "pass" | "fail" | "load-error";
 };

@@ -225,20 +225,76 @@ deliberately; it appends a new row and leaves the old one alone.
 
 ## Failure handling
 
-| what happened                              | recorded as     |
-| ------------------------------------------ | --------------- |
-| bad model id, provider error, opencode ≠ 0 | `harness_error` |
-| harness or tool exceeded its timeout       | `timeout`       |
-| model wrote no solution file               | `refusal`       |
-| gate tool could not be run at all          | `harness_error` |
-| suite would not load / parse               | `parse_error`   |
-| `aven check` rejected it                   | `check_error`   |
-| a case raised                              | `runtime_error` |
-| a case asserted                            | `wrong_output`  |
-| every gating probe green                   | `pass`          |
+| what happened                              | recorded as                          |
+| ------------------------------------------ | ------------------------------------ |
+| bad model id, provider error, opencode ≠ 0 | `harness_error`                      |
+| harness or tool exceeded its timeout       | `timeout`                            |
+| agent turn returned **no tokens at all**   | `harness_error` (`agent-no-tokens`)  |
+| model wrote no solution file               | `refusal`                            |
+| gate tool could not be run at all          | `harness_error` (`gate-unavailable`) |
+| suite would not load / parse               | `parse_error`                        |
+| `aven check` rejected it                   | `check_error`                        |
+| a case raised                              | `runtime_error`                      |
+| a case asserted                            | `wrong_output`                       |
+| every gating probe green                   | `pass`                               |
 
 A harness failure ends the attempt with whatever rounds already happened and is
 never folded into a model failure or retried in place.
+
+`harnessErrorKind` (schema 5) names the cause when the runner recognises one:
+`agent-no-tokens`, `agent-failed`, `gate-unavailable`, `runner-exception`.
+
+**A turn that billed nothing measured nothing.** Zero tokens in every category
+_and_ no solution file is the provider, not the model, so it outranks both
+`timeout` and `refusal` — a real timeout burns tokens, and a refusal bills for
+the prose it refuses in. `timedOut` still records that a process was killed, so
+the process-level truth survives the reclassification. This matters twice:
+harness errors are outside the capability denominator, and
+`--retry-harness-errors` can re-attempt these keys once the provider is back.
+
+## Dead models
+
+Individual models on the opencode gateway stop answering mid-sweep, and the
+harness used to have no idea. Measured once, for real: from 12:20 in
+`phase2-calibration-02` every `opencode/big-pickle` attempt came back
+`outcome=timeout, roundsUsed=1, wallMs≈420000`, zero tokens — ten consecutive
+rows that look exactly like a model failing ten tasks slowly. Probed by hand
+afterwards,
+`opencode run --model opencode/big-pickle "Reply with exactly the word OK and nothing else."`
+hung past 120s while `opencode/ling-3.0-flash-free` answered in about a second.
+At 71 tasks and four jobs, a dead model costs ~2 hours of wall clock and
+silently corrupts the pass-rate deltas.
+
+Two defences, and the classification above is the third:
+
+- **Preflight.** Before anything is planned, each requested model gets one
+  trivial turn (`AgentAdapter.probeModel`, `--preflight-timeout`, default 120s).
+  Models that fail are printed with the reason and dropped — not attempted, so
+  no rows exist and a later run picks them up cleanly. If that leaves nothing,
+  the run refuses to start. `--no-preflight` skips the probe. The probe's tokens
+  and cost are reported beside the run's cost and never inside it, the same rule
+  the survey turn follows. Note `agent.available()` is a different question: it
+  checks the harness, and `opencode --version` was happy throughout.
+
+  The default is 120s rather than 60s. A measured live probe answers well inside
+  either budget (`opencode/ling-3.0-flash-free`, 19.3s wall, reply `OK`), but
+  the ~2 minute cold opencode start documented under "Concurrency and timeouts"
+  does not, so a 60s budget would drop a live model on the first sweep after a
+  reboot for being merely cold. Two minutes per dead model is a rounding error
+  against the ~2 hours the breaker exists to save, so the budget is set by the
+  cold-start case, not the warm one. A drop is loud rather than silent either
+  way: it prints `DEAD … no reply within Ns` and is listed again in the summary.
+
+- **A per-model circuit breaker.** After `--breaker-threshold` consecutive
+  zero-token attempts (default 3; `0` disables it), the model's remaining
+  planned attempts are skipped rather than dispatched. Skipped, not recorded: a
+  row would assert an attempt that never happened, and since resume counts
+  `harness_error` rows as present, the next run would need
+  `--retry-harness-errors` to do work this one simply never did. Any attempt
+  that measured something — a wrong answer, a refusal, a token-burning timeout —
+  clears the streak, so the breaker can never stop measuring a model that is
+  merely bad. Other models are unaffected, and every tripped model is named in
+  the end-of-run summary.
 
 ## Concurrency and timeouts
 
@@ -273,10 +329,13 @@ has nothing to do with the model. `--tool-timeout` defaults to 120s.
 Implement `AgentAdapter` in `adapters/agent/` and register it. The contract is:
 never throw (a failure is `ok: false` plus `harnessError`), always report token
 counts and shell-command usage, honour `timeoutMs`, and apply the requested
-sandbox mode to the model-driven process. `pi`, `little-coder` and `ollama` are
-registered as stubs that fail immediately with a reason — raw `ollama` in
-particular is not an agent at all and needs a decision about how much
-scaffolding is fair before it is comparable.
+sandbox mode to the model-driven process. Two optional methods are worth having:
+`sessionLedger` (the harness's own cost total, which cross-checks the event
+parsing) and `probeModel` (one cheap turn against one model, which is what makes
+preflight possible; an adapter without it simply gets no preflight). `pi`,
+`little-coder` and `ollama` are registered as stubs that fail immediately with a
+reason — raw `ollama` in particular is not an agent at all and needs a decision
+about how much scaffolding is fair before it is comparable.
 
 ## Acceptance recipe
 

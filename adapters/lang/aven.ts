@@ -240,6 +240,9 @@ export const avenAdapter: LangAdapter = {
           cwd: AVEN_LANG_DIR,
         };
   },
+  // The sandbox binds the configured AVEN_BIN in as plain `aven` on PATH, so the
+  // model's command names neither the host path nor cargo.
+  modelTestCommand: () => `aven test --format json ${AVEN_TEST_FILE}`,
   classifyExit: (code) => (code === 0 ? "pass" : code === 1 ? "fail" : "load-error"),
 };
 

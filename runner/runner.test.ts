@@ -13,7 +13,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { parseEvents } from "../adapters/agent/opencode.ts";
-import { AGENTS, agentFor, emptyResult, type AgentAdapter } from "../adapters/agent/index.ts";
+import { AGENTS, agentFor, emptyResult, type AgentAdapter, type AgentResult } from "../adapters/agent/index.ts";
 import { adapterFor } from "../adapters/lang/index.ts";
 import {
   classifyOutcome,
@@ -27,9 +27,17 @@ import {
 import { computeShadowCost, resetPriceTableCache, type PriceTable } from "./prices.ts";
 import { runProcess, Semaphore } from "./proc.ts";
 import { buildInitialPrompt, buildRepairPrompt, buildSurveyPrompt, summarizeCaseMessage } from "./prompt.ts";
-import { enclosingRepo, parseArgv } from "./run.ts";
+import { enclosingRepo, ModelBreaker, parseArgv, preflightModels } from "./run.ts";
 import { bubblewrapCommand, sandboxAvailability } from "./sandbox.ts";
-import { DEFAULT_WORK_ROOT, isInside, runAttempt, type RunContext } from "./attempt.ts";
+import {
+  agentMeasuredNothing,
+  DEFAULT_WORK_ROOT,
+  isInside,
+  NO_TOKENS_DETAIL,
+  runAttempt,
+  type AttemptSpec,
+  type RunContext,
+} from "./attempt.ts";
 import { REPO_ROOT } from "../ingest/paths.ts";
 import {
   attemptKey,
@@ -100,6 +108,7 @@ function record(over: Partial<AttemptRecord> = {}): AttemptRecord {
     outcome: "pass",
     outcomeDetail: null,
     harnessError: null,
+    harnessErrorKind: null,
     timedOut: false,
     firstShotPass: true,
     roundsToGreen: 0,
@@ -149,6 +158,43 @@ function record(over: Partial<AttemptRecord> = {}): AttemptRecord {
     ...over,
   };
 }
+
+/** A `RunContext` around a fake harness: no network, no model, no compiler. */
+function context(agent: AgentAdapter, workRoot: string, maxRounds: number): RunContext {
+  return {
+    runId: "test",
+    agent,
+    harnessVersion: "spy",
+    modelId: "spy/model",
+    provider: "spy",
+    quantization: null,
+    avenCommit: null,
+    avenBinarySha256: null,
+    languageVersions: { python: "test" },
+    docId: null,
+    docHash: null,
+    docTokens: null,
+    doc: null,
+    toolPolicy: "no-verify",
+    suiteVisibility: "hidden",
+    sandbox: "none",
+    avenBin: null,
+    maxRounds,
+    agentTimeoutMs: 60_000,
+    toolTimeoutMs: 60_000,
+    mypy: false,
+    temperature: null,
+    seed: null,
+    agentSem: new Semaphore(1),
+    langSem: new Semaphore(1),
+    workRoot,
+    resumeSessions: false,
+    survey: true,
+    keepWork: true,
+  };
+}
+
+const TWO_FER: AttemptSpec = { taskId: "two-fer", language: "python", sampleIndex: 0, taskSet: "holdout" };
 
 function gate(over: Partial<GateResult> = {}): GateResult {
   return {
@@ -577,6 +623,19 @@ describe("prompts", () => {
     expect(summarizeCaseMessage(message)).toBe(expected);
   });
 
+  test("the self-verify command comes from the adapter and names only sandbox contents", () => {
+    // Host-side wrappers (`py_runner.py`, a `cargo run` fallback, an AVEN_BIN path)
+    // are absent from the model's mount namespace, so none of them may appear here.
+    expect(adapterFor("python").modelTestCommand()).toBe("python3 solution_test.py");
+    expect(adapterFor("aven").modelTestCommand()).toBe("aven test --format json solution_test.av");
+    for (const id of ["python", "aven"]) {
+      const command = adapterFor(id).modelTestCommand();
+      expect(command).not.toContain("py_runner");
+      expect(command).not.toContain("cargo");
+      expect(command).not.toMatch(/(^|\s)\//);
+    }
+  });
+
   test("an unresumed repair prompt restates task and doc, because the model has no memory", () => {
     const p = buildRepairPrompt({
       adapter,
@@ -624,41 +683,7 @@ describe("hidden suite (the default)", () => {
     return { adapter, seen };
   }
 
-  function context(agent: AgentAdapter, workRoot: string, maxRounds: number): RunContext {
-    return {
-      runId: "test",
-      agent,
-      harnessVersion: "spy",
-      modelId: "spy/model",
-      provider: "spy",
-      quantization: null,
-      avenCommit: null,
-      avenBinarySha256: null,
-      languageVersions: { python: "test" },
-      docId: null,
-      docHash: null,
-      docTokens: null,
-      doc: null,
-      toolPolicy: "no-verify",
-      suiteVisibility: "hidden",
-      sandbox: "none",
-      avenBin: null,
-      maxRounds,
-      agentTimeoutMs: 60_000,
-      toolTimeoutMs: 60_000,
-      mypy: false,
-      temperature: null,
-      seed: null,
-      agentSem: new Semaphore(1),
-      langSem: new Semaphore(1),
-      workRoot,
-      resumeSessions: false,
-      survey: true,
-      keepWork: true,
-    };
-  }
-
-  const spec = { taskId: "two-fer", language: "python", sampleIndex: 0, taskSet: "holdout" as const };
+  const spec = TWO_FER;
 
   test("the model never sees the suite, and the suite still runs", async () => {
     const workRoot = mkdtempSync(join(tmpdir(), "aven-bench-hidden-"));
@@ -783,11 +808,21 @@ describe("hidden suite (the default)", () => {
         available: async () => ({ ok: true, detail: "spy" }),
         run: async (inv) => {
           prompts.push(inv.prompt);
-          return emptyResult({ ok: true, sessionRef: "ses_spy", assistantText: "I would rather not.", wallMs: 1 });
+          // A refusal is a *measured* outcome and bills tokens for the prose it
+          // refuses in; that is what keeps it out of the zero-token path below.
+          return emptyResult({
+            ok: true,
+            promptTokens: 1_200,
+            completionTokens: 9,
+            sessionRef: "ses_spy",
+            assistantText: "I would rather not.",
+            wallMs: 1,
+          });
         },
       };
       const record = await runAttempt({ ...context(adapter, workRoot, 0), resumeSessions: true }, spec);
       expect(record.outcome).toBe("refusal");
+      expect(record.harnessErrorKind).toBeNull();
       expect(prompts).toHaveLength(1);
       expect(record.surveyed).toBe(false);
     });
@@ -802,6 +837,213 @@ describe("hidden suite (the default)", () => {
         "no rounds left",
       );
     });
+  });
+});
+
+// --- a provider that goes dead ---------------------------------------------
+
+/**
+ * The defect this section exists for, from `phase2-calibration-02`: at 12:20
+ * `opencode/big-pickle` stopped answering and the next ten attempts all came back
+ * `timeout`, `roundsUsed: 1`, `wallMs≈420000`, **zero tokens both directions**.
+ * Nothing about the model was measured, yet the rows are indistinguishable in the
+ * dataset from a model failing ten tasks slowly — which is exactly the number the
+ * benchmark exists to produce. So they are harness errors, and the sweep stops
+ * feeding a corpse.
+ */
+describe("a turn that returned no tokens", () => {
+  /** A harness stuck in whatever failure mode the test is about. */
+  function fixedAgent(result: Partial<AgentResult>): AgentAdapter {
+    return {
+      id: "spy",
+      supportsResume: false,
+      version: async () => "spy",
+      available: async () => ({ ok: true, detail: "spy" }),
+      run: async () => emptyResult({ wallMs: 1, ...result }),
+    };
+  }
+
+  test.each([
+    ["nothing anywhere", {}, true],
+    ["output tokens", { completionTokens: 1 }, false],
+    ["input tokens", { promptTokens: 1 }, false],
+    // A fully cache-served prompt bills no input tokens, and a reasoning model can
+    // bill thinking before its first visible token. Both are live turns.
+    ["a cache read", { cachedPromptTokens: 9_088 }, false],
+    ["a cache write", { cachedWriteTokens: 8_870 }, false],
+    ["reasoning only", { reasoningTokens: 27 }, false],
+  ] as const)("%s -> measuredNothing = %s", (_name, tokens, expected) => {
+    expect(agentMeasuredNothing({ ...emptyResult(), ...tokens })).toBe(expected);
+  });
+
+  test("a success with no tokens and no solution is a harness error, not a refusal", async () => {
+    const workRoot = mkdtempSync(join(tmpdir(), "aven-bench-notokens-"));
+    const agent = fixedAgent({ ok: true });
+    const record = await runAttempt(context(agent, workRoot, 0), TWO_FER);
+    expect(record.outcome).toBe("harness_error");
+    expect(record.harnessErrorKind).toBe("agent-no-tokens");
+    expect(record.harnessError).toContain(NO_TOKENS_DETAIL);
+    // It measured nothing, so it must not count as the model failing the task.
+    expect(record.firstShotPass).toBe(false);
+    expect(record.roundsToGreen).toBeNull();
+  });
+
+  test("a timeout with no tokens is the provider, not a slow model", async () => {
+    const workRoot = mkdtempSync(join(tmpdir(), "aven-bench-deadtimeout-"));
+    const agent = fixedAgent({
+      ok: false,
+      timedOut: true,
+      harnessError: "opencode timed out after 420000ms",
+      wallMs: 420_000,
+    });
+    const record = await runAttempt(context(agent, workRoot, 2), TWO_FER);
+    expect(record.outcome).toBe("harness_error");
+    expect(record.harnessErrorKind).toBe("agent-no-tokens");
+    expect(record.harnessError).toContain("timed out");
+    // The process-level truth survives the reclassification.
+    expect(record.timedOut).toBe(true);
+    // And the attempt stops at the first round rather than paying the timeout again.
+    expect(record.roundsUsed).toBe(1);
+  });
+
+  test("a timeout that burned tokens is still the model's timeout", async () => {
+    const workRoot = mkdtempSync(join(tmpdir(), "aven-bench-slowmodel-"));
+    const agent = fixedAgent({
+      ok: false,
+      timedOut: true,
+      promptTokens: 4_000,
+      completionTokens: 2_500,
+      harnessError: "opencode timed out after 900000ms",
+    });
+    const record = await runAttempt(context(agent, workRoot, 0), TWO_FER);
+    expect(record.outcome).toBe("timeout");
+    expect(record.harnessErrorKind).toBeNull();
+  });
+
+  test("a harness failure that reported tokens is an agent failure, not an empty one", async () => {
+    const workRoot = mkdtempSync(join(tmpdir(), "aven-bench-agentfail-"));
+    const agent = fixedAgent({ ok: false, promptTokens: 10, harnessError: "opencode exited 1: boom" });
+    const record = await runAttempt(context(agent, workRoot, 0), TWO_FER);
+    expect(record.outcome).toBe("harness_error");
+    expect(record.harnessErrorKind).toBe("agent-failed");
+  });
+});
+
+// --- the circuit breaker ---------------------------------------------------
+
+describe("per-model circuit breaker", () => {
+  test("trips on the threshold-th consecutive zero-token attempt and then skips", () => {
+    const breaker = new ModelBreaker(3);
+    expect(breaker.observe("a/dead", true)).toBe(false);
+    expect(breaker.observe("a/dead", true)).toBe(false);
+    expect(breaker.isOpen("a/dead")).toBe(false);
+    expect(breaker.observe("a/dead", true)).toBe(true);
+    expect(breaker.isOpen("a/dead")).toBe(true);
+    // Only the tripping call reports; the caller prints once, not per attempt.
+    expect(breaker.observe("a/dead", true)).toBe(false);
+    breaker.skip("a/dead");
+    breaker.skip("a/dead");
+    expect(breaker.report()).toEqual([{ modelId: "a/dead", after: 3, skipped: 2 }]);
+  });
+
+  test("one attempt that measured something clears the streak", () => {
+    const breaker = new ModelBreaker(3);
+    breaker.observe("a/flaky", true);
+    breaker.observe("a/flaky", true);
+    // A wrong answer, a refusal or a token-burning timeout: the model is working.
+    breaker.observe("a/flaky", false);
+    breaker.observe("a/flaky", true);
+    breaker.observe("a/flaky", true);
+    expect(breaker.isOpen("a/flaky")).toBe(false);
+    expect(breaker.report()).toEqual([]);
+  });
+
+  test("a dead model does not stop the run for a healthy one", () => {
+    const breaker = new ModelBreaker(2);
+    breaker.observe("a/dead", true);
+    breaker.observe("a/live", false);
+    breaker.observe("a/dead", true);
+    breaker.observe("a/live", false);
+    expect(breaker.isOpen("a/dead")).toBe(true);
+    expect(breaker.isOpen("a/live")).toBe(false);
+    expect(breaker.report().map((r) => r.modelId)).toEqual(["a/dead"]);
+  });
+
+  test("--breaker-threshold 0 disables it, for investigating a flaky provider", () => {
+    const breaker = new ModelBreaker(0);
+    for (let i = 0; i < 20; i++) expect(breaker.observe("a/dead", true)).toBe(false);
+    expect(breaker.isOpen("a/dead")).toBe(false);
+    expect(breaker.report()).toEqual([]);
+  });
+});
+
+// --- preflight -------------------------------------------------------------
+
+describe("model preflight", () => {
+  function probeAgent(dead: string[], probe?: AgentAdapter["probeModel"]): { adapter: AgentAdapter; asked: string[] } {
+    const asked: string[] = [];
+    const adapter: AgentAdapter = {
+      id: "spy",
+      supportsResume: false,
+      version: async () => "spy",
+      available: async () => ({ ok: true, detail: "spy" }),
+      run: async () => emptyResult({ ok: true, promptTokens: 1, completionTokens: 1 }),
+      probeModel:
+        probe ??
+        (async ({ model, timeoutMs }) => {
+          asked.push(model);
+          return dead.includes(model)
+            ? {
+                ok: false,
+                detail: `no reply within ${timeoutMs / 1000}s`,
+                promptTokens: 0,
+                completionTokens: 0,
+                costUsd: null,
+                wallMs: timeoutMs,
+              }
+            : { ok: true, detail: "OK", promptTokens: 11, completionTokens: 1, costUsd: 0.0001, wallMs: 900 };
+        }),
+    };
+    return { adapter, asked };
+  }
+
+  test("drops the model that cannot answer and keeps the one that can", async () => {
+    const { adapter, asked } = probeAgent(["spy/dead"]);
+    const report = await preflightModels(adapter, ["spy/alive", "spy/dead"], 60_000, 2);
+    expect(asked.sort()).toEqual(["spy/alive", "spy/dead"]);
+    expect(report?.results.filter((r) => r.ok).map((r) => r.modelId)).toEqual(["spy/alive"]);
+    const dropped = report?.results.filter((r) => !r.ok) ?? [];
+    expect(dropped.map((r) => r.modelId)).toEqual(["spy/dead"]);
+    expect(dropped[0]?.detail).toContain("no reply within 60s");
+  });
+
+  test("probe usage is accounted out of band, like the survey turn", async () => {
+    const { adapter } = probeAgent([]);
+    const report = await preflightModels(adapter, ["spy/a", "spy/b"], 60_000, 2);
+    // Reported so the summary can print it *beside* the run's cost, never inside it.
+    expect(report?.promptTokens).toBe(22);
+    expect(report?.completionTokens).toBe(2);
+    expect(report?.costUsd).toBeCloseTo(0.0002, 9);
+  });
+
+  test("a harness with no probe gets no preflight rather than a fabricated verdict", async () => {
+    const adapter: AgentAdapter = {
+      id: "spy",
+      supportsResume: false,
+      version: async () => "spy",
+      available: async () => ({ ok: true, detail: "spy" }),
+      run: async () => emptyResult({ ok: true }),
+    };
+    expect(await preflightModels(adapter, ["spy/a"], 60_000, 1)).toBeNull();
+  });
+
+  test("a probe that throws drops that model instead of killing the run", async () => {
+    const { adapter } = probeAgent([], async () => {
+      throw new Error("socket hang up");
+    });
+    const report = await preflightModels(adapter, ["spy/a"], 60_000, 1);
+    expect(report?.results[0]?.ok).toBe(false);
+    expect(report?.results[0]?.detail).toContain("socket hang up");
   });
 });
 

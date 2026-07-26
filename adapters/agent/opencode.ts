@@ -33,8 +33,8 @@
  * change what the model is measured on.
  */
 
-import { existsSync, realpathSync } from "node:fs";
-import { homedir } from "node:os";
+import { existsSync, mkdtempSync, realpathSync, rmSync } from "node:fs";
+import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { bubblewrapCommand } from "../../runner/sandbox.ts";
 import { runProcess } from "../../runner/proc.ts";
@@ -43,6 +43,8 @@ import {
   type AgentAdapter,
   type AgentInvocation,
   type AgentResult,
+  type ModelProbe,
+  type ModelProbeResult,
   type SessionLedger,
   type SessionLedgerQuery,
 } from "./common.ts";
@@ -175,6 +177,14 @@ export function parseEvents(stdout: string): OpencodeUsage {
 const OPENCODE_BIN = process.env["OPENCODE_BIN"] ?? "opencode";
 
 /**
+ * The liveness question, kept as small as a prompt can be.
+ *
+ * Deliberately answerable without a tool call, so a model that is merely slow at
+ * agentic work still passes and only an unreachable one fails.
+ */
+const PROBE_PROMPT = "Reply with exactly the word OK and nothing else.";
+
+/**
  * Where opencode's SQLite store lives for a given attempt.
  *
  * A sandboxed run does not write to this machine's opencode database: the
@@ -285,6 +295,79 @@ export const opencodeAdapter: AgentAdapter = {
       touchedPaths: usage.touchedPaths,
       shellCommands: usage.shellCommands,
     };
+  },
+
+  /**
+   * Is this one model answering?
+   *
+   * Verified by hand on the gateway: `opencode/big-pickle` and
+   * `opencode/deepseek-v4-flash-free` hung past 120s on this exact prompt while
+   * `opencode/ling-3.0-flash-free` and `opencode/north-mini-code-free` answered in
+   * about a second — and `opencode --version` was happy throughout, which is why
+   * `available()` cannot answer this.
+   *
+   * Not sandboxed, and not run in a work directory. A throwaway `--dir` outside
+   * this repository is what stops opencode taking aven-bench as its project root
+   * (the contamination lesson), and there is no task, no suite and no record here
+   * for a stray read to corrupt. `--session` is not passed: a probe must not
+   * become part of any attempt's conversation.
+   */
+  async probeModel(probe: ModelProbe): Promise<ModelProbeResult> {
+    const dir = mkdtempSync(join(tmpdir(), "aven-bench-preflight-"));
+    try {
+      const proc = await runProcess(
+        [
+          OPENCODE_BIN,
+          "run",
+          "--model",
+          probe.model,
+          "--log-level",
+          "ERROR",
+          "--format",
+          "json",
+          "--dir",
+          dir,
+          PROBE_PROMPT,
+        ],
+        { cwd: dir, timeoutMs: probe.timeoutMs },
+      );
+      if (proc.spawnError) {
+        return {
+          ok: false,
+          detail: `opencode could not be started: ${proc.spawnError}`,
+          promptTokens: 0,
+          completionTokens: 0,
+          costUsd: null,
+          wallMs: proc.wallMs,
+        };
+      }
+      const usage = parseEvents(proc.stdout);
+      const reply = usage.assistantText.trim().split("\n")[0]?.slice(0, 120) ?? "";
+      const detail = proc.timedOut
+        ? `no reply within ${Math.round(probe.timeoutMs / 1000)}s`
+        : usage.errors.length > 0
+          ? usage.errors.join("; ")
+          : proc.exitCode !== 0
+            ? `opencode exited ${proc.exitCode}: ${(proc.stderr.trim() || proc.stdout.trim()).slice(0, 200)}`
+            : reply || "replied without any text";
+      // A reply with no tokens at all is the same silent-provider shape the
+      // breaker watches for downstream, so it fails preflight here too.
+      const ok =
+        !proc.timedOut &&
+        proc.exitCode === 0 &&
+        usage.errors.length === 0 &&
+        usage.promptTokens + usage.completionTokens > 0;
+      return {
+        ok,
+        detail,
+        promptTokens: usage.promptTokens,
+        completionTokens: usage.completionTokens,
+        costUsd: usage.reportedCostUsd,
+        wallMs: proc.wallMs,
+      };
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   },
 
   /**
