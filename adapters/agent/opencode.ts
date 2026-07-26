@@ -8,8 +8,15 @@
  *
  * `--format json` writes newline-delimited events to stdout; `step_finish` events
  * carry `tokens: {total, input, output, reasoning, cache: {read, write}}` and
- * `cost`. That is where the token counts come from — the price table does the
- * rest, because every free model reports `cost: 0` regardless of usage.
+ * `cost`. Both the token counts and the **bill** come from there.
+ *
+ * `cost` is real on paid models and 0 on the free tier, which is simply true.
+ * Measured on `opencode-go/qwen3.7-max`: turn 1 billed $0.02788375, turn 2
+ * $0.0048275, and the session total came to $0.03271125 — so per-turn costs are
+ * deltas that sum to the session, and rounds can be added without double
+ * counting. That measurement is also why `cache.write` is now kept: turn 1 was 6
+ * input and 20 output tokens against 8 870 cache writes, so the charge is
+ * essentially all cache-write and no input/output rate can reproduce it.
  *
  * Two field notes worth keeping:
  *
@@ -26,10 +33,19 @@
  * change what the model is measured on.
  */
 
-import { realpathSync } from "node:fs";
+import { existsSync, realpathSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import { bubblewrapCommand } from "../../runner/sandbox.ts";
 import { runProcess } from "../../runner/proc.ts";
-import { emptyResult, type AgentAdapter, type AgentInvocation, type AgentResult } from "./common.ts";
+import {
+  emptyResult,
+  type AgentAdapter,
+  type AgentInvocation,
+  type AgentResult,
+  type SessionLedger,
+  type SessionLedgerQuery,
+} from "./common.ts";
 
 type Tokens = { input?: number; output?: number; reasoning?: number; cache?: { read?: number; write?: number } };
 type Event = {
@@ -50,6 +66,7 @@ export type OpencodeUsage = {
   promptTokens: number;
   completionTokens: number;
   cachedPromptTokens: number;
+  cachedWriteTokens: number;
   reasoningTokens: number;
   reportedCostUsd: number | null;
   sessionRef: string | null;
@@ -88,6 +105,7 @@ export function parseEvents(stdout: string): OpencodeUsage {
     promptTokens: 0,
     completionTokens: 0,
     cachedPromptTokens: 0,
+    cachedWriteTokens: 0,
     reasoningTokens: 0,
     reportedCostUsd: null,
     sessionRef: null,
@@ -143,6 +161,7 @@ export function parseEvents(stdout: string): OpencodeUsage {
       usage.completionTokens += t?.output ?? 0;
       usage.reasoningTokens += t?.reasoning ?? 0;
       usage.cachedPromptTokens += t?.cache?.read ?? 0;
+      usage.cachedWriteTokens += t?.cache?.write ?? 0;
       if (typeof ev.part?.cost === "number") {
         usage.reportedCostUsd = (usage.reportedCostUsd ?? 0) + ev.part.cost;
         sawCost = true;
@@ -154,6 +173,24 @@ export function parseEvents(stdout: string): OpencodeUsage {
 }
 
 const OPENCODE_BIN = process.env["OPENCODE_BIN"] ?? "opencode";
+
+/**
+ * Where opencode's SQLite store lives for a given attempt.
+ *
+ * A sandboxed run does not write to this machine's opencode database: the
+ * bubblewrap profile binds `<dir>/.agent-state/data` over `~/.local/share/opencode`
+ * so the session store is attempt-local (that is what makes `--session` resume
+ * work across rounds without leaking the host's 80 other sessions into the
+ * model's project scan). So the ledger has to be looked up where the run actually
+ * put it, and `opencode export` on the host would find nothing.
+ */
+function ledgerPath(query: SessionLedgerQuery): string {
+  if (query.sandbox === "bubblewrap") {
+    return join(query.dir, ".agent-state", "data", "opencode.db");
+  }
+  const hostData = process.env["XDG_DATA_HOME"] ?? join(homedir(), ".local/share");
+  return join(hostData, "opencode", "opencode.db");
+}
 
 let versionCache: string | null = null;
 
@@ -237,6 +274,7 @@ export const opencodeAdapter: AgentAdapter = {
       promptTokens: usage.promptTokens,
       completionTokens: usage.completionTokens,
       cachedPromptTokens: usage.cachedPromptTokens,
+      cachedWriteTokens: usage.cachedWriteTokens,
       reasoningTokens: usage.reasoningTokens,
       reportedCostUsd: usage.reportedCostUsd,
       sessionRef: usage.sessionRef,
@@ -247,5 +285,48 @@ export const opencodeAdapter: AgentAdapter = {
       touchedPaths: usage.touchedPaths,
       shellCommands: usage.shellCommands,
     };
+  },
+
+  /**
+   * opencode's own running total for the session — the number its UI shows.
+   *
+   * Read straight out of its SQLite store, read-only, via bun's built-in driver
+   * (the repo has no runtime dependencies and this keeps it that way). The
+   * `session` table carries `cost` and the five token counters as columns, so
+   * this needs no knowledge of its message format.
+   *
+   * Every failure path returns null. This figure exists to audit the event
+   * parsing; it must never be able to turn a finished attempt into an error.
+   */
+  async sessionLedger(query: SessionLedgerQuery): Promise<SessionLedger | null> {
+    const path = ledgerPath(query);
+    if (!existsSync(path)) return null;
+    try {
+      const { Database } = await import("bun:sqlite");
+      const db = new Database(path, { readonly: true });
+      try {
+        const row = db
+          .query(
+            "SELECT cost, tokens_input, tokens_output, tokens_reasoning," +
+              " tokens_cache_read, tokens_cache_write FROM session WHERE id = ?",
+          )
+          .get(query.sessionRef) as Record<string, number> | null;
+        if (!row) return null;
+        return {
+          costUsd: row["cost"] ?? 0,
+          tokens: {
+            input: row["tokens_input"] ?? 0,
+            output: row["tokens_output"] ?? 0,
+            reasoning: row["tokens_reasoning"] ?? 0,
+            cacheRead: row["tokens_cache_read"] ?? 0,
+            cacheWrite: row["tokens_cache_write"] ?? 0,
+          },
+        };
+      } finally {
+        db.close();
+      }
+    } catch {
+      return null;
+    }
   },
 };

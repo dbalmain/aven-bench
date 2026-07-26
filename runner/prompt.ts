@@ -188,3 +188,65 @@ export function buildRepairPrompt(inputs: RepairInputs): string {
 
   return `${parts.join("\n\n")}\n`;
 }
+
+/**
+ * The exit interview: one question, asked after the verdict is already recorded.
+ *
+ * Rationale, because this is experiment design and not a nicety. The ranked tails
+ * say *where* Aven is much worse; they never say why. The model that just spent
+ * four rounds fighting the checker is the only witness, and asking it is far
+ * cheaper than inferring the cause from diagnostic-code frequencies.
+ *
+ * Four choices in the wording, each guarding a way this could produce garbage:
+ *
+ *  - **"already been scored"** — otherwise the answer is written to influence a
+ *    grader, and what comes back is flattery or a plea rather than a complaint.
+ *  - **One** change, in prose, capped. An unbounded "what would you improve"
+ *    returns a tidy essay covering everything, which cannot be ranked. Forcing a
+ *    single pick is what makes counting across attempts mean something.
+ *  - **"nothing, this was straightforward" is offered explicitly.** A model asked
+ *    for a criticism will invent one. Without a licensed null answer the easy
+ *    tasks manufacture findings and swamp the real ones.
+ *  - **Asked on the control arm too, identically.** A complaint about Aven only
+ *    counts against the rate at which the same model complains about Python. That
+ *    baseline is the whole reason this is worth recording rather than reading.
+ *
+ * The response is **untrusted model output**. It is stored as data and quoted in
+ * analysis; nothing in the runner may act on its contents.
+ */
+export type SurveyInputs = {
+  adapter: LangAdapter;
+  /** Whether the solve loop ended green — the model is told, so it can be candid. */
+  passed: boolean;
+  /** Rounds the model actually used, for the same reason. */
+  roundsUsed: number;
+};
+
+export const SURVEY_WORD_LIMIT = 150;
+
+export function buildSurveyPrompt(inputs: SurveyInputs): string {
+  const { adapter } = inputs;
+  const verdict = inputs.passed
+    ? "Your solution passed."
+    : "Your solution did not pass, and there are no rounds left.";
+  return (
+    [
+      `${verdict} The exercise is over and the result has already been recorded — nothing you write now changes it.`,
+      "",
+      "One last question, for language-design research rather than for scoring:",
+      "",
+      `**What is the single change to ${adapter.displayName} — either to the language itself, or to` +
+        ` the documentation you were given — that would have made this task easier?**`,
+      "",
+      `Answer in prose, in at most ${SURVEY_WORD_LIMIT} words. Pick exactly one thing and be` +
+        " concrete: name the construct, the error message, or the specific thing you looked for in" +
+        " the documentation and could not find. Prefer whatever actually cost you time here over" +
+        " what would be nice in general.",
+      "",
+      'If the honest answer is "nothing, this was straightforward", say that instead — it is a' +
+        " useful answer and inventing a complaint is not.",
+      "",
+      "Do not create, edit or delete any files. Do not run any commands.",
+    ].join("\n") + "\n"
+  );
+}

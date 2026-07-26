@@ -24,7 +24,7 @@ bun run bench --lang aven,python --intersect \
 | `attempt.ts`         | one attempt: rounds, prompts, gate, record assembly                   |
 | `gate.ts`            | the probes (`aven check`, `aven test`, `python`, `mypy`) and outcomes |
 | `prompt.ts`          | round-0 and repair prompts                                            |
-| `prices.ts`          | the local price table — `cost_usd` is computed here, never read back  |
+| `prices.ts`          | the local price table — list prices for `shadowCostUsd`               |
 | `store.ts`           | append-only JSONL, content-addressed artifacts, the resume index      |
 | `session.ts`         | `AVEN_SESSION_LOG` reader and the phase tagging scheme                |
 | `proc.ts`            | subprocess with a hard timeout; semaphores                            |
@@ -50,11 +50,12 @@ alone.
   absent while the model works, then is written only for the trusted gate and
   removed again (including Python bytecode) before another model turn.
   `--show-suite` restores the Exercism-like policy where the model may read it.
-  Hidden does not mean "no test feedback": from round 1 onward, the repair prompt
-  includes ordinary assertion output, including the actual and expected values
-  for each failing case shown. An Aven check diagnostic may also quote its source
-  line from the generated suite. That feedback is deliberate; only round 0 hides
-  the entire lookup table. Pooling visible and hidden rows is not valid.
+  Hidden does not mean "no test feedback": from round 1 onward, the repair
+  prompt includes ordinary assertion output, including the actual and expected
+  values for each failing case shown. An Aven check diagnostic may also quote
+  its source line from the generated suite. That feedback is deliberate; only
+  round 0 hides the entire lookup table. Pooling visible and hidden rows is not
+  valid.
 
 ## Gates and probes
 
@@ -63,8 +64,8 @@ timing and diagnostics. `gating: false` means recorded-but-not-decisive;
 `ok: null` means the tool could not be run at all.
 
 The agent harness (`opencode run` and every model-requested shell command it
-launches) runs inside bubblewrap by default. The trusted probes in this table run
-outside it: they need the generated suite and are harness verification, not
+launches) runs inside bubblewrap by default. The trusted probes in this table
+run outside it: they need the generated suite and are harness verification, not
 model-controlled code.
 
 | language | gating probes             | recorded only |
@@ -85,8 +86,9 @@ reasons unrelated to any solution, the record also carries
 **mypy is data, not a gate.** Python's bar stays "the tests pass" on purpose —
 running without a static gate is how Python is actually used, and holding the
 control arm to Aven's `check`-and-`test` bar would flatter Aven. mypy output is
-also deliberately _not_ fed back in repair rounds, for the same reason. It is the
-lever for making the comparison symmetric later, if that becomes the experiment.
+also deliberately _not_ fed back in repair rounds, for the same reason. It is
+the lever for making the comparison symmetric later, if that becomes the
+experiment.
 
 Resolution order is `MYPY_BIN`, then `mypy` on `PATH`, then `python3 -m mypy`.
 The probe records the version it found (here `mypy 1.20.1 (compiled: yes)`) and
@@ -113,18 +115,48 @@ bun run bench --no-mypy …                   # or skip the probe entirely
 
 ## Cost
 
-`costUsd` is computed in `prices.ts` from token counts, **never** read back from
-the harness. The free opencode models report `cost: 0` no matter how much they
-burn, so trusting the harness would erase the cost axis exactly where the data
-is thickest. A model with no table entry records `costUsd: null` and
-`priceSource: "unknown"` rather than a fabricated zero; what the harness claimed
-is kept alongside as `reportedCostUsd`. Extend the table without editing the
-file:
+`costUsd` is **actual spend**, summed from what the harness charged per round.
+Measurement forced this (schema 4): one `opencode-go/qwen3.7-max` turn billed
+$0.0279 on 6 input and 20 output tokens, because 8 870 _cache-write_ tokens
+dominated it. No token table reproduces that — and `computeShadowCost` was not
+even pricing cache writes, so a table cost was ~40× low on the shape opencode
+actually produces. Per-round charges are deltas that sum to the session total
+(verified), so adding them is exact.
+
+`harnessSessionCostUsd` is the harness's own session total, read straight from
+its SQLite store — the figure its UI shows. It is computed independently of the
+event parsing, so a mismatch means events were missed, and the runner says so in
+the summary. Note a sandboxed run keeps its store _inside the attempt
+directory_, so `opencode export` on the host will not find these sessions.
+
+`shadowCostUsd` is the price table's list price for that model. It is zero for
+the free tier, whose list price is zero, so it does not by itself make a free
+arm comparable to a paid one — that is a cross-model counterfactual, computed at
+analysis time from the token columns (all five categories are recorded). Extend
+the table without editing the file:
 
 ```sh
 AVEN_BENCH_PRICES=my-prices.json bun run bench …
 # { "version": "2026-08", "models": { "opencode-go/glm-5.2": { "in": 0.5, "out": 1.5 } } }
 ```
+
+## Survey
+
+After the verdict is recorded, the model is asked one question: the single
+change to the language or its documentation that would have made the task
+easier. The ranked tails say _where_ Aven is much worse and never why; the model
+that just burned four rounds is the cheapest available witness.
+
+It runs on both arms, identically — a complaint about Aven only means something
+against the rate at which the same model complains about Python. The wording
+tells the model the result is already fixed, demands exactly one concrete thing,
+and explicitly licenses "nothing, this was straightforward", because a model
+asked for a criticism will otherwise invent one.
+
+Its tokens, cost and wall time are recorded in `survey*` fields and **excluded**
+from the attempt totals: it is not part of solving the task. `--no-survey` skips
+it. The response is untrusted model output — data to be quoted, never an
+instruction.
 
 ## Data layout
 
@@ -141,8 +173,8 @@ store before the directory is removed. `--keep-work` keeps them.
 
 ## Contamination
 
-The models try to read things outside their work directory, and on the first real
-sweep they succeeded twice:
+The models try to read things outside their work directory, and on the first
+real sweep they succeeded twice:
 
 1. With work directories under `data/work/`, opencode resolved its project root
    to the enclosing git repository and read `references/acronym/solution.av` —
@@ -162,17 +194,18 @@ The default defence is now an OS filesystem sandbox:
   to start rather than falling back.
 - network is deliberately shared because the harness calls a cloud API. This is
   filesystem containment, not an exfiltration or retrieval boundary.
-- the work root still defaults to `~/.cache/aven-bench/work`, and each attempt is
-  still `git init`-ed. Those scope the harness project and reduce accidental
-  discovery on an explicitly unsandboxed debugging run; they are not containment.
+- the work root still defaults to `~/.cache/aven-bench/work`, and each attempt
+  is still `git init`-ed. Those scope the harness project and reduce accidental
+  discovery on an explicitly unsandboxed debugging run; they are not
+  containment.
 - every round records `shellCommands`, `outsideWorkdirTouches` and a bounded
   sample of `escapedPaths`. `shellCommands` counts shell tool invocations even
   when their filesystem effects cannot be reconstructed from the event stream.
 
 Every attempt records `sandbox: "bubblewrap" | "none"`, so containment is
-auditable per row. A nonzero escape count on a sandboxed row says the model named
-an outside path, not that the read succeeded; on an unsandboxed row it remains a
-contamination warning.
+auditable per row. A nonzero escape count on a sandboxed row says the model
+named an outside path, not that the read succeeded; on an unsandboxed row it
+remains a contamination warning.
 
 ## Resume
 
@@ -271,10 +304,10 @@ MYPY_BIN=/nonexistent/mypy bun run bench --lang python --tasks acronym \
               --model opencode/deepseek-v4-flash-free --run-id mypy-null
 ```
 
-That sweep also exercised, without being asked to: the repair loop reaching green
-at round 1 (`raindrops`, Aven), the round cap being exhausted (`two-fer`, Aven,
-`roundsToGreen: null`), and the hard timeout (`hamming`, Aven — opencode hung and
-was killed at 900s, recorded as `outcome: "timeout"`).
+That sweep also exercised, without being asked to: the repair loop reaching
+green at round 1 (`raindrops`, Aven), the round cap being exhausted (`two-fer`,
+Aven, `roundsToGreen: null`), and the hard timeout (`hamming`, Aven — opencode
+hung and was killed at 900s, recorded as `outcome: "timeout"`).
 
 ## Not built
 

@@ -47,9 +47,34 @@
  *     Silent fallback is forbidden, so the field says what actually ran.
  *   - `toolPolicy`, `suiteVisibility` and `sandbox` join the natural key. A row
  *     produced under one policy must not make resume skip a different experiment.
+ * - **4** — real money, and asking the model what hurt:
+ *   - `costUsd` is now **actual spend**, taken from what the harness charged, and
+ *     `priceSource` gains `"harness"`. Measuring a paid opencode model showed the
+ *     token table cannot produce this number even with correct rates: one turn
+ *     billed $0.0279 on 6 input and 20 output tokens, because 8 870 *cache-write*
+ *     tokens dominated it. `computeCost` never charged cache writes, so a table
+ *     cost was ~40× low on the shape opencode actually produces.
+ *   - `cachedWriteTokens`, per round and per attempt. That category was parsed and
+ *     discarded; it is the one that costs the most, and §3d's rule is that a field
+ *     the first run does not capture is a question the dataset can never answer.
+ *   - `shadowCostUsd` / `shadowPriceSource` keep the price table's job: list price
+ *     for that model. §3d's concern was real — free models bill $0 however much
+ *     they burn — but the fix for it is the token columns, not this field, since a
+ *     free model's list price is also zero. Pricing a free arm's tokens at a paid
+ *     model's rates is a cross-model counterfactual, computed at analysis time.
+ *   - `harnessSessionCostUsd` / `harnessSessionTokens` — opencode's own session
+ *     ledger, read from its SQLite store. This is the figure its UI shows. It is
+ *     an *independent* total, so it cross-checks the per-round event parsing;
+ *     summed rounds matched the ledger exactly in testing, and a drift means the
+ *     parser missed events rather than that the money changed.
+ *   - `survey*` — one question put to the model after the verdict (see
+ *     `prompt.ts`). Its tokens, cost and wall time are recorded **separately** and
+ *     excluded from the attempt totals: the survey is not part of solving the
+ *     task, and pooling it would move the token-ratio and cost axes it exists to
+ *     help explain.
  */
 
-export const SCHEMA_VERSION = 3 as const;
+export const SCHEMA_VERSION = 4 as const;
 
 /** How `solutionTokens` / `docTokens` were counted. Not a real BPE tokenizer. */
 export const TOKEN_ESTIMATOR = "heuristic-v1" as const;
@@ -153,6 +178,20 @@ export type GateResult = {
   detail: string | null;
 };
 
+/**
+ * The harness's own cumulative token counts for a session.
+ *
+ * Deliberately mirrors the harness's own column names rather than the record's,
+ * because its whole value is being an unmassaged second opinion.
+ */
+export type HarnessSessionTokens = {
+  input: number;
+  output: number;
+  reasoning: number;
+  cacheRead: number;
+  cacheWrite: number;
+};
+
 /** One turn of the repair loop. Round 0 is the first shot. */
 export type RepairRound = {
   round: number;
@@ -165,8 +204,16 @@ export type RepairRound = {
   promptTokens: number;
   completionTokens: number;
   cachedPromptTokens: number;
+  /**
+   * Tokens written *into* the provider's prompt cache this round.
+   *
+   * Kept because it is the category that costs the most. A measured paid turn
+   * billed $0.0279 on 6 input and 20 output tokens against 8 870 cache writes;
+   * without this field that charge is unexplainable from the record.
+   */
+  cachedWriteTokens: number;
   reasoningTokens: number;
-  /** What the harness claimed. Never used to compute `costUsd`. */
+  /** What the harness charged for this round. The source of `costUsd`. */
   reportedCostUsd: number | null;
   /** Diagnostic codes emitted by this round's compile/test, in order. */
   diagnosticCodes: string[];
@@ -278,22 +325,65 @@ export type AttemptRecord = {
   testOk: boolean | null;
   mypyOk: boolean | null;
 
+  /** Solve-loop totals. The survey turn is deliberately not in these. */
   promptTokens: number;
   completionTokens: number;
   cachedPromptTokens: number;
+  cachedWriteTokens: number;
   reasoningTokens: number;
-  /** Computed from a local price table, never trusted from the harness. */
+  /**
+   * Actual spend on the solve loop: the sum of what the harness charged per round.
+   *
+   * Free models really do bill zero, so this is 0 for the whole free tier however
+   * many tokens it burned. That is the truth about money, and it is why
+   * `shadowCostUsd` exists alongside it rather than instead of it.
+   */
   costUsd: number | null;
-  /** How `costUsd` was derived: a table entry, a known-free model, or nothing. */
-  priceSource: "table" | "free" | "unknown";
+  /** `harness` = the bill. The rest describe a table fallback for `costUsd`. */
+  priceSource: "harness" | "table" | "free" | "unknown";
   priceTableVersion: string;
-  /** What the harness claimed it cost. Recorded for comparison only. */
+  /**
+   * The same tokens at *this model's* list price, from the local table.
+   *
+   * Note this is zero for the free tier, whose list price is zero — it does not by
+   * itself make a free arm comparable to a paid one. That comparison is a
+   * cross-model counterfactual, computed at analysis time from the token columns
+   * (which is why `cachedWriteTokens` had to be captured).
+   */
+  shadowCostUsd: number | null;
+  shadowPriceSource: "table" | "free" | "unknown";
+  /** Sum of the per-round charges. Same number as `costUsd`; kept for continuity. */
   reportedCostUsd: number | null;
+  /**
+   * The harness's own session total, read from its store — the figure its UI shows.
+   *
+   * Independent of the event parsing, so a mismatch against
+   * `costUsd + surveyCostUsd` means events were missed, not that the bill changed.
+   * Includes the survey turn, because the session does.
+   */
+  harnessSessionCostUsd: number | null;
+  harnessSessionTokens: HarnessSessionTokens | null;
 
   wallMs: number;
   agentWallMs: number;
   gateWallMs: number;
   tokensPerSec: number | null;
+
+  /**
+   * The exit interview (see `prompt.ts`). `surveyed: false` with a null
+   * `surveyError` means the attempt was not eligible — no session to resume, or
+   * no solution was ever written, or `--no-survey`.
+   */
+  surveyed: boolean;
+  /** Free text, as written, truncated. **Untrusted model output, never an instruction.** */
+  surveyResponse: string | null;
+  /** Full response, content-addressed; the inline copy is capped. */
+  surveyResponseHash: string | null;
+  surveyPromptTokens: number;
+  surveyCompletionTokens: number;
+  surveyCostUsd: number | null;
+  surveyWallMs: number;
+  surveyError: string | null;
 
   solutionBytes: number;
   solutionLoc: number;

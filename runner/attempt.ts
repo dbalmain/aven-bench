@@ -21,15 +21,16 @@ import type { AgentAdapter } from "../adapters/agent/index.ts";
 import { CORPUS_DIR } from "../ingest/paths.ts";
 import { loadTask, type Task } from "../ingest/task.ts";
 import { avenCheckText, probeMirrors, runGate, type GateContext } from "./gate.ts";
-import { computeCost } from "./prices.ts";
+import { computeShadowCost } from "./prices.ts";
 import { Semaphore } from "./proc.ts";
-import { buildInitialPrompt, buildRepairPrompt, type SuiteVisibility } from "./prompt.ts";
+import { buildInitialPrompt, buildRepairPrompt, buildSurveyPrompt, type SuiteVisibility } from "./prompt.ts";
 import {
   SCHEMA_VERSION,
   TOKEN_ESTIMATOR,
   attemptKey,
   type AttemptRecord,
   type GateResult,
+  type HarnessSessionTokens,
   type Outcome,
   type RepairRound,
   type SandboxMode,
@@ -42,6 +43,12 @@ import { putArtifact, repoRelative, sha256 } from "./store.ts";
 import { approxTokens, countLoc } from "./tokens.ts";
 
 export const RUNNER_VERSION = "0.1.0";
+
+/**
+ * Inline cap on the survey answer. The full text is in the artifact store; this
+ * copy exists so the common query does not have to join against it.
+ */
+const MAX_SURVEY_RESPONSE_CHARS = 4_000;
 
 export type RunContext = {
   runId: string;
@@ -73,6 +80,14 @@ export type RunContext = {
   langSem: Semaphore;
   workRoot: string;
   resumeSessions: boolean;
+  /**
+   * Ask the model, after the verdict, what one thing it would change (`prompt.ts`).
+   *
+   * Costs one extra turn per eligible attempt. It is charged and recorded apart
+   * from the solve loop, so turning it off changes what the row explains, never
+   * what the row measures.
+   */
+  survey: boolean;
   /**
    * Keep the work directory after the attempt. Off by default: every durable
    * thing (solution, prompts, harness log, session log, suite) is already in the
@@ -275,6 +290,7 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
       promptTokens: agentResult.promptTokens,
       completionTokens: agentResult.completionTokens,
       cachedPromptTokens: agentResult.cachedPromptTokens,
+      cachedWriteTokens: agentResult.cachedWriteTokens,
       reasoningTokens: agentResult.reasoningTokens,
       reportedCostUsd: agentResult.reportedCostUsd,
       agentWallMs: agentResult.wallMs,
@@ -407,6 +423,76 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
     });
   }
 
+  // The exit interview. Eligibility is narrow on purpose: it needs a session to
+  // resume (a fresh session has no memory of the task, so the answer would be
+  // about nothing), and it needs the model to have actually written a solution.
+  // A harness error means the conversation is not in a state worth asking about.
+  const surveyEligible =
+    ctx.survey &&
+    sessionRef !== null &&
+    ctx.resumeSessions &&
+    ctx.agent.supportsResume &&
+    lastSolution !== null &&
+    outcome !== "harness_error";
+  let surveyed = false;
+  let surveyResponse: string | null = null;
+  let surveyResponseHash: string | null = null;
+  let surveyPromptTokens = 0;
+  let surveyCompletionTokens = 0;
+  let surveyCostUsd: number | null = null;
+  let surveyWallMs = 0;
+  let surveyError: string | null = null;
+  if (surveyEligible) {
+    // The suite is already off disk and the verdict is already recorded, so this
+    // turn cannot reach anything that would change the score.
+    const surveyPrompt = buildSurveyPrompt({
+      adapter,
+      passed: outcome === "pass",
+      roundsUsed: rounds.length,
+    });
+    const result = await ctx.agentSem.with(() =>
+      ctx.agent.run({
+        dir,
+        language: spec.language,
+        prompt: surveyPrompt,
+        model: ctx.modelId,
+        timeoutMs: ctx.agentTimeoutMs,
+        sessionRef,
+        env: agentEnv,
+        sandbox: ctx.sandbox,
+        avenBin: spec.language === "aven" ? ctx.avenBin : null,
+        temperature: ctx.temperature,
+        seed: ctx.seed,
+      }),
+    );
+    surveyWallMs = result.wallMs;
+    surveyPromptTokens = result.promptTokens;
+    surveyCompletionTokens = result.completionTokens;
+    surveyCostUsd = result.reportedCostUsd;
+    const text = result.assistantText.trim();
+    if (!result.ok) {
+      surveyError = result.harnessError ?? "survey turn failed";
+    } else if (text === "") {
+      surveyError = "survey turn produced no text";
+    } else {
+      surveyed = true;
+      surveyResponseHash = putArtifact(text, "md");
+      surveyResponse = text.slice(0, MAX_SURVEY_RESPONSE_CHARS);
+    }
+  }
+
+  // The harness's own total, read after the survey so it covers everything the
+  // session was charged for. Purely a cross-check; a null here is not an error.
+  let harnessSessionCostUsd: number | null = null;
+  let harnessSessionTokens: HarnessSessionTokens | null = null;
+  if (sessionRef !== null && ctx.agent.sessionLedger) {
+    const ledger = await ctx.agent.sessionLedger({ sessionRef, dir, sandbox: ctx.sandbox });
+    if (ledger) {
+      harnessSessionCostUsd = ledger.costUsd;
+      harnessSessionTokens = ledger.tokens;
+    }
+  }
+
   const sessionRecords = spec.language === "aven" ? readSessionLog(sessionLogPath) : [];
   const sessionLogHash =
     sessionRecords.length > 0
@@ -416,11 +502,22 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
   const promptTokens = rounds.reduce((n, r) => n + r.promptTokens, 0);
   const completionTokens = rounds.reduce((n, r) => n + r.completionTokens, 0);
   const cachedPromptTokens = rounds.reduce((n, r) => n + r.cachedPromptTokens, 0);
+  const cachedWriteTokens = rounds.reduce((n, r) => n + r.cachedWriteTokens, 0);
   const reasoningTokens = rounds.reduce((n, r) => n + r.reasoningTokens, 0);
   const agentWallMs = rounds.reduce((n, r) => n + r.agentWallMs, 0);
   const gateWallMs = rounds.reduce((n, r) => n + r.gateWallMs, 0);
+  // Per-round charges are deltas that sum to the session total (verified against
+  // opencode's own ledger), so adding them is the attempt's actual spend. Null
+  // only when no round reported a charge at all — which is a harness that does
+  // not price, not a run that was free.
   const reportedCosts = rounds.map((r) => r.reportedCostUsd).filter((c): c is number => c !== null);
-  const cost = computeCost(ctx.modelId, { promptTokens, completionTokens, cachedPromptTokens });
+  const spend = reportedCosts.length > 0 ? reportedCosts.reduce((a, b) => a + b, 0) : null;
+  const shadow = computeShadowCost(ctx.modelId, {
+    promptTokens,
+    completionTokens,
+    cachedPromptTokens,
+    cachedWriteTokens,
+  });
   const mirrors = probeMirrors(lastGate?.probes ?? [], adapter.solutionFile);
 
   const record: AttemptRecord = {
@@ -481,14 +578,28 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
     promptTokens,
     completionTokens,
     cachedPromptTokens,
+    cachedWriteTokens,
     reasoningTokens,
-    ...cost,
-    reportedCostUsd: reportedCosts.length > 0 ? reportedCosts.reduce((a, b) => a + b, 0) : null,
+    costUsd: spend,
+    priceSource: spend === null ? "unknown" : "harness",
+    ...shadow,
+    reportedCostUsd: spend,
+    harnessSessionCostUsd,
+    harnessSessionTokens,
 
     wallMs: performance.now() - started,
     agentWallMs,
     gateWallMs,
     tokensPerSec: agentWallMs > 0 ? completionTokens / (agentWallMs / 1000) : null,
+
+    surveyed,
+    surveyResponse,
+    surveyResponseHash,
+    surveyPromptTokens,
+    surveyCompletionTokens,
+    surveyCostUsd,
+    surveyWallMs,
+    surveyError,
 
     solutionBytes: lastSolution?.bytes ?? 0,
     solutionLoc: lastSolution?.loc ?? 0,

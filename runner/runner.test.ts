@@ -24,9 +24,9 @@ import {
   parseAvenCheck,
   probeMirrors,
 } from "./gate.ts";
-import { computeCost, resetPriceTableCache, type PriceTable } from "./prices.ts";
+import { computeShadowCost, resetPriceTableCache, type PriceTable } from "./prices.ts";
 import { runProcess, Semaphore } from "./proc.ts";
-import { buildInitialPrompt, buildRepairPrompt, summarizeCaseMessage } from "./prompt.ts";
+import { buildInitialPrompt, buildRepairPrompt, buildSurveyPrompt, summarizeCaseMessage } from "./prompt.ts";
 import { enclosingRepo, parseArgv } from "./run.ts";
 import { bubblewrapCommand, sandboxAvailability } from "./sandbox.ts";
 import { DEFAULT_WORK_ROOT, isInside, runAttempt, type RunContext } from "./attempt.ts";
@@ -113,11 +113,24 @@ function record(over: Partial<AttemptRecord> = {}): AttemptRecord {
     promptTokens: 10,
     completionTokens: 5,
     cachedPromptTokens: 0,
+    cachedWriteTokens: 0,
     reasoningTokens: 0,
     costUsd: 0,
-    priceSource: "free",
+    priceSource: "harness",
     priceTableVersion: "test",
+    shadowCostUsd: 0,
+    shadowPriceSource: "free",
     reportedCostUsd: 0,
+    harnessSessionCostUsd: null,
+    harnessSessionTokens: null,
+    surveyed: false,
+    surveyResponse: null,
+    surveyResponseHash: null,
+    surveyPromptTokens: 0,
+    surveyCompletionTokens: 0,
+    surveyCostUsd: null,
+    surveyWallMs: 0,
+    surveyError: null,
     wallMs: 1,
     agentWallMs: 1,
     gateWallMs: 0,
@@ -170,29 +183,47 @@ describe("token estimation", () => {
 
 // --- price table -----------------------------------------------------------
 
-describe("cost", () => {
+describe("shadow cost", () => {
   const table: PriceTable = {
     version: "test",
     models: {
       "free/model": { in: 0, out: 0 },
-      "paid/model": { in: 1, out: 10, cacheReadIn: 0.1 },
+      "paid/model": { in: 1, out: 10, cacheReadIn: 0.1, cacheWriteIn: 1.25 },
     },
   };
+  const zero = { promptTokens: 0, completionTokens: 0, cachedPromptTokens: 0, cachedWriteTokens: 0 };
 
   test.each([
-    ["free/model", { promptTokens: 1_000_000, completionTokens: 1_000_000, cachedPromptTokens: 0 }, 0, "free"],
-    ["paid/model", { promptTokens: 1_000_000, completionTokens: 100_000, cachedPromptTokens: 0 }, 2, "table"],
-    ["paid/model", { promptTokens: 0, completionTokens: 0, cachedPromptTokens: 1_000_000 }, 0.1, "table"],
-  ] as const)("%s prices from the table, not the harness", (model, tokens, expected, source) => {
-    const cost = computeCost(model, tokens, table);
-    expect(cost.costUsd).toBeCloseTo(expected, 9);
-    expect(cost.priceSource).toBe(source);
+    ["free/model", { ...zero, promptTokens: 1_000_000, completionTokens: 1_000_000 }, 0, "free"],
+    ["paid/model", { ...zero, promptTokens: 1_000_000, completionTokens: 100_000 }, 2, "table"],
+    ["paid/model", { ...zero, cachedPromptTokens: 1_000_000 }, 0.1, "table"],
+    ["paid/model", { ...zero, cachedWriteTokens: 1_000_000 }, 1.25, "table"],
+  ] as const)("%s prices each token category at its own rate", (model, tokens, expected, source) => {
+    const cost = computeShadowCost(model, tokens, table);
+    expect(cost.shadowCostUsd).toBeCloseTo(expected, 9);
+    expect(cost.shadowPriceSource).toBe(source);
+  });
+
+  /**
+   * The regression that motivated schema 4. A real qwen3.7-max turn billed
+   * $0.02788375 on 6 input, 20 output and 8 870 cache-write tokens. Before cache
+   * writes were priced, the dominant term was silently dropped.
+   */
+  test("cache writes dominate a real paid turn and must not be dropped", () => {
+    const measured = { promptTokens: 6, completionTokens: 20, cachedPromptTokens: 0, cachedWriteTokens: 8_870 };
+    const withWrites = computeShadowCost("paid/model", measured, table).shadowCostUsd ?? 0;
+    const withoutWrites = computeShadowCost(
+      "paid/model",
+      { ...measured, cachedWriteTokens: 0 },
+      table,
+    ).shadowCostUsd ?? 0;
+    expect(withWrites).toBeGreaterThan(withoutWrites * 20);
   });
 
   test("a model with no entry records null, never a fabricated zero", () => {
-    const cost = computeCost("mystery/model", { promptTokens: 99, completionTokens: 99, cachedPromptTokens: 0 }, table);
-    expect(cost.costUsd).toBeNull();
-    expect(cost.priceSource).toBe("unknown");
+    const cost = computeShadowCost("mystery/model", { ...zero, promptTokens: 99, completionTokens: 99 }, table);
+    expect(cost.shadowCostUsd).toBeNull();
+    expect(cost.shadowPriceSource).toBe("unknown");
   });
 
   test("the built-in table prices every free opencode model at zero", () => {
@@ -206,9 +237,14 @@ describe("cost", () => {
       "opencode/north-mini-code-free",
       "opencode/big-pickle",
     ]) {
-      const cost = computeCost(model, { promptTokens: 5_000, completionTokens: 500, cachedPromptTokens: 100 });
-      expect(cost.costUsd).toBe(0);
-      expect(cost.priceSource).toBe("free");
+      const cost = computeShadowCost(model, {
+        promptTokens: 5_000,
+        completionTokens: 500,
+        cachedPromptTokens: 100,
+        cachedWriteTokens: 100,
+      });
+      expect(cost.shadowCostUsd).toBe(0);
+      expect(cost.shadowPriceSource).toBe("free");
     }
   });
 });
@@ -244,6 +280,41 @@ describe("opencode --format json", () => {
     expect(usage.sessionRef).toBe("ses_1");
     expect(usage.assistantText).toBe("Done.\n");
     expect(usage.errors).toEqual([]);
+  });
+
+  /**
+   * Verbatim from a paid `opencode-go/qwen3.7-max` session: two turns whose costs
+   * are deltas summing to the $0.03271125 the harness reported for the session, on
+   * a token shape where cache writes dwarf everything else. Both properties are
+   * load-bearing — rounds are summed, and cache writes are what get billed.
+   */
+  test("real paid turns: costs are summable deltas and cache writes are kept", () => {
+    const paid = [
+      JSON.stringify({
+        type: "step_finish",
+        sessionID: "ses_062029af3ffeZ664qMnv6qe5S7",
+        part: {
+          type: "step-finish",
+          tokens: { total: 8896, input: 6, output: 20, reasoning: 0, cache: { write: 8870, read: 0 } },
+          cost: 0.02788375,
+        },
+      }),
+      JSON.stringify({
+        type: "step_finish",
+        sessionID: "ses_062029af3ffeZ664qMnv6qe5S7",
+        part: {
+          type: "step-finish",
+          tokens: { total: 8952, input: 6, output: 42, reasoning: 0, cache: { write: 20, read: 8870 } },
+          cost: 0.0048275,
+        },
+      }),
+    ].join("\n");
+    const usage = parseEvents(paid);
+    expect(usage.cachedWriteTokens).toBe(8890);
+    expect(usage.cachedPromptTokens).toBe(8870);
+    expect(usage.reportedCostUsd).toBeCloseTo(0.03271125, 9);
+    // The charge is not explainable from input+output alone; that is the whole point.
+    expect(usage.promptTokens + usage.completionTokens).toBe(74);
   });
 
   test("tool paths are collected, which is how work-directory escapes are caught", () => {
@@ -582,6 +653,7 @@ describe("hidden suite (the default)", () => {
       langSem: new Semaphore(1),
       workRoot,
       resumeSessions: false,
+      survey: true,
       keepWork: true,
     };
   }
@@ -623,6 +695,113 @@ describe("hidden suite (the default)", () => {
     const record = await runAttempt(ctx, spec);
     expect(seen[0]).toContain("solution_test.py");
     expect(record.suiteVisibility).toBe("visible");
+  });
+
+  /**
+   * The survey exists to explain the ranked tails, so the thing that must hold is
+   * that it cannot move them: its tokens, cost and wall time stay out of the solve
+   * totals, and it happens after the verdict is fixed.
+   */
+  describe("post-verdict survey", () => {
+    /** Resumable spy: writes a solution each round, then answers the survey. */
+    function surveyAgent(solution: string): { adapter: AgentAdapter; prompts: string[] } {
+      const prompts: string[] = [];
+      const adapter: AgentAdapter = {
+        id: "spy",
+        supportsResume: true,
+        version: async () => "spy",
+        available: async () => ({ ok: true, detail: "spy" }),
+        run: async (inv) => {
+          prompts.push(inv.prompt);
+          const surveying = inv.prompt.includes("language-design research");
+          if (!surveying) await Bun.write(join(inv.dir, "solution.py"), solution);
+          return emptyResult({
+            ok: true,
+            promptTokens: surveying ? 500 : 1,
+            completionTokens: surveying ? 70 : 1,
+            reportedCostUsd: surveying ? 0.004 : 0.01,
+            sessionRef: "ses_spy",
+            assistantText: surveying ? "Pattern matching on optional arguments was hard to find." : "",
+            wallMs: surveying ? 900 : 1,
+          });
+        },
+      };
+      return { adapter, prompts };
+    }
+
+    const right = 'def two_fer(name=None):\n    return f"One for {name or \'you\'}, one for me."\n';
+
+    test("is asked after the verdict and accounted separately from the solve loop", async () => {
+      const workRoot = mkdtempSync(join(tmpdir(), "aven-bench-survey-"));
+      const { adapter, prompts } = surveyAgent(right);
+      const ctx = { ...context(adapter, workRoot, 0), resumeSessions: true };
+      const record = await runAttempt(ctx, spec);
+
+      // One solve round, then exactly one survey turn.
+      expect(record.roundsUsed).toBe(1);
+      expect(prompts).toHaveLength(2);
+      expect(prompts[1]).toContain("already been recorded");
+      expect(prompts[1]).toContain("Python");
+
+      expect(record.outcome).toBe("pass");
+      expect(record.surveyed).toBe(true);
+      expect(record.surveyResponse).toContain("optional arguments");
+      expect(record.surveyResponseHash).not.toBeNull();
+      expect(record.surveyError).toBeNull();
+
+      // The separation that matters: survey usage is not in the solve totals.
+      expect(record.surveyCompletionTokens).toBe(70);
+      expect(record.completionTokens).toBe(1);
+      expect(record.promptTokens).toBe(1);
+      expect(record.surveyCostUsd).toBeCloseTo(0.004, 9);
+      expect(record.costUsd).toBeCloseTo(0.01, 9);
+      expect(record.priceSource).toBe("harness");
+      expect(record.agentWallMs).toBe(1);
+      expect(record.surveyWallMs).toBe(900);
+    });
+
+    test("--no-survey leaves the fields empty without touching the verdict", async () => {
+      const workRoot = mkdtempSync(join(tmpdir(), "aven-bench-nosurvey-"));
+      const { adapter, prompts } = surveyAgent(right);
+      const ctx = { ...context(adapter, workRoot, 0), resumeSessions: true, survey: false };
+      const record = await runAttempt(ctx, spec);
+      expect(prompts).toHaveLength(1);
+      expect(record.outcome).toBe("pass");
+      expect(record.surveyed).toBe(false);
+      expect(record.surveyResponse).toBeNull();
+      expect(record.surveyError).toBeNull();
+      expect(record.surveyCostUsd).toBeNull();
+    });
+
+    test("a model that writes nothing is not surveyed about it", async () => {
+      const workRoot = mkdtempSync(join(tmpdir(), "aven-bench-refusal-"));
+      const prompts: string[] = [];
+      const adapter: AgentAdapter = {
+        id: "spy",
+        supportsResume: true,
+        version: async () => "spy",
+        available: async () => ({ ok: true, detail: "spy" }),
+        run: async (inv) => {
+          prompts.push(inv.prompt);
+          return emptyResult({ ok: true, sessionRef: "ses_spy", assistantText: "I would rather not.", wallMs: 1 });
+        },
+      };
+      const record = await runAttempt({ ...context(adapter, workRoot, 0), resumeSessions: true }, spec);
+      expect(record.outcome).toBe("refusal");
+      expect(prompts).toHaveLength(1);
+      expect(record.surveyed).toBe(false);
+    });
+
+    test("the question offers a licensed null answer, so easy tasks stop inventing findings", () => {
+      const adapter = adapterFor("python");
+      const prompt = buildSurveyPrompt({ adapter, passed: true, roundsUsed: 1 });
+      expect(prompt).toContain("nothing, this was straightforward");
+      expect(prompt).toContain("single change");
+      // Asked identically on the control arm; that baseline is the point.
+      expect(buildSurveyPrompt({ adapter: adapterFor("aven"), passed: false, roundsUsed: 3 })).toContain(
+        "no rounds left",
+      );
+    });
   });
 });
 

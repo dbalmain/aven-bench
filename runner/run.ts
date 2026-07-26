@@ -130,6 +130,7 @@ experiment
   --temperature F  --seed N    recorded; passed through where the harness supports it
   --no-mypy                    skip the (non-gating) mypy probe on the Python arm
   --no-resume-sessions         each repair round starts a fresh harness session
+  --no-survey                  skip the post-verdict "what would you change" turn
 
 execution
   --no-sandbox                 run the model harness without bubblewrap (debugging only)
@@ -274,6 +275,7 @@ async function main(): Promise<number> {
   const intersect = bool(args, "intersect", false);
   const mypy = bool(args, "mypy", true);
   const resumeSessions = bool(args, "resume-sessions", true);
+  const survey = bool(args, "survey", true);
   const keepWork = bool(args, "keep-work", false);
   const retryHarnessErrors = bool(args, "retry-harness-errors", false);
   const runId = args.flags.get("run-id") ?? new Date().toISOString().replace(/[:.]/g, "-");
@@ -468,6 +470,7 @@ async function main(): Promise<number> {
       langSem,
       workRoot,
       resumeSessions,
+      survey,
       keepWork,
     };
     if (doc) putArtifact(doc, "md");
@@ -565,15 +568,28 @@ function harnessErrorRecord(ctx: RunContext, spec: AttemptSpec, err: unknown): A
     promptTokens: 0,
     completionTokens: 0,
     cachedPromptTokens: 0,
+    cachedWriteTokens: 0,
     reasoningTokens: 0,
     costUsd: null,
     priceSource: "unknown",
     priceTableVersion: priceTable().version,
+    shadowCostUsd: null,
+    shadowPriceSource: "unknown",
     reportedCostUsd: null,
+    harnessSessionCostUsd: null,
+    harnessSessionTokens: null,
     wallMs: 0,
     agentWallMs: 0,
     gateWallMs: 0,
     tokensPerSec: null,
+    surveyed: false,
+    surveyResponse: null,
+    surveyResponseHash: null,
+    surveyPromptTokens: 0,
+    surveyCompletionTokens: 0,
+    surveyCostUsd: null,
+    surveyWallMs: 0,
+    surveyError: null,
     solutionBytes: 0,
     solutionLoc: 0,
     solutionTokens: 0,
@@ -596,6 +612,15 @@ function summarize(records: AttemptRecord[]): void {
   const green = records.filter((r) => r.roundsToGreen !== null);
   const cost = records.reduce((n, r) => n + (r.costUsd ?? 0), 0);
   const unknownCost = records.filter((r) => r.costUsd === null).length;
+  const surveyCost = records.reduce((n, r) => n + (r.surveyCostUsd ?? 0), 0);
+  const surveyed = records.filter((r) => r.surveyed).length;
+  const surveyFailed = records.filter((r) => r.surveyError !== null).length;
+  // A drift here means the event parsing missed charges, not that the bill moved.
+  const drifted = records.filter(
+    (r) =>
+      r.harnessSessionCostUsd !== null &&
+      Math.abs(r.harnessSessionCostUsd - ((r.costUsd ?? 0) + (r.surveyCostUsd ?? 0))) > 1e-6,
+  ).length;
 
   console.log("\n--- summary ---");
   for (const [outcome, n] of [...byOutcome].sort((a, b) => b[1] - a[1])) {
@@ -611,8 +636,18 @@ function summarize(records: AttemptRecord[]): void {
     }
   }
   console.log(
-    `  cost           $${cost.toFixed(6)}` + (unknownCost > 0 ? `  (${unknownCost} row(s) with no price entry)` : ""),
+    `  cost           $${cost.toFixed(6)}` + (unknownCost > 0 ? `  (${unknownCost} row(s) reported no charge)` : ""),
   );
+  if (surveyCost > 0 || surveyed > 0) {
+    console.log(
+      `  survey         $${surveyCost.toFixed(6)}  ${surveyed} answered` +
+        (surveyFailed > 0 ? `, ${surveyFailed} failed` : "") +
+        "  (not included in cost above)",
+    );
+  }
+  if (drifted > 0) {
+    console.log(`  !! ${drifted} row(s) disagree with the harness's own session total — check event parsing`);
+  }
   const tokens = records.reduce((n, r) => n + r.promptTokens + r.completionTokens, 0);
   console.log(`  tokens         ${tokens}`);
   const escaped = records.filter((r) => r.outsideWorkdirTouches > 0);

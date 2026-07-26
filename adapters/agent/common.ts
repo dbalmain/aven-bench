@@ -12,13 +12,18 @@
  * - **Never throw.** A network failure, a missing binary, a rate limit and a
  *   refusal are all *data*. `ok: false` with `harnessError` set becomes
  *   `outcome: "harness_error"`, which §3c forbids retrying silently into the log.
- * - **Token counts, always.** They are the input to the local price table.
- *   `reportedCostUsd` is recorded but never used for `costUsd` — the free models
- *   report zero cost no matter how much they burn.
+ * - **Token counts, always**, including `cachedWriteTokens` — on a paid model that
+ *   is usually the category that costs the most. They feed the shadow price table.
+ * - **`reportedCostUsd` is the bill.** It becomes the record's `costUsd`. A free
+ *   model reporting 0 is telling the truth; the counterfactual "what would this
+ *   have cost at list price" is the price table's job, not the adapter's.
  * - **Respect `timeoutMs`.** The runner's only guarantee against a hung sweep.
+ * - **`sessionLedger` is optional.** Implement it when the harness keeps its own
+ *   cumulative cost, so the runner can cross-check its event parsing against a
+ *   figure it did not compute.
  */
 
-import type { SandboxMode } from "../../runner/schema.ts";
+import type { HarnessSessionTokens, SandboxMode } from "../../runner/schema.ts";
 
 export type AgentInvocation = {
   /** Working directory. The solution file must land here. */
@@ -49,8 +54,10 @@ export type AgentResult = {
   promptTokens: number;
   completionTokens: number;
   cachedPromptTokens: number;
+  /** Tokens written into the provider's prompt cache. Often the dominant charge. */
+  cachedWriteTokens: number;
   reasoningTokens: number;
-  /** What the harness claims it cost. Recorded for comparison only. */
+  /** What the harness charged. This is the record's actual `costUsd`. */
   reportedCostUsd: number | null;
   sessionRef: string | null;
   wallMs: number;
@@ -79,6 +86,19 @@ export type AgentResult = {
   shellCommands: number;
 };
 
+/** A harness's own cumulative accounting for one session. */
+export type SessionLedger = {
+  costUsd: number;
+  tokens: HarnessSessionTokens;
+};
+
+export type SessionLedgerQuery = {
+  sessionRef: string;
+  /** Attempt directory: a sandboxed harness keeps its store inside it. */
+  dir: string;
+  sandbox: SandboxMode;
+};
+
 export type AgentAdapter = {
   readonly id: string;
   /** Can a later round continue the same conversation? */
@@ -88,6 +108,14 @@ export type AgentAdapter = {
   /** Is the harness usable at all? Checked once before a sweep starts. */
   available(): Promise<{ ok: boolean; detail: string }>;
   run(inv: AgentInvocation): Promise<AgentResult>;
+  /**
+   * The harness's own total for a session, if it keeps one.
+   *
+   * Null whenever it cannot be read — absent store, unknown session, a schema
+   * this code does not recognise. It is a cross-check, so it must never be able
+   * to fail an attempt that otherwise succeeded.
+   */
+  sessionLedger?(query: SessionLedgerQuery): Promise<SessionLedger | null>;
 };
 
 export function emptyResult(overrides: Partial<AgentResult> = {}): AgentResult {
@@ -97,6 +125,7 @@ export function emptyResult(overrides: Partial<AgentResult> = {}): AgentResult {
     promptTokens: 0,
     completionTokens: 0,
     cachedPromptTokens: 0,
+    cachedWriteTokens: 0,
     reasoningTokens: 0,
     reportedCostUsd: null,
     sessionRef: null,

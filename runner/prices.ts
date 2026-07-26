@@ -1,20 +1,37 @@
 /**
- * The local price table.
+ * The local price table — the **shadow price**, not the bill.
  *
- * §3d is explicit: `cost_usd` is **computed here, never read back from the
- * harness**. The highest-volume models in this benchmark are free and report
- * `cost: 0` regardless of how many tokens they burned, so trusting the harness
- * would erase the cost axis exactly where the data is thickest. Free models must
- * still carry token counts, which is why the free entries are real entries with
- * a rate of zero rather than an absence.
+ * §3d said `cost_usd` must be computed here and never read back from the harness,
+ * on the grounds that the free tier reports `cost: 0` however many tokens it
+ * burned, so trusting the harness erases the cost axis where the data is
+ * thickest. That reasoning still holds, but it answers a counterfactual — *what
+ * would this run have cost at list price* — and measurement showed it cannot
+ * answer the other question at all:
  *
- * A model with no entry records `costUsd: null` and `priceSource: "unknown"`.
- * That is deliberate: a fabricated 0 is indistinguishable from a free model in
- * the data, and would quietly understate every paid arm.
+ *   qwen3.7-max, one turn: 6 input tokens, 20 output, 8 870 cache-write. Billed
+ *   $0.02788375. No input/output rate reproduces that; the charge is essentially
+ *   all cache-write, a category this function did not price.
  *
- * Rates are USD per million tokens. `cacheReadIn` defaults to `in` when a
- * provider's cache discount is not known — that overstates cost slightly, which
- * is the safe direction.
+ * So actual spend comes from the harness (`costUsd`) and this table produces
+ * `shadowCostUsd`: what the same tokens cost **at that model's own list price**.
+ * Cache writes are priced here now — omitting them made the shadow price wrong in
+ * the same direction as the bill, just less visibly.
+ *
+ * What this deliberately does *not* do is rescue the free tier's cost axis. A free
+ * model's list price is zero, so its shadow cost is zero too. The comparison §3d
+ * actually wants — "what would this run have cost on a paid model" — is a
+ * counterfactual *across* models, not within one, and it is an analysis-time
+ * computation: price any arm's recorded token columns at a chosen reference
+ * model's rates. That is why getting `cachedWriteTokens` into the record mattered
+ * more than anything in this file; without the dominant token category, no such
+ * counterfactual could be computed after the fact at all.
+ *
+ * A model with no entry records `null` and `"unknown"`. A fabricated 0 is
+ * indistinguishable from a free model in the data.
+ *
+ * Rates are USD per million tokens. `cacheReadIn` defaults to `in` and
+ * `cacheWriteIn` to `in` when a provider's cache rates are not known — both
+ * overstate slightly, which is the safe direction.
  *
  * Override or extend without editing this file:
  *
@@ -32,8 +49,10 @@ export type PriceEntry = {
   in: number;
   /** USD per million completion tokens. */
   out: number;
-  /** USD per million cached prompt tokens; defaults to `in`. */
+  /** USD per million cache-read prompt tokens; defaults to `in`. */
   cacheReadIn?: number;
+  /** USD per million cache-*write* tokens; defaults to `in`. Usually the largest term. */
+  cacheWriteIn?: number;
   note?: string;
 };
 
@@ -85,9 +104,9 @@ export function priceTable(): PriceTable {
   return cached;
 }
 
-export type Cost = {
-  costUsd: number | null;
-  priceSource: "table" | "free" | "unknown";
+export type ShadowCost = {
+  shadowCostUsd: number | null;
+  shadowPriceSource: "table" | "free" | "unknown";
   priceTableVersion: string;
 };
 
@@ -95,28 +114,33 @@ export type TokenCounts = {
   promptTokens: number;
   completionTokens: number;
   cachedPromptTokens: number;
+  cachedWriteTokens: number;
 };
 
 /**
- * Cost for a model's token usage.
+ * List-price cost for a model's token usage.
  *
- * `promptTokens` is charged at the uncached rate and `cachedPromptTokens` at the
- * cache-read rate; harnesses report the two separately and opencode's
- * `tokens.input` already excludes `tokens.cache.read`.
+ * Each token category is charged at its own rate: opencode reports them
+ * separately and `tokens.input` already excludes both cache figures, so summing
+ * them here does not double-count.
  */
-export function computeCost(modelId: string, t: TokenCounts, table = priceTable()): Cost {
+export function computeShadowCost(modelId: string, t: TokenCounts, table = priceTable()): ShadowCost {
   const entry = table.models[modelId];
   if (!entry) {
-    return { costUsd: null, priceSource: "unknown", priceTableVersion: table.version };
+    return { shadowCostUsd: null, shadowPriceSource: "unknown", priceTableVersion: table.version };
   }
-  const cacheRate = entry.cacheReadIn ?? entry.in;
+  const readRate = entry.cacheReadIn ?? entry.in;
+  const writeRate = entry.cacheWriteIn ?? entry.in;
   const cost =
-    (t.promptTokens * entry.in + t.cachedPromptTokens * cacheRate + t.completionTokens * entry.out) /
+    (t.promptTokens * entry.in +
+      t.cachedPromptTokens * readRate +
+      t.cachedWriteTokens * writeRate +
+      t.completionTokens * entry.out) /
     1_000_000;
-  const free = entry.in === 0 && entry.out === 0 && cacheRate === 0;
+  const free = entry.in === 0 && entry.out === 0 && readRate === 0 && writeRate === 0;
   return {
-    costUsd: cost,
-    priceSource: free ? "free" : "table",
+    shadowCostUsd: cost,
+    shadowPriceSource: free ? "free" : "table",
     priceTableVersion: table.version,
   };
 }
