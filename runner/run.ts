@@ -91,6 +91,63 @@ export function parseArgv(argv: string[]): Args {
   return { flags, bools };
 }
 
+/**
+ * Every flag this runner accepts, including the `no-` spelling of each boolean.
+ *
+ * Silently ignoring an unknown flag is the expensive kind of harmless. `--only`
+ * looked plausible (attempt specs really do carry an `only` set of case uuids) but
+ * the CLI spells it `--tasks`; the flag was dropped without comment and a
+ * three-task smoke test quietly became a seventy-one-task sweep against a shared
+ * provider. A filter that silently does nothing is worse than one that errors,
+ * because the run still looks like it worked.
+ */
+const KNOWN_FLAGS = new Set([
+  "help",
+  "tasks",
+  "task-set",
+  "limit",
+  "lang",
+  "model",
+  "harness",
+  "doc",
+  "doc-id",
+  "samples",
+  "rounds",
+  "jobs",
+  "agent-jobs",
+  "lang-jobs",
+  "agent-timeout",
+  "tool-timeout",
+  "out",
+  "run-id",
+  "work-root",
+  "keep-work",
+  "intersect",
+  "sandbox",
+  "mypy",
+  "survey",
+  "preflight",
+  "preflight-timeout",
+  "breaker-threshold",
+  "resume-sessions",
+  "self-verify",
+  "show-suite",
+  "dry-run",
+  "retry-harness-errors",
+  "allow-repo-workdir",
+  "temperature",
+  "seed",
+]);
+
+/** Unknown flags, so the CLI can refuse rather than ignore them. */
+export function unknownFlags(args: Args): string[] {
+  const seen = [...args.flags.keys(), ...args.bools];
+  return seen.filter((key) => {
+    const bare = key.startsWith("no-") ? key.slice(3) : key;
+    return !KNOWN_FLAGS.has(key) && !KNOWN_FLAGS.has(bare);
+  });
+}
+
 function list(args: Args, key: string): string[] | undefined {
   const v = args.flags.get(key);
   if (v === undefined) return undefined;
@@ -369,6 +426,14 @@ async function main(): Promise<number> {
   if (args.bools.has("help") || args.bools.has("h")) {
     console.log(USAGE);
     return 0;
+  }
+
+  const unknown = unknownFlags(args);
+  if (unknown.length > 0) {
+    console.error(`unknown flag(s): ${unknown.map((f) => `--${f}`).join(", ")}`);
+    console.error("A misspelled filter would otherwise run a far larger sweep than intended.");
+    console.error(USAGE);
+    return 2;
   }
 
   const languages = list(args, "lang") ?? ["python"];

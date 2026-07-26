@@ -27,7 +27,7 @@ import {
 import { computeShadowCost, resetPriceTableCache, type PriceTable } from "./prices.ts";
 import { runProcess, Semaphore } from "./proc.ts";
 import { buildInitialPrompt, buildRepairPrompt, buildSurveyPrompt, summarizeCaseMessage } from "./prompt.ts";
-import { enclosingRepo, ModelBreaker, parseArgv, preflightModels } from "./run.ts";
+import { enclosingRepo, ModelBreaker, parseArgv, preflightModels, unknownFlags } from "./run.ts";
 import { bubblewrapCommand, sandboxAvailability } from "./sandbox.ts";
 import {
   agentMeasuredNothing,
@@ -1252,6 +1252,45 @@ describe("argv", () => {
     expect(args.flags.get("rounds")).toBe("3");
     expect(args.flags.get("model")).toBe("a/b");
     expect(args.bools.has("dry-run")).toBe(true);
+  });
+
+  test("rejects an unknown flag, and accepts the no- spelling of a boolean", () => {
+    expect(unknownFlags(parseArgv(["--only", "two-fer"]))).toEqual(["only"]);
+    expect(unknownFlags(parseArgv(["--no-survey", "--no-preflight", "--mypy"]))).toEqual([]);
+  });
+
+  /**
+   * The flag list is hand-written so the error message can be specific, which means
+   * it can drift from the code. It already did: a first draft invented `--gate-jobs`
+   * and omitted `--jobs`, the flag the README's own example uses — so the runner
+   * would have refused to start a real sweep. This test reads the source and holds
+   * the three views (declared, read, documented) together, because the failure mode
+   * is a sweep that will not launch and the feedback belongs in `bun test`.
+   */
+  test("every flag the code reads or documents is in KNOWN_FLAGS, and vice versa", async () => {
+    const src = await Bun.file(new URL("./run.ts", import.meta.url).pathname).text();
+
+    const read = new Set<string>();
+    for (const m of src.matchAll(/(?:flags\.get|bools\.has)\(\s*"([^"]+)"\s*\)/g)) read.add(m[1]!);
+    for (const m of src.matchAll(/\b(?:list|num|bool)\(args,\s*"([^"]+)"/g)) read.add(m[1]!);
+
+    const usage = src.match(/const USAGE = `([\s\S]*?)`;/)?.[1] ?? "";
+    expect(usage).not.toBe("");
+    for (const m of usage.matchAll(/^\s*--([a-z0-9-]+)/gm)) read.add(m[1]!);
+
+    const declared = new Set(
+      [...(src.match(/const KNOWN_FLAGS = new Set\(\[([\s\S]*?)\]\)/)?.[1] ?? "").matchAll(/"([^"]+)"/g)].map(
+        (m) => m[1]!,
+      ),
+    );
+    expect(declared.size).toBeGreaterThan(10);
+
+    // `-h` is an alias handled beside `--help`, not a flag of its own.
+    const bare = (k: string) => (k.startsWith("no-") ? k.slice(3) : k);
+    const missing = [...read].filter((k) => k !== "h" && !declared.has(k) && !declared.has(bare(k)));
+    const unused = [...declared].filter((k) => ![...read].some((r) => r === k || bare(r) === k));
+
+    expect({ missing, unused }).toEqual({ missing: [], unused: [] });
   });
 });
 
