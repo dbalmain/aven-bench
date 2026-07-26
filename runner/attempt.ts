@@ -14,8 +14,9 @@
  * the answer wrong, because those two are not the same measurement.
  */
 
-import { existsSync, mkdirSync, rmSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync } from "node:fs";
 import { homedir } from "node:os";
+import { join } from "node:path";
 import { adapterFor, type LangAdapter } from "../adapters/lang/index.ts";
 import type { AgentAdapter } from "../adapters/agent/index.ts";
 import { CORPUS_DIR } from "../ingest/paths.ts";
@@ -193,6 +194,35 @@ function freshDir(dir: string): void {
   Bun.spawnSync(["git", "init", "--quiet", "."], { cwd: dir, stdout: "ignore", stderr: "ignore" });
 }
 
+/**
+ * Copy a task's data fixtures into the work directory, returning their names.
+ *
+ * Some Exercism tasks test against files on disk: `grep`'s suite calls
+ * `grep("Agamemnon", [], ["iliad.txt"])`, and the instructions say the language
+ * track "should ensure that when the tests run, three files are created". We are
+ * the track. Until this existed the files never appeared, so the task was
+ * passable only by transcribing them out of an ASCII table in the prompt — which
+ * measured transcription, not `grep`, and left models hunting outside the work
+ * directory for files that were never there.
+ *
+ * `ingest/extract-fixtures.ts` generates `corpus/<task>/fixtures/`. Only `grep`
+ * has any today; the mechanism is general so the next such task needs no code.
+ *
+ * These are *inputs*, not answers, so unlike the suite they stay in place for
+ * every round — `suiteVisibility` is about hiding the expected values, and a
+ * task's own input data is not one of them.
+ */
+function copyFixtures(taskId: string, dir: string): string[] {
+  const from = join(CORPUS_DIR, taskId, "fixtures");
+  if (!existsSync(from)) return [];
+  const names: string[] = [];
+  for (const name of readdirSync(from)) {
+    copyFileSync(join(from, name), join(dir, name));
+    names.push(name);
+  }
+  return names.sort();
+}
+
 type SolutionSnapshot = {
   exists: boolean;
   text: string;
@@ -227,6 +257,7 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
   const started = performance.now();
 
   freshDir(dir);
+  const fixtures = copyFixtures(spec.taskId, dir);
 
   const { contents: suite, omitted } = adapter.renderTests(task, spec.only);
   const suiteHash = putArtifact(suite, adapter.testFile.replace(/^.*\./, ""));
@@ -264,6 +295,7 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
     toolPolicy: ctx.toolPolicy,
     suiteVisibility: ctx.suiteVisibility,
     testCommandDisplay: modelTestCommand,
+    fixtures,
   });
   const promptHash = putArtifact(initialPrompt, "md");
 

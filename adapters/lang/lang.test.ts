@@ -1,4 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import { join } from "node:path";
+import { extractFixtures } from "../../ingest/extract-fixtures.ts";
 import { renderAvenValue, avenAdapter } from "./aven.ts";
 import { PY_EMIT, pyName, pythonAdapter } from "./python.ts";
 import { RB_EMIT, rbName, renderRubyValue, rubyAdapter } from "./ruby.ts";
@@ -709,5 +711,43 @@ describe("pseudocode expressions", () => {
     const av = avenAdapter.renderTests(t);
     expect(av.omitted).toEqual([]);
     expect(av.contents).toContain("(x) => (x).toUpper()");
+  });
+});
+
+// --- data fixtures ---------------------------------------------------------
+
+describe("fixture extraction", () => {
+  test("grep's three files come out of the prompt matching every expected value", async () => {
+    // The strongest available check: the canonical data's expected results are
+    // exact lines from these files, so if extraction is off by a character —
+    // trailing padding kept, a row dropped — some expected line stops matching.
+    const prompt = await Bun.file(join(CORPUS_DIR, "grep", "prompt.md")).text();
+    const fixtures = extractFixtures(prompt);
+    expect(fixtures.map((f) => f.name).sort()).toEqual([
+      "iliad.txt",
+      "midsummer-night.txt",
+      "paradise-lost.txt",
+    ]);
+
+    const lines = new Set(fixtures.flatMap((f) => f.contents.split("\n")));
+    const task = JSON.parse(await Bun.file(join(CORPUS_DIR, "grep", "task.json")).text()) as Task;
+    let checked = 0;
+    for (const testCase of task.cases) {
+      if (testCase.expected.kind !== "value") continue;
+      for (const raw of testCase.expected.value as unknown[]) {
+        // `-l` yields bare file names; `-n` and multi-file runs prefix the line.
+        const text = String(raw);
+        if (fixtures.some((f) => f.name === text)) continue;
+        const bare = /^(?:[A-Za-z0-9._-]+\.txt:)?(?:\d+:)?(.*)$/.exec(text)?.[1] ?? text;
+        if (bare === "") continue;
+        expect(lines).toContain(bare);
+        checked++;
+      }
+    }
+    expect(checked).toBeGreaterThan(50);
+  });
+
+  test("a table that is an illustration rather than a fixture yields nothing", () => {
+    expect(extractFixtures("Some prose.\n\n  ------\n  |a|\n  ------\n")).toEqual([]);
   });
 });

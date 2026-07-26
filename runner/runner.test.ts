@@ -573,6 +573,17 @@ describe("prompts", () => {
     expect(p).toContain("Aven in one line.");
   });
 
+  test("fixtures are announced as already present, and absent when there are none", () => {
+    // The task statement says these files "should be created"; without this the
+    // model treats that as its job and goes looking for them.
+    const p = buildInitialPrompt({ ...base, fixtures: ["iliad.txt", "paradise-lost.txt"] });
+    expect(p).toContain("`iliad.txt`");
+    expect(p).toContain("`paradise-lost.txt`");
+    expect(p).toContain("already in the working directory");
+    expect(buildInitialPrompt(base)).not.toContain("already in the working directory");
+    expect(buildInitialPrompt({ ...base, fixtures: [] })).not.toContain("already in the working directory");
+  });
+
   test("the default hides the suite and says so", () => {
     const p = buildInitialPrompt(base);
     expect(p).toContain("is not in this directory and you cannot see it");

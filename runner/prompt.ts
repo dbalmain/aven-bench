@@ -47,6 +47,16 @@ export type PromptInputs = {
   suiteVisibility: SuiteVisibility;
   /** Human-readable form of the command that will judge the solution. */
   testCommandDisplay: string;
+  /**
+   * Data files placed in the working directory for the task to read.
+   *
+   * Naming them matters as much as creating them. `grep`'s instructions describe
+   * three text files and say the language track should make sure they exist; a
+   * model that is not told they are already there goes looking for them, and the
+   * observed behaviour was exactly that — `grep` had one of the highest
+   * work-directory escape rates in the corpus.
+   */
+  fixtures?: string[];
 };
 
 export function buildInitialPrompt(inputs: PromptInputs): string {
@@ -82,6 +92,17 @@ export function buildInitialPrompt(inputs: PromptInputs): string {
           `4. You may run \`${inputs.testCommandDisplay}\` to check your work before finishing.`,
         ].join("\n"),
   );
+
+  // Stated as fact and as already-satisfied, because the task statement below
+  // will say these files "should be created" — and a model that reads that as an
+  // instruction either writes them itself or goes hunting for them.
+  if (inputs.fixtures && inputs.fixtures.length > 0) {
+    const names = inputs.fixtures.map((f) => `\`${f}\``).join(", ");
+    parts.push(
+      `5. The data file(s) this task reads are already in the working directory: ${names}.` +
+        ` They exist with the contents the task describes. Do not create or modify them.`,
+    );
+  }
 
   if (inputs.doc) {
     parts.push(
