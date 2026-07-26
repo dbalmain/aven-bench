@@ -202,11 +202,24 @@ function isGitRepo(dir: string): boolean {
   return existsSync(join(dotGit, "HEAD"));
 }
 
-async function pythonVersion(): Promise<string> {
-  const proc = await runProcess(["python3", "--version"], { cwd: process.cwd(), timeoutMs: 15_000 });
+/**
+ * Version string for a language's interpreter, for provenance.
+ *
+ * Both streams are read because `python3 --version` wrote to stderr for years and
+ * `ruby --version` writes to stdout; asking which is which per tool is a detail
+ * this does not need to know.
+ */
+async function interpreterVersion(argv: string[]): Promise<string> {
+  const proc = await runProcess(argv, { cwd: process.cwd(), timeoutMs: 15_000 });
   if (proc.spawnError) return "unavailable";
   return `${proc.stdout}${proc.stderr}`.trim() || "unknown";
 }
+
+/** How to ask each control language its version. Aven's comes from its git commit. */
+const VERSION_COMMANDS: Record<string, string[]> = {
+  python: ["python3", "--version"],
+  ruby: ["ruby", "--version"],
+};
 
 /**
  * Hash of the `aven` binary actually used.
@@ -431,10 +444,17 @@ async function main(): Promise<number> {
   const avenBin = avenNeeded ? avenBinaryPath() : null;
   const avenCommit = avenNeeded ? await gitHead(AVEN_LANG_DIR) : null;
   const avenBinary = avenNeeded ? await avenBinaryHash(avenBin) : null;
+  // Only the languages this run actually uses. Recording `python` unconditionally
+  // meant a ruby-only sweep carried Python's version as its provenance, which is
+  // worse than recording nothing: `languageVersion` is the field that says which
+  // toolchain produced a row.
   const languageVersions: Record<string, string> = {
-    python: await pythonVersion(),
     ...(avenNeeded ? { aven: `aven-lang@${(avenCommit ?? "unknown").slice(0, 12)}` } : {}),
   };
+  for (const lang of languages) {
+    const argv = VERSION_COMMANDS[lang];
+    if (argv) languageVersions[lang] = await interpreterVersion(argv);
+  }
 
   // Contamination guard. See `enclosingRepo`: this is why the default work root
   // is outside the repository.

@@ -2,16 +2,16 @@
 /**
  * Prove the generated suites are real, not plausible-looking text.
  *
- *   bun run verify                    # both checks, both languages
+ *   bun run verify                    # both checks, every implemented language
  *   bun run verify --lang aven
- *   bun run verify --only-references
+ *   bun run verify --lang ruby --only-references
  *
  * Two independent checks:
  *
  * 1. **Reference check.** For every task under `references/`, run the generated
  *    suite against the hand-written reference solution and require a green run
- *    (`aven test` exit 0 / py_runner exit 0). A reference that fails means the
- *    generator, not the solution, is probably wrong.
+ *    (every arm's runner exits 0). A reference that fails means the generator,
+ *    not the solution, is probably wrong.
  *
  * 1b. **Negative check.** Wherever a `solution.broken.*` fixture exists, the
  *    same suite must report a *failure*. A generator that emitted a vacuous or
@@ -31,6 +31,7 @@ import { existsSync, mkdirSync, readdirSync, rmSync, statSync } from "node:fs";
 import { adapterFor, casesOf, type LangAdapter } from "../adapters/lang/index.ts";
 import { AVEN_LANG_DIR, CORPUS_DIR, DATA_DIR, REFERENCES_DIR } from "./paths.ts";
 import { pyName } from "../adapters/lang/python.ts";
+import { rbName } from "../adapters/lang/ruby.ts";
 import { renderAvenValue } from "../adapters/lang/aven.ts";
 import { loadIndex, loadTask, type Task } from "./task.ts";
 
@@ -102,6 +103,17 @@ function stubSolution(task: Task, lang: string): string {
       return `def ${pyName(p.name)}(${params}):\n${body}\n`;
     });
     return `# stub: correct names and arity, deliberately wrong answers\n${defs.join("\n")}`;
+  }
+  if (lang === "ruby") {
+    const defs = task.properties.map((p) => {
+      const params = p.argNames.map((_, i) => `a${i}`).join(", ");
+      const body = p.returnsResult ? '    raise ArgumentError, "stub"' : "    nil";
+      return `  def self.${rbName(p.name)}(${params})\n${body}\n  end\n`;
+    });
+    return (
+      "# stub: correct names and arity, deliberately wrong answers\n" +
+      `module Solution\n${defs.join("\n")}end\n`
+    );
   }
   throw new Error(`no stub generator for ${lang}`);
 }
@@ -226,7 +238,7 @@ async function main(): Promise<void> {
   const argv = Bun.argv.slice(2);
   const langFlag = argv.indexOf("--lang");
   const languages =
-    langFlag >= 0 ? argv[langFlag + 1]!.split(",") : ["aven", "python"];
+    langFlag >= 0 ? argv[langFlag + 1]!.split(",") : ["aven", "python", "ruby"];
   const onlyReferences = argv.includes("--only-references");
 
   const index = await loadIndex(CORPUS_DIR);

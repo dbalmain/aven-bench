@@ -54,6 +54,21 @@ export type LangAdapter = {
   classifyExit(code: number): "pass" | "fail" | "load-error";
 };
 
+/**
+ * Upstream lowerCamelCase property name -> snake_case.
+ *
+ * Lives here rather than in one adapter because it is the same translation on
+ * every snake_case arm: Python and Ruby both need it, identically, and a second
+ * copy is a second thing to keep in step.
+ */
+export function snakeCase(name: string): string {
+  return name
+    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1_$2")
+    .replace(/[^A-Za-z0-9]+/g, "_")
+    .toLowerCase();
+}
+
 /** Cases of a task belonging to one property, in upstream order. */
 export function casesOf(task: Task, property: string): TaskCase[] {
   return task.cases.filter((c) => c.property === property);

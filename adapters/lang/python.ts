@@ -21,6 +21,7 @@ import type { Task } from "../../ingest/task.ts";
 import {
   orderedArgs,
   propertyOf,
+  snakeCase,
   type LangAdapter,
   type OmittedCase,
   type RenderedSuite,
@@ -34,14 +35,6 @@ import {
 
 const PY_TEST_FILE = "solution_test.py";
 const PY_RUNNER = new URL("./py_runner.py", import.meta.url).pathname;
-
-export function snakeCase(name: string): string {
-  return name
-    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
-    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1_$2")
-    .replace(/[^A-Za-z0-9]+/g, "_")
-    .toLowerCase();
-}
 
 const PY_KEYWORDS = new Set([
   "and", "as", "assert", "async", "await", "break", "class", "continue", "def",

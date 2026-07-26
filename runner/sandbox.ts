@@ -198,6 +198,7 @@ export function bubblewrapCommand(command: string[], options: SandboxCommandOpti
     ...["bash", "git", "ls", "find", "sed", "grep"].map((name) => dirname(executable(name))),
   ]);
   if (options.language === "python") pathDirs.add(dirname(executable("python3")));
+  if (options.language === "ruby") pathDirs.add(dirname(executable("ruby")));
 
   if (options.language === "aven" && options.avenBin) {
     const avenBin = realpathSync(options.avenBin);

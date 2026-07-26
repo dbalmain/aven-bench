@@ -19,8 +19,10 @@ corpus/                 generated, committed. The oracle.
   <task>/prompt.md      the task statement, language-agnostic
 adapters/lang/          one adapter per language: render tests, run them, read exit codes
   common.ts             the LangAdapter interface
-  aven.ts  python.ts    the two implemented arms
+  aven.ts               the measured arm
+  python.ts  ruby.ts    the control arms
   py_runner.py          normalizes unittest into `aven test --format json`'s envelope
+  rb_runner.rb          the same, for minitest
 adapters/agent/         one adapter per agent harness: prompt in, tokens + files out
   opencode.ts           the implemented harness
   index.ts              registry; pi / little-coder / ollama are stubs
@@ -159,15 +161,25 @@ solution = import("./solution.av")
 
 Python — stdlib `unittest`, `import solution`, snake_case names.
 
-Both are run through the same envelope:
+Ruby — stdlib `minitest`, `require_relative "solution"`, snake_case names on a
+module named `Solution`. The Exercism Ruby track's per-exercise class (`TwoFer`,
+`ListOps`) was rejected: it makes the model guess a constant spelling the Python
+arm never has to guess, and a wrong guess would be recorded as a language
+failure. Assertions are parenthesized because `assert_equal {"a" => 1}, x` reads
+the brace as a block, which is a syntax error.
+
+All three are run through the same envelope:
 `{ok, total, passed, failed, errored, cases[]}` and exit `0` all pass / `1` a
 case failed / `2` the suite could not be loaded. Aven gets that from
-`aven test --format json`; Python gets it from `adapters/lang/py_runner.py`.
+`aven test --format json`; Python gets it from `adapters/lang/py_runner.py` and
+Ruby from `adapters/lang/rb_runner.rb`.
 
 **Error expectations.** 169 cases expect an error rather than a value. A
 property with any such case is treated as fallible for _all_ its cases: Aven
 compares against `@Ok(v)` and uses `expectErr`, Python uses
-`assertRaises(ValueError)`.
+`assertRaises(ValueError)`, Ruby `assert_raises(ArgumentError)`. Each is that
+track's idiom; every arm only checks that the failure happened, so the differing
+class is not a scoring difference.
 
 **Argument order.** `input` is a JSON object, so positional order comes from key
 insertion order. `ingest/json.ts` is a hand-rolled JSON reader specifically to
@@ -234,6 +246,16 @@ The 61 `aven check` rejections split cleanly:
 - **1 task — `dnd-character`.** Not an example-based exercise: its `expected`
   values are assertion source text (`"score >= 3 && score <= 18"`). No adapter
   can make an oracle out of it; consider excluding it from headline numbers.
+
+### The Ruby arm
+
+Added after that snapshot, measured on the same upstream commit with nine
+reference tasks: **2246 / 2246** cases rendered (no omissions), **142 / 142**
+suites load, **9 / 9** reference solutions green, **1 / 1** broken fixture
+correctly reported as failing — the same numbers Python posts on the run that
+added it. Aven's own omission count is six by then, not four: the two extra are
+`list-ops`' float-division folds, which Python gets natively, Ruby gets through
+`fdiv`, and Aven cannot express at all.
 
 ### Aven ergonomics, from hand-writing the reference solutions
 

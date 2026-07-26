@@ -72,6 +72,11 @@ model-controlled code.
 | -------- | ------------------------- | ------------- |
 | aven     | `aven check`, `aven test` | —             |
 | python   | `solution_test.py`        | `mypy`        |
+| ruby     | `solution_test.rb`        | —             |
+
+Ruby gates on the suite alone: there is no static gate to record, and running
+`ruby solution_test.rb` leaves no bytecode behind, so hiding the suite between
+rounds needs nothing beyond deleting it (unlike Python's `__pycache__`).
 
 **Aven is gated on `check` AND `test`** — and both are recorded separately
 regardless, because the two disagree in practice. A real example from the first
