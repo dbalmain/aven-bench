@@ -271,16 +271,13 @@ describe("pseudocode arguments", () => {
   });
 
   test("both arms omit exactly the same cases, so the arms stay comparable", () => {
-    const task: Task = {
-      schemaVersion: TASK_SCHEMA_VERSION,
+    const t = task({
       id: "higher-order",
-      title: "Higher order",
-      source: "test",
       properties: [prop({ name: "f", argNames: ["a"], arity: 1 })],
       cases: [withArg("(x) => x * x"), { ...withArg(1), uuid: "v" }],
-    } as Task;
-    const py = pythonAdapter.renderTests(task);
-    const av = avenAdapter.renderTests(task);
+    });
+    const py = pythonAdapter.renderTests(t);
+    const av = avenAdapter.renderTests(t);
     expect(py.omitted.map((o) => o.uuid)).toEqual(["u"]);
     expect(av.omitted.map((o) => o.uuid)).toEqual(["u"]);
     expect(py.omitted[0]!.reason).toContain("pseudocode");
