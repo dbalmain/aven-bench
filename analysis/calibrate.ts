@@ -7,15 +7,22 @@
  * without a same-model, same-harness baseline.
  *
  * This is a bun script rather than the DuckDB queries in `queries.sql` because
- * duckdb is not installed on this machine and calibration should not wait on a
- * dependency. It reads the same JSONL and keeps the repo's zero-runtime-dependency
- * rule.
+ * duckdb was not installed when calibration needed to run, and calibration should
+ * not wait on a dependency. It reads the same JSONL and keeps the repo's
+ * zero-runtime-dependency rule. duckdb has since been installed, so the two
+ * overlap: `queries.sql` owns the ranked worklists over the holdout split, and this
+ * owns the Phase 2 model-selection report over the tune split.
  *
  *   bun run analysis/calibrate.ts [filter]
  *
  * `filter` is a substring matched against either the run log's file name or the
  * row's `runId`, because `--out` names a sweep while `runId` defaults to a
  * timestamp; matching only one of them makes selecting "that sweep" awkward.
+ *
+ * Run it **after** a sweep finishes. The coverage check compares each model
+ * against the task set actually present in the log, so mid-sweep every model that
+ * has not been reached yet reads as a partial arm. That is a true statement about
+ * the data and a useless one about the model.
  *
  * The model band is the load-bearing output. §2 is blunt about why: "a model
  * failing 80% of Python tasks teaches nothing about Aven" — its failures are about
@@ -63,7 +70,37 @@ type Row = {
   surveyed?: boolean;
   surveyResponse?: string | null;
   mypyOk?: boolean | null;
+  /** Schema 5+. Absent on older rows, which is what `poisonedLegacy` is for. */
+  harnessErrorKind?: string | null;
+  cachedPromptTokens?: number;
+  cachedWriteTokens?: number;
+  reasoningTokens?: number;
 };
+
+/**
+ * A row where the harness billed nothing at all: the provider never answered, so
+ * the attempt says nothing about the model.
+ *
+ * Schema 5 records these as `outcome: "harness_error"` with
+ * `harnessErrorKind: "agent-no-tokens"`, and every rate below already excludes
+ * harness errors. Older logs recorded them as `outcome: "timeout"` — a *model*
+ * verdict — and are indistinguishable from a genuinely slow model by outcome
+ * alone, so they have to be matched on the token columns instead.
+ */
+function measuredNothing(r: Row): boolean {
+  return (
+    r.promptTokens === 0 &&
+    r.completionTokens === 0 &&
+    (r.cachedPromptTokens ?? 0) === 0 &&
+    (r.cachedWriteTokens ?? 0) === 0 &&
+    (r.reasoningTokens ?? 0) === 0
+  );
+}
+
+/** Pre-schema-5 rows still masquerading as a model timeout. */
+function poisonedLegacy(r: Row): boolean {
+  return r.outcome === "timeout" && measuredNothing(r);
+}
 
 function load(filter: string | null): Row[] {
   const rows: Row[] = [];
@@ -111,6 +148,48 @@ console.log(`rows      ${rows.length} python of ${all.length} total   schema ver
 console.log(`runs      ${[...new Set(rows.map((r) => r.runId))].join(", ")}`);
 console.log(`tasks     ${new Set(rows.map((r) => r.taskId)).size} distinct\n`);
 
+// --- preconditions ---------------------------------------------------------
+//
+// Printed before anything else, because every rate below is conditioned on them
+// and all of them look perfectly plausible when they are wrong. A model that
+// attempted a third of the task set still gets a green rate, and that rate still
+// lands in a band.
+
+const allTasks = new Set(rows.map((r) => r.taskId));
+const legacy = rows.filter(poisonedLegacy);
+const warnings: string[] = [];
+
+if (legacy.length > 0) {
+  const byRun = new Map<string, number>();
+  for (const r of legacy) byRun.set(r.runId, (byRun.get(r.runId) ?? 0) + 1);
+  warnings.push(
+    `${legacy.length} zero-token row(s) recorded as 'timeout' by a pre-schema-5 runner ` +
+      `(${[...byRun].map(([k, v]) => `${k}: ${v}`).join(", ")}).\n` +
+      `    These are a dead provider, not a slow model, and they are counted as ` +
+      `failures below.\n    Fix: bun run quarantine --apply`,
+  );
+}
+
+for (const [modelId, rs] of new Map(
+  [...new Set(rows.map((r) => r.modelId))].map((m) => [m, rows.filter((r) => r.modelId === m)]),
+)) {
+  const attempted = new Set(rs.map((r) => r.taskId)).size;
+  if (attempted < allTasks.size * 0.9) {
+    warnings.push(
+      `${modelId} attempted ${attempted} of ${allTasks.size} tasks (${pct(attempted, allTasks.size).trim()}).\n` +
+        `    Preflight or the circuit breaker probably dropped it. Its rates below are ` +
+        `over a partial\n    task set and are not comparable with a complete arm.`,
+    );
+  }
+}
+
+if (warnings.length > 0) {
+  console.log("## ⚠ Read before trusting anything below\n");
+  for (const w of warnings) console.log(`  - ${w}\n`);
+} else {
+  console.log("preconditions  ok — no partial arms, no legacy zero-token rows\n");
+}
+
 // --- per-model profile -----------------------------------------------------
 
 type Profile = {
@@ -129,6 +208,10 @@ type Profile = {
   shellViolations: number;
   escapes: number;
   caseRate: number;
+  /** Attempts where the provider returned nothing — an incomplete arm, not a weak model. */
+  noTokens: number;
+  /** Distinct tasks reached, against the run's full task set. */
+  tasksAttempted: number;
 };
 
 const byModel = new Map<string, Row[]>();
@@ -163,6 +246,10 @@ for (const [modelId, rs] of byModel) {
     shellViolations: rs.filter((r) => r.shellCommands > 0).length,
     escapes: rs.filter((r) => r.outsideWorkdirTouches > 0).length,
     caseRate: casesTotal ? casesPassed / casesTotal : 0,
+    // Counts both spellings: schema 5 labels these, older logs only reveal them
+    // through the token columns.
+    noTokens: rs.filter((r) => r.harnessErrorKind === "agent-no-tokens" || poisonedLegacy(r)).length,
+    tasksAttempted: new Set(rs.map((r) => r.taskId)).size,
   });
 }
 profiles.sort((a, b) => b.green / (b.scored || 1) - a.green / (a.scored || 1));
@@ -186,18 +273,26 @@ for (const p of profiles) {
 }
 
 console.log("\n## Reliability (not model capability)\n");
-console.log("model                          harness-err  timeout  refusal  shell>0  escaped");
-console.log("-".repeat(78));
+console.log("model                          coverage  harness-err  no-tokens  timeout  refusal  shell>0  escaped");
+console.log("-".repeat(100));
 for (const p of profiles) {
   console.log(
     p.modelId.replace("opencode/", "").padEnd(30) +
-      String(p.harnessErrors).padStart(11) +
+      `${p.tasksAttempted}/${allTasks.size}`.padStart(8) +
+      String(p.harnessErrors).padStart(13) +
+      String(p.noTokens).padStart(11) +
       String(p.timeouts).padStart(9) +
       String(p.refusals).padStart(9) +
       String(p.shellViolations).padStart(9) +
       String(p.escapes).padStart(9),
   );
 }
+console.log(
+  "\n  no-tokens counts attempts where the provider returned nothing. A nonzero value\n" +
+    "  means that arm is short of attempts rather than that the model failed them, and\n" +
+    "  a model whose coverage is below its peers needs re-running before its rate means\n" +
+    "  anything. Both are recoverable — but only if noticed.",
+);
 
 // --- the band --------------------------------------------------------------
 
