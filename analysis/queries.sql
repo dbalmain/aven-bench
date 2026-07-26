@@ -15,37 +15,118 @@ CREATE OR REPLACE VIEW split AS
 CREATE OR REPLACE VIEW holdout AS
   SELECT a.* FROM attempts a JOIN split s ON s.task_id = a.taskId WHERE s.task_set = 'holdout';
 
--- 1. Language worklist: where is Aven furthest behind the control language?
+-- Attempts that actually measured the model.
+--
+-- A harness error measured the *provider*, not the model. `agent-no-tokens` rows
+-- are the sharp case: a dead provider returns nothing and the attempt used to be
+-- recorded as a timeout, so averaging it into a pass rate reproduces at analysis
+-- time exactly the corruption the runner's circuit breaker exists to prevent.
+-- §3c excludes harness errors from the capability denominator; this view is where
+-- that exclusion actually happens, and every rate below is built on it.
+CREATE OR REPLACE VIEW measured AS
+  SELECT * FROM holdout WHERE outcome <> 'harness_error';
+
+-- 1. Language worklist: where is Aven furthest behind the control languages?
 --    Ascending delta, so the worst tasks come first.
 CREATE OR REPLACE VIEW pass_rate_by_task_language AS
   SELECT taskId, language, avg(CASE WHEN firstShotPass THEN 1.0 ELSE 0.0 END) AS first_shot_rate,
          avg(CASE WHEN outcome = 'pass' THEN 1.0 ELSE 0.0 END) AS eventual_rate,
          count(*) AS n
-  FROM holdout GROUP BY 1, 2;
+  FROM measured GROUP BY 1, 2;
+
+-- The control arm is "the best mainstream language on this task", not Python
+-- specifically. A task Ruby handles cleanly and Python fumbles is still evidence
+-- that Aven is behind, and taking the stronger control keeps the delta from
+-- flattering Aven when one control happens to be weak. Adding a language to the
+-- corpus needs no change here: anything that is not 'aven' is a control.
+CREATE OR REPLACE VIEW baseline_by_task AS
+  SELECT taskId,
+         max(first_shot_rate) AS first_shot_rate,
+         max(eventual_rate) AS eventual_rate,
+         arg_max(language, first_shot_rate) AS best_language,
+         count(*) AS control_languages
+  FROM pass_rate_by_task_language
+  WHERE language <> 'aven'
+  GROUP BY 1;
 
 .print "--- language worklist (worst Aven deltas first) ---"
 SELECT a.taskId,
        a.first_shot_rate AS aven_rate,
        b.first_shot_rate AS control_rate,
-       a.first_shot_rate - b.first_shot_rate AS delta
+       b.best_language AS control,
+       a.first_shot_rate - b.first_shot_rate AS delta,
+       a.n AS aven_n
 FROM pass_rate_by_task_language a
-JOIN pass_rate_by_task_language b USING (taskId)
-WHERE a.language = 'aven' AND b.language = 'python'
+JOIN baseline_by_task b USING (taskId)
+WHERE a.language = 'aven'
 ORDER BY delta ASC
 LIMIT 30;
 
 -- 2. Ergonomics worklist: where is the Aven solution largest relative to control?
+--
+-- Only passing solutions are sized: a broken solution's length says nothing about
+-- how verbose the language is. The control size is the *smallest* control, which
+-- maximises the ratio and so is deliberately harsh on Aven. That is the right bias
+-- for a worklist — its job is to nominate candidates for a human to look at, and a
+-- generous control surfaces more of them — but it means the ratio ranks suspicion,
+-- not guilt. Read the numbers as an ordering, never as a verdict on the language.
 .print "--- ergonomics worklist (largest Aven size ratio first) ---"
 WITH sizes AS (
   SELECT taskId, language, median(solutionTokens) AS tokens
-  FROM holdout WHERE outcome = 'pass' GROUP BY 1, 2
+  FROM measured WHERE outcome = 'pass' GROUP BY 1, 2
+), control AS (
+  SELECT taskId, min(tokens) AS tokens, arg_min(language, tokens) AS best_language
+  FROM sizes WHERE language <> 'aven' GROUP BY 1
 )
 SELECT a.taskId, a.tokens AS aven_tokens, b.tokens AS control_tokens,
+       b.best_language AS control,
        a.tokens / nullif(b.tokens, 0) AS ratio
-FROM sizes a JOIN sizes b USING (taskId)
-WHERE a.language = 'aven' AND b.language = 'python'
+FROM sizes a JOIN control b USING (taskId)
+WHERE a.language = 'aven'
 ORDER BY ratio DESC
 LIMIT 30;
+
+-- 2b. Harness health. Run this **before** trusting anything above.
+--
+-- Every rate in this file is conditioned on the harness having actually reached
+-- the model, so the share of rows this excluded is a precondition, not a footnote.
+-- `agent-no-tokens` is a provider that answered nothing; a nonzero count there
+-- means some arm is short of attempts, and a model whose row count is far below
+-- the others was probably dropped by preflight or abandoned by the circuit
+-- breaker. Both are recoverable by re-running that model — but only if noticed.
+--
+-- Note this reads `attempts`, not `measured`: the excluded rows are the subject.
+.print "--- harness health (excluded rows by model; expect zeros) ---"
+SELECT modelId,
+       language,
+       count(*) AS rows_total,
+       sum(CASE WHEN outcome = 'harness_error' THEN 1 ELSE 0 END) AS harness_errors,
+       -- `union_by_name` over mixed schema versions infers this column as JSON when
+       -- older logs lack it entirely, and comparing JSON to a bare string is a
+       -- parse error. Cast and strip quotes so the query works on any mix of
+       -- versions — which is the normal state of `data/runs/`, not an edge case.
+       sum(CASE WHEN trim(CAST(harnessErrorKind AS VARCHAR), '"') = 'agent-no-tokens'
+                THEN 1 ELSE 0 END) AS no_tokens,
+       sum(CASE WHEN outcome = 'timeout' THEN 1 ELSE 0 END) AS timeouts,
+       min(schemaVersion) AS min_schema,
+       max(schemaVersion) AS max_schema
+FROM attempts
+GROUP BY 1, 2
+ORDER BY harness_errors DESC, rows_total ASC;
+
+-- Pre-schema-5 logs recorded a dead provider as `outcome: 'timeout'` with zero
+-- tokens everywhere, and `harnessErrorKind` did not exist. Those rows are
+-- indistinguishable from a genuinely slow model *by outcome alone*, so match them
+-- on the token columns instead. A nonzero count here means the log predates the
+-- fix and needs quarantining, not analysing.
+.print "--- legacy poisoned rows (zero-token timeouts; expect 0) ---"
+SELECT runId, modelId, count(*) AS poisoned_rows
+FROM attempts
+WHERE outcome = 'timeout'
+  AND coalesce(promptTokens, 0) = 0 AND coalesce(completionTokens, 0) = 0
+  AND coalesce(cachedPromptTokens, 0) = 0 AND coalesce(reasoningTokens, 0) = 0
+GROUP BY 1, 2
+ORDER BY poisoned_rows DESC;
 
 -- 3. Diagnostics worklist: which codes burn the most repair rounds?
 .print "--- diagnostics worklist (rounds burned per code) ---"
