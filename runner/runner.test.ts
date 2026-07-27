@@ -157,6 +157,10 @@ function record(over: Partial<AttemptRecord> = {}): AttemptRecord {
     workDir: "/tmp/aven-bench-work/x",
     outsideWorkdirTouches: 0,
     shellCommands: 0,
+    contaminated: false,
+    contaminationTier: null,
+    contaminationRules: [],
+    upstreamLookups: 0,
     ...over,
   };
 }

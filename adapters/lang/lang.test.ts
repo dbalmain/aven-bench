@@ -288,10 +288,17 @@ describe("Aven value rendering", () => {
     expect(renderAvenValue("日本 → ok")).toBe('"日本 → ok"');
   });
 
-  test("refuses integers Aven's 64-bit Int cannot hold", () => {
+  test("renders integers of any width, since Aven's Int is arbitrary precision", () => {
+    // aven-lang `bde5492` made `Int` arbitrary precision, converging the
+    // implementation on what the spec had said all along. The adapter used to
+    // refuse anything outside i64 and that refusal was the sole cause of 4 of
+    // Aven's 6 corpus omissions.
     expect(renderAvenValue({ $n: "9223372036854775807" })).toBe("9223372036854775807");
-    expect(() => renderAvenValue({ $n: "9223372036854775808" })).toThrow(/does not fit/);
-    expect(() => renderAvenValue({ $n: "18446744073709551615" })).toThrow(/does not fit/);
+    expect(renderAvenValue({ $n: "9223372036854775808" })).toBe("9223372036854775808");
+    expect(renderAvenValue({ $n: "18446744073709551615" })).toBe("18446744073709551615");
+    expect(renderAvenValue({ $n: "115132219018763992565095597973971522401" })).toBe(
+      "115132219018763992565095597973971522401",
+    );
   });
 });
 
@@ -342,18 +349,21 @@ describe("Aven suite rendering", () => {
       cases: [
         {
           uuid: "u1",
-          name: "too big",
+          name: "exponent float",
           group: [],
           description: "d",
           property: "f",
           args: [{ name: "a", value: 1 }],
-          expected: { kind: "value", value: { $n: "18446744073709551615" } },
+          // Was an out-of-i64 integer until `Int` became arbitrary precision and
+          // stopped being unrenderable. The mechanism under test is the omission
+          // path itself, so it needs a value the adapter still genuinely refuses.
+          expected: { kind: "value", value: { $n: "1.0e22" } },
         },
       ],
     });
     const { contents, omitted } = avenAdapter.renderTests(t);
     expect(omitted).toEqual([
-      { name: "too big", uuid: "u1", reason: expect.stringContaining("does not fit") },
+      { name: "exponent float", uuid: "u1", reason: expect.stringContaining("exponent-form") },
     ]);
     // A vacuous green would be worse than a failure.
     expect(contents).toContain("test.fail(");

@@ -93,13 +93,27 @@ export function buildInitialPrompt(inputs: PromptInputs): string {
         ].join("\n"),
   );
 
+  // Stated unconditionally, including under `no-verify` where the model cannot
+  // run a shell: harnesses may still expose a fetch tool, and models have used
+  // one. The reason is spelled out because a bare prohibition reads as
+  // arbitrary, while "this invalidates the measurement" is a reason to comply.
+  parts.push(
+    [
+      "5. Solve this yourself. Do not search the web, fetch URLs, or look up this exercise,",
+      "   its tests, or an existing solution — on Exercism, GitHub or anywhere else.",
+      "   This task is adapted from a public exercise, so the original tests and published",
+      "   answers do exist online; retrieving them measures retrieval instead of the thing",
+      "   under study, and the attempt is discarded.",
+    ].join("\n"),
+  );
+
   // Stated as fact and as already-satisfied, because the task statement below
   // will say these files "should be created" — and a model that reads that as an
   // instruction either writes them itself or goes hunting for them.
   if (inputs.fixtures && inputs.fixtures.length > 0) {
     const names = inputs.fixtures.map((f) => `\`${f}\``).join(", ");
     parts.push(
-      `5. The data file(s) this task reads are already in the working directory: ${names}.` +
+      `6. The data file(s) this task reads are already in the working directory: ${names}.` +
         ` They exist with the contents the task describes. Do not create or modify them.`,
     );
   }

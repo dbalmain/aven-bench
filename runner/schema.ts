@@ -1,3 +1,5 @@
+import type { ContaminationHit, ContaminationTier } from "./contamination.ts";
+
 /**
  * The attempt record — one row per (model, task, language, sample).
  *
@@ -94,12 +96,27 @@
  *     commit dates are not an adequate provenance boundary.
  *   - The field joins the natural key. Otherwise resume would treat an old-prompt
  *     row as completion of the new experiment and silently skip it.
+ * - **7** — contamination detection. Every task is a public Exercism exercise
+ *   whose suite and worked answer are reachable over the network, and the
+ *   sandbox runs `--share-net` because the agent must reach its provider, so
+ *   `suiteVisibility: "hidden"` only ever meant *hidden locally*. Re-auditing
+ *   existing logs found 14 of 143 rows fetching upstream material, six of them
+ *   passes, all on the control arm — a bias that can only inflate the baseline
+ *   and therefore manufacture an Aven gap. `contaminated` /
+ *   `contaminationTier` / `upstreamHits` record it; `contractGeneration` moves
+ *   to `shapes-v2` because the prompt now prohibits lookup.
  */
 
-export const SCHEMA_VERSION = 6 as const;
+export const SCHEMA_VERSION = 7 as const;
 
-/** Generated task-contract policy embedded in every round-0 prompt. */
-export const CONTRACT_GENERATION = "shapes-v1" as const;
+/**
+ * Generated task-contract policy embedded in every round-0 prompt.
+ *
+ * `shapes-v2` adds the no-lookup rule. It is a generation bump rather than a
+ * silent edit because the instruction changes model behaviour, so rows either
+ * side of it are not poolable.
+ */
+export const CONTRACT_GENERATION = "shapes-v2" as const;
 
 /** How `solutionTokens` / `docTokens` were counted. Not a real BPE tokenizer. */
 export const TOKEN_ESTIMATOR = "heuristic-v1" as const;
@@ -291,6 +308,15 @@ export type RepairRound = {
    * can read anything, so this is the second half of `outsideWorkdirTouches`.
    */
   shellCommands: number;
+  /**
+   * Evidence this round fetched upstream Exercism material — the canonical
+   * suite, the worked example, or the exercise page. See `contamination.ts`.
+   *
+   * `escapedPaths` is not a substitute: it caps at 8 entries per round and only
+   * sees URLs the path extractor happened to recognise, which is why it showed
+   * 2 affected rows where a log scan finds 14.
+   */
+  upstreamHits: ContaminationHit[];
 };
 
 export type AttemptRecord = {
@@ -445,6 +471,24 @@ export type AttemptRecord = {
   outsideWorkdirTouches: number;
   /** Sum of `repairRounds[].shellCommands`; nonzero under `no-verify` is a violation. */
   shellCommands: number;
+
+  /**
+   * True when this attempt fetched the suite or the worked answer, making its
+   * outcome a measurement of retrieval rather than of unaided ability.
+   *
+   * Deliberately **not** folded into `outcome`. The attempt really was measured
+   * — unlike a zero-token harness error, where nothing happened — so the pass
+   * or failure is a real event that simply answers a different question.
+   * Keeping the axes separate is also what makes "how often does fetching the
+   * tests actually work?" queryable, which is worth knowing.
+   */
+  contaminated: boolean;
+  /** Most severe evidence found, or null when clean. */
+  contaminationTier: ContaminationTier | null;
+  /** Distinct detector rules that fired, for triage without reading logs. */
+  contaminationRules: string[];
+  /** Sum of `repairRounds[].upstreamHits.length`. */
+  upstreamLookups: number;
 };
 
 /**

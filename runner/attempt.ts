@@ -21,6 +21,12 @@ import { adapterFor, type LangAdapter } from "../adapters/lang/index.ts";
 import type { AgentAdapter } from "../adapters/agent/index.ts";
 import { CORPUS_DIR } from "../ingest/paths.ts";
 import { loadTask, type Task } from "../ingest/task.ts";
+import {
+  detectContamination,
+  isDisqualifying,
+  worstTier,
+  type ContaminationHit,
+} from "./contamination.ts";
 import { avenCheckText, probeMirrors, runGate, type GateContext } from "./gate.ts";
 import { computeShadowCost } from "./prices.ts";
 import { Semaphore } from "./proc.ts";
@@ -350,12 +356,18 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
     // answer. With bubblewrap, it records the attempt even though access failed.
     const escaped = agentResult.touchedPaths.filter((p) => !isInside(dir, p));
 
+    // Did the model go and read the answer? The prompt is subtracted first: the
+    // harness writes it into the log verbatim and the exercise text carries
+    // Exercism attribution URLs, so a naive scan would flag our own writing.
+    const upstreamHits = detectContamination(agentResult.log, prompt);
+
     const baseRound = {
       round,
       promptHash: round === 0 ? promptHash : putArtifact(prompt, "md"),
       outsideWorkdirTouches: escaped.length,
       escapedPaths: escaped.slice(0, 8),
       shellCommands: agentResult.shellCommands,
+      upstreamHits,
       promptTokens: agentResult.promptTokens,
       completionTokens: agentResult.completionTokens,
       cachedPromptTokens: agentResult.cachedPromptTokens,
@@ -704,6 +716,7 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
     tokenEstimator: TOKEN_ESTIMATOR,
     outsideWorkdirTouches: rounds.reduce((n, r) => n + r.outsideWorkdirTouches, 0),
     shellCommands: rounds.reduce((n, r) => n + r.shellCommands, 0),
+    ...contaminationSummary(rounds.flatMap((r) => r.upstreamHits)),
 
     artifactHash: lastSolution?.hash ?? null,
     promptHash,
@@ -715,6 +728,26 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
   // behind only gives the *next* concurrent attempt something to glob.
   if (!ctx.keepWork) rmSync(dir, { recursive: true, force: true });
   return record;
+}
+
+/**
+ * Roll every round's contamination evidence up to the four record-level fields.
+ *
+ * Split out so the audit script can reuse the exact rollup the runner applies,
+ * rather than reimplementing "disqualifying" and drifting from it.
+ */
+export function contaminationSummary(hits: ContaminationHit[]): {
+  contaminated: boolean;
+  contaminationTier: ReturnType<typeof worstTier>;
+  contaminationRules: string[];
+  upstreamLookups: number;
+} {
+  return {
+    contaminated: isDisqualifying(hits),
+    contaminationTier: worstTier(hits),
+    contaminationRules: [...new Set(hits.map((h) => h.rule))].sort(),
+    upstreamLookups: hits.length,
+  };
 }
 
 /**

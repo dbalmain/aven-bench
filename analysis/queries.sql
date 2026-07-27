@@ -3,8 +3,15 @@
 -- These are the two ranked worklists plus the diagnostics worklist from §6 of
 -- PLAN-aven-bench.md. They run once the runner writes data/runs/*.jsonl.
 
+-- The zero-row sentinel forces the schema-7 contamination columns to exist even
+-- while every file on disk predates them. Without it `coalesce(contaminated,
+-- false)` below is a binder error rather than a null, and the whole script fails
+-- to load until the first new sweep lands — so the guard would be absent exactly
+-- when the old data most needs it.
 CREATE OR REPLACE VIEW attempts AS
-  SELECT * FROM read_json_auto('data/runs/*.jsonl', union_by_name = true);
+  SELECT * FROM read_json_auto('data/runs/*.jsonl', union_by_name = true)
+  UNION ALL BY NAME
+  SELECT false AS contaminated, NULL::VARCHAR AS contaminationTier WHERE false;
 
 CREATE OR REPLACE VIEW split AS
   SELECT unnest(holdout) AS task_id, 'holdout' AS task_set FROM read_json_auto('corpus/split.json')
@@ -23,8 +30,19 @@ CREATE OR REPLACE VIEW holdout AS
 -- time exactly the corruption the runner's circuit breaker exists to prevent.
 -- §3c excludes harness errors from the capability denominator; this view is where
 -- that exclusion actually happens, and every rate below is built on it.
+--
+-- Contaminated attempts are excluded on the same principle for a different
+-- reason: they measured the model, but they measured its ability to fetch the
+-- published tests rather than to write the code. Labelling alone is not enough —
+-- that was precisely the bug in the first zero-token fix, where rows were
+-- correctly classified in the runner and still averaged into every rate here.
+--
+-- Only `suite` and `solution` tiers set `contaminated`; a bare `lookup` (reading
+-- the exercise description the model was handed anyway) stays in.
 CREATE OR REPLACE VIEW measured AS
-  SELECT * FROM holdout WHERE outcome <> 'harness_error';
+  SELECT * FROM holdout
+  WHERE outcome <> 'harness_error'
+    AND NOT coalesce(contaminated, false);
 
 -- 1. Language worklist: where is Aven furthest behind the control languages?
 --    Ascending delta, so the worst tasks come first.
