@@ -407,6 +407,21 @@ describe("Aven export-surface check", () => {
     expect(result.message).toContain("{ twoFer }");
   });
 
+  test("the scan is syntactic, which is why the gate runs it only after `check` passes", () => {
+    // Both of these report "no export record" — the truncated one demonstrably
+    // *has* one. That is not a bug in the scan (it cannot parse broken source)
+    // but it is why `runGate` gates this probe behind a passing `aven check`:
+    // on unparseable input the compiler's diagnostic is the true one, and this
+    // message would point the model away from its actual defect.
+    const truncated = checkAvenExports("double = (x) => x * 2\n\n{ double\n", ["double"]);
+    expect(truncated.ok).toBe(false);
+    if (truncated.ok) return;
+    expect(truncated.kind).toBe("no-export-record");
+
+    const unparseable = checkAvenExports("double = (x => x *\n", ["double"]);
+    expect(unparseable.ok).toBe(false);
+  });
+
   test("a record missing a required name lists the gap and what was exported", () => {
     const source = "square = (n) => n\ntotal = () => 0\n\n{ square }\n";
     const result = checkAvenExports(source, ["square", "total"]);

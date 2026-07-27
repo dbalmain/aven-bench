@@ -3,12 +3,14 @@
  *
  * ## What gates, and what is only recorded
  *
- * - **Aven** — export surface, then `aven check` AND `aven test` (Dave's call).
- *   The export check is harness-only: Aven accepts modules with no export record
- *   (effectful modules are legal), but the suite is about to call named
- *   properties, so a forgotten `{ f, g }` is failed here with a repair-ready
- *   diagnostic instead of an opaque suite cascade. Check and test remain
- *   separate probes so check/test divergence stays queryable; it is not a
+ * - **Aven** — `aven check`, then the export surface, then `aven test` (Dave's
+ *   call on check-and-test). The export check is harness-only: Aven accepts
+ *   modules with no export record (effectful modules are legal), but the suite
+ *   is about to call named properties, so a forgotten `{ f, g }` is failed here
+ *   with a repair-ready diagnostic instead of an opaque suite cascade. It runs
+ *   only once `check` passes, because it is a syntactic scan and would otherwise
+ *   blame a missing export for a file that simply does not parse. Check and test
+ *   remain separate probes so check/test divergence stays queryable; it is not a
  *   hypothetical: `aven test` accepts suites `aven check` rejects.
  * - **Python** — `solution_test.py` gates. `mypy` is recorded and **does not
  *   gate**: running without a static gate is how Python is actually used, so
@@ -435,12 +437,23 @@ export function classifyOutcome(probes: GateProbe[], envelope: Envelope | null, 
 /**
  * Fail the round when `solution.av` does not export the names the suite needs.
  *
- * Short-circuits before `aven check` / `aven test`: those tools accept a module
- * with no export record (effectful modules are legal), and the suite then dies
- * with a cascade that never names the missing surface. The diagnostic here is
- * written so `gate.detail` lands in the repair prompt unchanged — that is the
- * entire reason this probe exists. It is a model failure (`check_error`), never
- * a harness error: the model wrote a solution whose public surface is wrong.
+ * Runs **after `aven check` passes**, never before it. The check is syntactic —
+ * it looks for a trailing literal record — so on a file that does not parse it
+ * reports "exports nothing" no matter what the real defect was. That is an
+ * actively misleading diagnostic for the most common malformed output there is:
+ * a truncated `{ double` did write an export record, and being told it wrote
+ * none points away from the actual problem.
+ *
+ * Ordering it after `check` costs nothing it was trying to buy. The cascade this
+ * probe exists to pre-empt is the *suite* failing to find the functions, which is
+ * downstream of `check`; and `check` accepts a no-export module silently (that
+ * being the whole finding), so it never swallows the case. Syntax errors get the
+ * compiler's diagnostic, and a module that parses but exports the wrong surface
+ * gets this one.
+ *
+ * The message is written so `gate.detail` lands in the repair prompt unchanged —
+ * the entire reason this probe exists. It is a model failure (`check_error`),
+ * never a harness error: the model wrote a solution whose public surface is wrong.
  */
 async function avenExportProbe(ctx: GateContext): Promise<GateProbe | null> {
   const required = ctx.requiredExports;
@@ -481,29 +494,33 @@ async function avenExportProbe(ctx: GateContext): Promise<GateProbe | null> {
 export async function runGate(ctx: GateContext): Promise<GateResult> {
   const probes: GateProbe[] = [];
 
-  // Export surface before anything that talks to the compiler: a forgotten
-  // `{ f, g }` is the model's bug, and the suite's fallout does not name it.
+  // Static gate first: it is the cheaper tool and the earlier failure.
   if (ctx.adapter.id === "aven") {
-    const exports = await avenExportProbe(ctx);
-    if (exports) {
-      return {
-        ok: false,
-        probes: [exports],
-        casesTotal: 0,
-        casesPassed: 0,
-        casesFailed: 0,
-        casesErrored: 0,
-        failedCases: [],
-        // Interface is wrong before the suite runs — same bucket as a check
-        // rejection, and not a harness_error (we measured the model).
-        outcome: "check_error",
-        detail: exports.detail,
-      };
+    const checkProbe = await avenCheckProbe(ctx);
+    probes.push(checkProbe);
+
+    // Export surface, but only once the file parses — see `avenExportProbe`.
+    // A syntactic export scan on unparseable source blames the wrong thing.
+    if (checkProbe.ok) {
+      const exports = await avenExportProbe(ctx);
+      if (exports) {
+        probes.push(exports);
+        return {
+          ok: false,
+          probes,
+          casesTotal: 0,
+          casesPassed: 0,
+          casesFailed: 0,
+          casesErrored: 0,
+          failedCases: [],
+          // Interface is wrong before the suite runs — same bucket as a check
+          // rejection, and not a harness_error (we measured the model).
+          outcome: "check_error",
+          detail: exports.detail,
+        };
+      }
     }
   }
-
-  // Static gate first: it is the cheaper tool and the earlier failure.
-  if (ctx.adapter.id === "aven") probes.push(await avenCheckProbe(ctx));
 
   const { probe: test, envelope } = await testProbe(ctx);
   probes.push(test);
