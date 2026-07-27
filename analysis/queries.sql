@@ -3,15 +3,17 @@
 -- These are the two ranked worklists plus the diagnostics worklist from §6 of
 -- PLAN-aven-bench.md. They run once the runner writes data/runs/*.jsonl.
 
--- The zero-row sentinel forces the schema-7 contamination columns to exist even
--- while every file on disk predates them. Without it `coalesce(contaminated,
--- false)` below is a binder error rather than a null, and the whole script fails
--- to load until the first new sweep lands — so the guard would be absent exactly
--- when the old data most needs it.
+-- The zero-row sentinel forces columns newer than the oldest log on disk to exist
+-- anyway. Without it `coalesce(contaminated, false)` below is a binder error
+-- rather than a null, and the whole script fails to load until the first new
+-- sweep lands — so the guard would be absent exactly when the old data most needs
+-- it. `contractGeneration` is here for the same reason, which is what lets 2a read
+-- the honest column instead of guessing from `schemaVersion`.
 CREATE OR REPLACE VIEW attempts AS
   SELECT * FROM read_json_auto('data/runs/*.jsonl', union_by_name = true)
   UNION ALL BY NAME
-  SELECT false AS contaminated, NULL::VARCHAR AS contaminationTier WHERE false;
+  SELECT false AS contaminated, NULL::VARCHAR AS contaminationTier,
+         NULL::VARCHAR AS contractGeneration WHERE false;
 
 CREATE OR REPLACE VIEW split AS
   SELECT unnest(holdout) AS task_id, 'holdout' AS task_set FROM read_json_auto('corpus/split.json')
@@ -123,12 +125,15 @@ LIMIT 30;
 -- together. The runner enforces this at collection time by putting
 -- `contractGeneration` in the resume key; this query is the reader's half.
 --
--- `schemaVersion` stands in for the generation deliberately. The honest column is
--- `contractGeneration`, but duckdb fails to bind a column that no file contains,
--- so referencing it here would break this whole script against any pre-schema-6
--- dataset. `analysis/calibrate.ts` does the exact check.
+-- This reads `contractGeneration` itself, via the sentinel above. It used to
+-- derive the generation from `schemaVersion` instead, because duckdb cannot bind a
+-- column no file contains — and that proxy went wrong the moment a *second*
+-- generation landed: `shapes-v2` rows are schema 7, so a `>= 6` test labelled them
+-- `shapes-v1` and pooled them with the very rows this query exists to keep apart.
+-- Reading the recorded value needs no edit when the next generation lands.
+-- Pre-schema-6 logs have no such column at all, hence the coalesce.
 .print "--- contract generation (more than one row here means do not pool) ---"
-SELECT CASE WHEN schemaVersion >= 6 THEN 'shapes-v1' ELSE 'names-v0' END AS contract_generation,
+SELECT coalesce(trim(CAST(contractGeneration AS VARCHAR), '"'), 'names-v0') AS contract_generation,
        count(*) AS rows_total,
        count(DISTINCT runId) AS runs
 FROM attempts
