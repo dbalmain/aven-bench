@@ -997,7 +997,16 @@ describe("per-model circuit breaker", () => {
     expect(breaker.observe("a/dead", true)).toBe(false);
     breaker.skip("a/dead");
     breaker.skip("a/dead");
-    expect(breaker.report()).toEqual([{ modelId: "a/dead", after: 3, skipped: 2 }]);
+    expect(breaker.report()).toEqual([
+      {
+        modelId: "a/dead",
+        reason: "consecutive",
+        after: 3,
+        window: null,
+        rate: null,
+        skipped: 2,
+      },
+    ]);
   });
 
   test("one attempt that measured something clears the streak", () => {
@@ -1028,6 +1037,55 @@ describe("per-model circuit breaker", () => {
     for (let i = 0; i < 20; i++) expect(breaker.observe("a/dead", true)).toBe(false);
     expect(breaker.isOpen("a/dead")).toBe(false);
     expect(breaker.report()).toEqual([]);
+  });
+
+  test("rate trips on an intermittent pattern the consecutive breaker misses", () => {
+    // pass / no-tokens / pass / no-tokens … never builds a consecutive streak
+    // (longest zero run is 1), so threshold 3 would stay shut — but once the
+    // min-observation floor is met the zero-token share is 0.6 and exceeds 0.5.
+    // Consecutive threshold kept high so only the rate condition can fire.
+    const consecutiveOnly = new ModelBreaker(3);
+    const withRate = new ModelBreaker(99, 0.5, 10);
+    // Alternating; at the 5th observation (minObservations for window 10) the
+    // window is [T,F,T,F,T] → 3/5 = 0.6 > 0.5.
+    const pattern = [true, false, true, false, true, false, true, false, true, false];
+    let rateTripped = false;
+    for (const noTokens of pattern) {
+      expect(consecutiveOnly.observe("a/intermittent", noTokens)).toBe(false);
+      if (withRate.observe("a/intermittent", noTokens)) rateTripped = true;
+    }
+    expect(consecutiveOnly.isOpen("a/intermittent")).toBe(false);
+    expect(rateTripped).toBe(true);
+    expect(withRate.isOpen("a/intermittent")).toBe(true);
+    const trip = withRate.report()[0]!;
+    expect(trip.reason).toBe("rate");
+    expect(trip.after / (trip.window ?? 1)).toBeGreaterThan(0.5);
+    expect(trip.rate).toBe(0.5);
+  });
+
+  test("rate does not trip below the minimum observation count", () => {
+    // Two flakes in three observations is a 2/3 share, above rate 0.5, but the
+    // default minObservations for window 10 is 5 — so the breaker must stay shut.
+    const breaker = new ModelBreaker(99, 0.5, 10);
+    expect(breaker.observe("a/early", true)).toBe(false);
+    expect(breaker.observe("a/early", false)).toBe(false);
+    expect(breaker.observe("a/early", true)).toBe(false);
+    expect(breaker.isOpen("a/early")).toBe(false);
+    expect(breaker.report()).toEqual([]);
+  });
+
+  test("with rate left at default 0, behaviour matches consecutive-only", () => {
+    // The important one: a run that does not pass --breaker-rate must behave
+    // exactly as it does today. Intermittent flakes must not abandon the model.
+    const breaker = new ModelBreaker(3);
+    const pattern = [true, false, true, false, true, false, true, false, true, false];
+    for (const noTokens of pattern) expect(breaker.observe("a/half", noTokens)).toBe(false);
+    expect(breaker.isOpen("a/half")).toBe(false);
+    // And pure consecutive death still trips.
+    expect(breaker.observe("a/dead", true)).toBe(false);
+    expect(breaker.observe("a/dead", true)).toBe(false);
+    expect(breaker.observe("a/dead", true)).toBe(true);
+    expect(breaker.report()[0]?.reason).toBe("consecutive");
   });
 });
 

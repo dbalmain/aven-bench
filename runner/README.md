@@ -291,16 +291,22 @@ Two defences, and the classification above is the third:
   cold-start case, not the warm one. A drop is loud rather than silent either
   way: it prints `DEAD … no reply within Ns` and is listed again in the summary.
 
-- **A per-model circuit breaker.** After `--breaker-threshold` consecutive
-  zero-token attempts (default 3; `0` disables it), the model's remaining
-  planned attempts are skipped rather than dispatched. Skipped, not recorded: a
-  row would assert an attempt that never happened, and since resume counts
-  `harness_error` rows as present, the next run would need
-  `--retry-harness-errors` to do work this one simply never did. Any attempt
-  that measured something — a wrong answer, a refusal, a token-burning timeout —
-  clears the streak, so the breaker can never stop measuring a model that is
-  merely bad. Other models are unaffected, and every tripped model is named in
-  the end-of-run summary.
+- **A per-model circuit breaker.** Two trip conditions, same open/skip/report
+  machinery. After `--breaker-threshold` consecutive zero-token attempts
+  (default 3; `0` disables it), or — when opted in — after the zero-token share
+  in a sliding window exceeds `--breaker-rate` (default **0 = off**, window
+  `--breaker-window` default 10), the model's remaining planned attempts are
+  skipped rather than dispatched. Skipped, not recorded: a row would assert an
+  attempt that never happened, and since resume counts `harness_error` rows as
+  present, the next run would need `--retry-harness-errors` to do work this one
+  simply never did. Any attempt that measured something — a wrong answer, a
+  refusal, a token-burning timeout — clears the consecutive streak, so the
+  consecutive trip can never stop measuring a model that is merely bad. The rate
+  trip is off by default on purpose: abandoning a model that works half the time
+  changes what the benchmark measures, so it is an explicit opt-in per run (it
+  exists for the intermittent case consecutive streaks miss, observed live on
+  `laguna-s-2.1-free`). Other models are unaffected, and every tripped model is
+  named in the end-of-run summary with which condition fired.
 
 ## Concurrency and timeouts
 

@@ -26,10 +26,11 @@
  *  - **A model can die mid-sweep, so the runner watches for it.** Two defences,
  *    both bought with 45 minutes of wasted wall clock: every model is probed once
  *    before planning (`preflightModels`), and a model whose attempts come back
- *    with no tokens at all three times running is dropped for the rest of the run
- *    (`ModelBreaker`). Without them a dead gateway model is handed all 71 tasks and
- *    charges the full agent timeout for each, writing rows that look exactly like
- *    genuine slow failures.
+ *    with no tokens is dropped for the rest of the run (`ModelBreaker`) — either
+ *    after N consecutive zeros (default) or, when opted in, after a high
+ *    zero-token *rate* in a sliding window. Without them a dead or flaking
+ *    gateway model is handed all 71 tasks and charges the full agent timeout for
+ *    each, writing rows that look exactly like genuine slow failures.
  */
 
 import { existsSync, realpathSync, statSync } from "node:fs";
@@ -130,6 +131,8 @@ const KNOWN_FLAGS = new Set([
   "preflight",
   "preflight-timeout",
   "breaker-threshold",
+  "breaker-rate",
+  "breaker-window",
   "resume-sessions",
   "self-verify",
   "show-suite",
@@ -207,6 +210,8 @@ execution
   --no-preflight               skip the one-turn liveness probe per model
   --preflight-timeout SEC      per liveness probe (default 120)
   --breaker-threshold N        drop a model after N zero-token attempts in a row (default 3; 0 disables)
+  --breaker-rate F             drop a model when zero-token share in the window exceeds F (default 0 = off)
+  --breaker-window N           sliding window for --breaker-rate (default 10; ignored when rate is 0)
   --out PATH                   run log (default data/runs/<run-id>.jsonl)
   --run-id ID                  default: timestamp
   --work-root DIR              default ~/.cache/aven-bench/work (must be outside any git repo)
@@ -372,36 +377,123 @@ export async function preflightModels(
 }
 
 /**
- * Per-model circuit breaker over consecutive zero-token attempts.
+ * Why a model was abandoned mid-run. The operator needs to know which, because
+ * the two conditions mean different things about the model and about the data:
+ * consecutive means it died; rate means it degraded into intermittent flakes.
+ */
+export type BreakerReason = "consecutive" | "rate";
+
+export type BreakerTrip = {
+  modelId: string;
+  reason: BreakerReason;
+  /**
+   * Consecutive: the streak length that tripped. Rate: zero-token count inside
+   * the window at trip time. Kept as one field so existing summary formatting
+   * still has a single number to print beside the reason.
+   */
+  after: number;
+  /** Rate trips only: window length used for the ratio. */
+  window: number | null;
+  /** Rate trips only: the configured threshold that was exceeded. */
+  rate: number | null;
+  skipped: number;
+};
+
+/**
+ * Per-model circuit breaker over zero-token attempts.
  *
- * The failure it exists for, from `phase2-calibration-02`: at 12:20 the model
- * `opencode/big-pickle` stopped answering, and the next ten attempts were all
- * `roundsUsed: 1`, `wallMs≈420000`, zero tokens both directions. The harness had
- * no idea and would have kept going for another two hours at four jobs.
+ * Two independent trip conditions share the open/skip/report machinery:
  *
- * Only `agent-no-tokens` attempts count. A genuine timeout that burned tokens, a
- * refusal and a wrong answer all reset the streak, because all three are the model
- * working: this must never be able to stop measuring a model that is merely bad.
- * Threshold 0 disables it entirely, for deliberately investigating a flaky
- * provider.
+ * 1. **Consecutive** (`--breaker-threshold`, default 3, `0` disables). The
+ *    failure it exists for, from `phase2-calibration-02`: at 12:20 the model
+ *    `opencode/big-pickle` stopped answering, and the next ten attempts were all
+ *    `roundsUsed: 1`, `wallMs≈420000`, zero tokens both directions. The harness
+ *    had no idea and would have kept going for another two hours at four jobs.
+ *
+ * 2. **Rate** (`--breaker-rate`, default **0 = disabled**). Catches the
+ *    intermittent case the consecutive streak misses: a model that alternates
+ *    pass / no-tokens / timeout keeps resetting the streak and burns the full
+ *    attempt timeout on every flake. Observed live on `laguna-s-2.1-free`.
+ *    Defaulting off is deliberate — abandoning a model that works half the time
+ *    changes what the benchmark measures, so it is an explicit opt-in per run.
+ *
+ * Only `agent-no-tokens` attempts count toward either condition. A genuine
+ * timeout that burned tokens, a refusal and a wrong answer all reset the
+ * consecutive streak (the model is working); they still enter the rate window as
+ * non-zero so a half-working model is judged on its actual ratio. A rate trip
+ * also refuses to fire until a minimum number of observations have landed, so
+ * the first two flakes of a long run cannot abandon the model by themselves.
  */
 export class ModelBreaker {
   private readonly streak = new Map<string, number>();
-  private readonly open = new Map<string, { after: number; skipped: number }>();
+  /** Sliding window of recent `noTokens` flags, oldest first. */
+  private readonly history = new Map<string, boolean[]>();
+  private readonly open = new Map<string, Omit<BreakerTrip, "modelId" | "skipped"> & { skipped: number }>();
+  private readonly minObservations: number;
 
-  constructor(private readonly threshold: number) {}
+  constructor(
+    private readonly threshold: number,
+    private readonly rate = 0,
+    private readonly windowSize = 10,
+    minObservations?: number,
+  ) {
+    // Half the window, at least 3: enough that two early flakes cannot trip a
+    // rate of 0.5, not so high that an intermittent model runs half a sweep
+    // before the breaker notices. Only consulted when rate > 0.
+    this.minObservations = minObservations ?? Math.max(3, Math.ceil(this.windowSize / 2));
+  }
 
   /** Fold one finished attempt in. True only on the call that trips the breaker. */
   observe(modelId: string, noTokens: boolean): boolean {
+    if (this.open.has(modelId)) return false;
+
     if (!noTokens) {
       this.streak.set(modelId, 0);
-      return false;
+    } else {
+      this.streak.set(modelId, (this.streak.get(modelId) ?? 0) + 1);
     }
-    const streak = (this.streak.get(modelId) ?? 0) + 1;
-    this.streak.set(modelId, streak);
-    if (this.threshold <= 0 || streak < this.threshold || this.open.has(modelId)) return false;
-    this.open.set(modelId, { after: streak, skipped: 0 });
-    return true;
+
+    // Rate window records every attempt, zero-token or not, so the ratio is the
+    // real share of flakes — not "of the flakes, how many were consecutive".
+    if (this.rate > 0) {
+      const window = this.history.get(modelId) ?? [];
+      window.push(noTokens);
+      while (window.length > this.windowSize) window.shift();
+      this.history.set(modelId, window);
+    }
+
+    // Consecutive first: a dead model trips here long before a rate window fills,
+    // and the report then says "died" rather than "degraded".
+    const streak = this.streak.get(modelId) ?? 0;
+    if (this.threshold > 0 && noTokens && streak >= this.threshold) {
+      this.open.set(modelId, {
+        reason: "consecutive",
+        after: streak,
+        window: null,
+        rate: null,
+        skipped: 0,
+      });
+      return true;
+    }
+
+    if (this.rate > 0) {
+      const window = this.history.get(modelId) ?? [];
+      if (window.length >= this.minObservations) {
+        const zeros = window.filter(Boolean).length;
+        if (zeros / window.length > this.rate) {
+          this.open.set(modelId, {
+            reason: "rate",
+            after: zeros,
+            window: window.length,
+            rate: this.rate,
+            skipped: 0,
+          });
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   isOpen(modelId: string): boolean {
@@ -415,8 +507,8 @@ export class ModelBreaker {
   }
 
   /** Tripped models, for the progress line and the end-of-run summary. */
-  report(): { modelId: string; after: number; skipped: number }[] {
-    return [...this.open].map(([modelId, e]) => ({ modelId, after: e.after, skipped: e.skipped }));
+  report(): BreakerTrip[] {
+    return [...this.open].map(([modelId, e]) => ({ modelId, ...e }));
   }
 }
 
@@ -483,6 +575,18 @@ async function main(): Promise<number> {
   // per dead model is a rounding error against the two hours the breaker exists to save.
   const preflightTimeoutMs = num(args, "preflight-timeout", 120) * 1000;
   const breakerThreshold = num(args, "breaker-threshold", 3);
+  // Rate defaults to 0 (off). Abandoning a half-working model changes what the
+  // benchmark measures, so the rate trip is an explicit opt-in per run.
+  const breakerRate = num(args, "breaker-rate", 0);
+  const breakerWindow = num(args, "breaker-window", 10);
+  if (breakerRate < 0 || breakerRate > 1) {
+    console.error(`--breaker-rate expects a fraction in [0, 1], got ${breakerRate}`);
+    return 2;
+  }
+  if (breakerWindow < 1 || !Number.isInteger(breakerWindow)) {
+    console.error(`--breaker-window expects a positive integer, got ${breakerWindow}`);
+    return 2;
+  }
   const toolPolicy: ToolPolicy = bool(args, "self-verify", false) ? "self-verify" : "no-verify";
   // Hidden by default: a visible suite tempts a model into pattern-matching the
   // expected values instead of implementing the algorithm (Dave's call).
@@ -706,7 +810,10 @@ async function main(): Promise<number> {
   );
   console.log(
     `health        preflight=${preflight ? `${preflightTimeoutMs / 1000}s` : "off"}` +
-      ` breaker=${breakerThreshold > 0 ? `${breakerThreshold} zero-token attempts` : "off"}`,
+      ` breaker=${
+        breakerThreshold > 0 ? `${breakerThreshold} consecutive` : "consecutive=off"
+      }` +
+      (breakerRate > 0 ? ` rate>${breakerRate}/${breakerWindow}` : " rate=off"),
   );
   console.log(`prices        table ${table.version}`);
   console.log(
@@ -776,7 +883,7 @@ async function main(): Promise<number> {
 
   // Attempt-level parallelism; the semaphores above are what actually bound the
   // harness and the toolchain.
-  const breaker = new ModelBreaker(breakerThreshold);
+  const breaker = new ModelBreaker(breakerThreshold, breakerRate, breakerWindow);
   let next = 0;
   const worker = async (): Promise<void> => {
     for (;;) {
@@ -813,8 +920,13 @@ async function main(): Promise<number> {
           (record.harnessError ? `  !! ${record.harnessError.slice(0, 120)}` : ""),
       );
       if (breaker.observe(p.modelId, record.harnessErrorKind === "agent-no-tokens")) {
+        const trip = breaker.report().find((t) => t.modelId === p.modelId);
+        const why =
+          trip?.reason === "rate"
+            ? `zero-token rate ${trip.after}/${trip.window} exceeds --breaker-rate ${trip.rate}`
+            : `returned no tokens on ${trip?.after ?? breakerThreshold} attempt(s) in a row`;
         console.log(
-          `[breaker] ${p.modelId} returned no tokens on ${breakerThreshold} attempt(s) in a row` +
+          `[breaker] ${p.modelId} ${why}` +
             " — its remaining attempts are skipped, not recorded. Other models continue.",
         );
       }
@@ -929,7 +1041,7 @@ function harnessErrorRecord(ctx: RunContext, spec: AttemptSpec, err: unknown): A
  * exists to produce, and 45 minutes of it went unnoticed once already.
  */
 type HealthSummary = {
-  breaker: { modelId: string; after: number; skipped: number }[];
+  breaker: BreakerTrip[];
   dropped: ProbeOutcome[];
   preflight: PreflightReport | null;
 };
@@ -1037,11 +1149,16 @@ function summarizeHealth(health: HealthSummary): void {
     console.log(
       `  !! ${health.breaker.length} model(s) tripped the circuit breaker mid-run — treat their rows as partial:\n` +
         health.breaker
-          .map(
-            (b) =>
-              `       ${b.modelId}: ${b.after} zero-token attempt(s) in a row,` +
-              ` ${b.skipped} planned attempt(s) skipped (re-run to pick them up)`,
-          )
+          .map((b) => {
+            const why =
+              b.reason === "rate"
+                ? `rate ${b.after}/${b.window} zero-token (threshold >${b.rate})`
+                : `${b.after} zero-token attempt(s) in a row`;
+            return (
+              `       ${b.modelId}: ${why},` +
+              ` ${b.skipped} planned attempt(s) skipped (re-run to pick them up)`
+            );
+          })
           .join("\n"),
     );
   }
