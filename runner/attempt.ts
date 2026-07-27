@@ -465,6 +465,9 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
       timeoutMs: ctx.toolTimeoutMs,
       env: { AVEN_SESSION_LOG: sessionLogPath },
       mypy: ctx.mypy,
+      // Aven only: the export-surface check needs the names the suite will call.
+      requiredExports:
+        adapter.id === "aven" ? task.properties.map((p) => p.name) : undefined,
     };
     if (ctx.suiteVisibility === "hidden") await writeSuite();
     const gate = await ctx.langSem.with(() => runGate(gateCtx));

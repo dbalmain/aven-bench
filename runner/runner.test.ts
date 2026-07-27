@@ -667,6 +667,43 @@ describe("prompts", () => {
     expect(p).toContain("Return one for you");
     expect(p).toContain("Aven in one line.");
   });
+
+  test("an export-surface failure reaches the repair prompt via tool output", () => {
+    // The gate short-circuits with detail set to checkAvenExports' message; the
+    // attempt path puts that detail in toolOutput when no check probe needs a
+    // re-render. If it only lands in a log, round 2 still has no idea what to fix.
+    const message =
+      "solution.av exports nothing: the module has no trailing export record. " +
+      "A module must end in a literal record like `{ twoFer }` to export anything.";
+    const p = buildRepairPrompt({
+      adapter: adapterFor("aven"),
+      round: 1,
+      gate: gate({
+        ok: false,
+        outcome: "check_error",
+        detail: message,
+        probes: [
+          probe({
+            name: "exports",
+            ok: false,
+            detail: message,
+            diagnosticCodes: ["bench.no-export-record"],
+          }),
+        ],
+        casesTotal: 0,
+        casesPassed: 0,
+        failedCases: [],
+      }),
+      toolOutput: message,
+      resumed: true,
+      taskPrompt: base.taskPrompt,
+      doc: base.doc,
+      toolPolicy: "no-verify",
+    });
+    expect(p).toContain("Failing stage(s): exports");
+    expect(p).toContain("exports nothing");
+    expect(p).toContain("{ twoFer }");
+  });
 });
 
 // --- hidden suite, end to end ----------------------------------------------

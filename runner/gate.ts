@@ -3,10 +3,13 @@
  *
  * ## What gates, and what is only recorded
  *
- * - **Aven** — `aven check` AND `aven test` must both pass (Dave's call). Both
- *   are recorded as separate probes regardless, so check/test divergence stays
- *   queryable instead of collapsing into one bit. It is not a hypothetical:
- *   `aven test` accepts suites `aven check` rejects.
+ * - **Aven** — export surface, then `aven check` AND `aven test` (Dave's call).
+ *   The export check is harness-only: Aven accepts modules with no export record
+ *   (effectful modules are legal), but the suite is about to call named
+ *   properties, so a forgotten `{ f, g }` is failed here with a repair-ready
+ *   diagnostic instead of an opaque suite cascade. Check and test remain
+ *   separate probes so check/test divergence stays queryable; it is not a
+ *   hypothetical: `aven test` accepts suites `aven check` rejects.
  * - **Python** — `solution_test.py` gates. `mypy` is recorded and **does not
  *   gate**: running without a static gate is how Python is actually used, so
  *   holding the control arm to Aven's bar would flatter Aven. When mypy is not
@@ -18,9 +21,12 @@
  * *repair prompt* gets the plain-text rendering instead, produced on demand by
  * `avenCheckText` — carets, notes and all — because the whole point of the
  * rounds-to-green metric is to measure the diagnostic a human would read. Making
- * the model read a JSON blob would measure a different artefact.
+ * the model read a JSON blob would measure a different artefact. Export-surface
+ * failures skip the re-render path and put the precise message in `gate.detail`,
+ * which the attempt path already feeds to the repair prompt as tool output.
  */
 
+import { checkAvenExports } from "../adapters/lang/aven.ts";
 import type { LangAdapter } from "../adapters/lang/index.ts";
 import { AVEN_LANG_DIR } from "../ingest/paths.ts";
 import { runProcess, type ProcResult } from "./proc.ts";
@@ -43,6 +49,13 @@ export type GateContext = {
   env: Record<string, string>;
   /** Record `mypy` on the Python arm. Off makes runs faster and loses the metric. */
   mypy: boolean;
+  /**
+   * Property names the suite is about to call on `solution`. Aven only: the
+   * export-surface check uses these to fail a forgotten or incomplete export
+   * record with a repair-ready diagnostic instead of an opaque suite cascade.
+   * Absent or empty skips the check (Python, or a call site that has no task).
+   */
+  requiredExports?: readonly string[];
 };
 
 // --- the test envelope, identical for both arms ----------------------------
@@ -419,8 +432,75 @@ export function classifyOutcome(probes: GateProbe[], envelope: Envelope | null, 
   return test?.ok === false ? "runtime_error" : "wrong_output";
 }
 
+/**
+ * Fail the round when `solution.av` does not export the names the suite needs.
+ *
+ * Short-circuits before `aven check` / `aven test`: those tools accept a module
+ * with no export record (effectful modules are legal), and the suite then dies
+ * with a cascade that never names the missing surface. The diagnostic here is
+ * written so `gate.detail` lands in the repair prompt unchanged — that is the
+ * entire reason this probe exists. It is a model failure (`check_error`), never
+ * a harness error: the model wrote a solution whose public surface is wrong.
+ */
+async function avenExportProbe(ctx: GateContext): Promise<GateProbe | null> {
+  const required = ctx.requiredExports;
+  if (!required || required.length === 0) return null;
+  const path = `${ctx.dir}/${ctx.adapter.solutionFile}`;
+  const source = await Bun.file(path).text().catch(() => null);
+  if (source === null) {
+    // Missing file is already handled by the agent-turn path; if we still reach
+    // the gate without a solution the suite will say so. Do not invent a probe.
+    return null;
+  }
+  const check = checkAvenExports(source, required);
+  if (check.ok) return null;
+  return {
+    name: "exports",
+    gating: true,
+    ok: false,
+    exitCode: null,
+    wallMs: 0,
+    timedOut: false,
+    diagnosticCodes: [`bench.${check.kind}`],
+    diagnostics: [
+      {
+        code: `bench.${check.kind}`,
+        severity: "error",
+        message: check.message.slice(0, MAX_MESSAGE_CHARS),
+        path: ctx.adapter.solutionFile,
+        line: null,
+        column: null,
+      },
+    ],
+    detail: check.message.slice(0, MAX_MESSAGE_CHARS),
+    unavailableReason: null,
+    toolVersion: null,
+  };
+}
+
 export async function runGate(ctx: GateContext): Promise<GateResult> {
   const probes: GateProbe[] = [];
+
+  // Export surface before anything that talks to the compiler: a forgotten
+  // `{ f, g }` is the model's bug, and the suite's fallout does not name it.
+  if (ctx.adapter.id === "aven") {
+    const exports = await avenExportProbe(ctx);
+    if (exports) {
+      return {
+        ok: false,
+        probes: [exports],
+        casesTotal: 0,
+        casesPassed: 0,
+        casesFailed: 0,
+        casesErrored: 0,
+        failedCases: [],
+        // Interface is wrong before the suite runs — same bucket as a check
+        // rejection, and not a harness_error (we measured the model).
+        outcome: "check_error",
+        detail: exports.detail,
+      };
+    }
+  }
 
   // Static gate first: it is the cheaper tool and the earlier failure.
   if (ctx.adapter.id === "aven") probes.push(await avenCheckProbe(ctx));

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import { extractFixtures } from "../../ingest/extract-fixtures.ts";
-import { renderAvenValue, avenAdapter } from "./aven.ts";
+import { checkAvenExports, renderAvenValue, avenAdapter } from "./aven.ts";
 import { PY_EMIT, pyName, pythonAdapter } from "./python.ts";
 import { RB_EMIT, rbName, renderRubyValue, rubyAdapter } from "./ruby.ts";
 import { orderedArgs, snakeCase } from "./common.ts";
@@ -380,6 +380,66 @@ describe("Aven suite rendering", () => {
     expect(avenAdapter.classifyExit(0)).toBe("pass");
     expect(avenAdapter.classifyExit(1)).toBe("fail");
     expect(avenAdapter.classifyExit(2)).toBe("load-error");
+  });
+});
+
+/**
+ * The export-surface check is what turns a forgotten `{ f, g }` into a repair
+ * diagnostic that names the problem. Without it the suite dies with an opaque
+ * missing-field cascade and the model burns rounds on the wrong symptom.
+ */
+describe("Aven export-surface check", () => {
+  test("a module with no trailing export record is rejected with a concrete fix", () => {
+    const source = [
+      "twoFer = (name) =>",
+      '  name ?> null => "One for you, one for me.", person => "One for ${person}, one for me."',
+      "",
+    ].join("\n");
+    const result = checkAvenExports(source, ["twoFer"]);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.kind).toBe("no-export-record");
+    expect(result.missing).toEqual(["twoFer"]);
+    expect(result.exported).toEqual([]);
+    // Repair prompt quotes this message; it must name both the problem and the shape.
+    expect(result.message).toContain("exports nothing");
+    expect(result.message).toContain("trailing export record");
+    expect(result.message).toContain("{ twoFer }");
+  });
+
+  test("a record missing a required name lists the gap and what was exported", () => {
+    const source = "square = (n) => n\ntotal = () => 0\n\n{ square }\n";
+    const result = checkAvenExports(source, ["square", "total"]);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.kind).toBe("missing-names");
+    expect(result.missing).toEqual(["total"]);
+    expect(result.exported).toEqual(["square"]);
+    expect(result.message).toContain("missing export(s): total");
+    expect(result.message).toContain("Exported: square");
+  });
+
+  test("shorthand and explicit fields both count, multi-line included", () => {
+    expect(checkAvenExports("f = 1\ng = 2\n{ f, g }\n", ["f", "g"])).toEqual({
+      ok: true,
+      exported: ["f", "g"],
+    });
+    expect(
+      checkAvenExports("f = 1\ng = 2\n{\n  f: f,\n  g,\n}\n", ["f", "g"]),
+    ).toEqual({ ok: true, exported: ["f", "g"] });
+  });
+
+  test("a record used only as an argument is not an export record", () => {
+    // Final expression is a call; the inner `{ a }` must not be mistaken for the
+    // module value, or a solution that never exported would look complete.
+    const result = checkAvenExports('f = (r) => r\nf({ a: 1 })\n', ["a"]);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.kind).toBe("no-export-record");
+  });
+
+  test("line comments do not hide a trailing export record", () => {
+    expect(checkAvenExports("f = 1\n{ f } # re-export\n", ["f"]).ok).toBe(true);
   });
 });
 

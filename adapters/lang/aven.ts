@@ -381,3 +381,227 @@ export const avenAdapter: LangAdapter = {
 export function renderAvenValue(p: Portable): string {
   return avenValue(fromPortable(p));
 }
+
+// --- export-surface check --------------------------------------------------
+//
+// Aven modules may be effectful and need not export anything — `aven check` and
+// `aven test` accept a file whose final expression is not a record. That is the
+// right call for the language. It is the wrong call for the benchmark: the suite
+// is about to call `solution.<property>(…)` for every property on the task, and
+// when the model forgets the export record the suite fails with an opaque
+// "no such field" cascade that never names the actual problem.
+//
+// The harness knows the property names. Checking the trailing export record
+// against them is a pure text look at `solution.av` — no compiler invocation —
+// and the diagnostic it produces is what the repair prompt needs so round 2
+// can fix the surface instead of chasing suite fallout.
+
+/** Result of comparing a solution's trailing export record to the task's properties. */
+export type ExportCheck =
+  | { ok: true; exported: string[] }
+  | {
+      ok: false;
+      kind: "no-export-record" | "missing-names";
+      message: string;
+      exported: string[];
+      missing: string[];
+    };
+
+/**
+ * Strip `#` line comments without walking into string literals.
+ *
+ * Models produce ordinary Aven; this is not a full lexer. Double-quoted strings
+ * and `\u{…}` / `\"` escapes are enough to keep a `#` inside a string from
+ * eating the rest of the line, which is the only way comment stripping would
+ * invent or destroy a trailing export record.
+ */
+function stripAvenLineComments(source: string): string {
+  let out = "";
+  let i = 0;
+  let inString = false;
+  while (i < source.length) {
+    const ch = source[i]!;
+    if (inString) {
+      out += ch;
+      if (ch === "\\") {
+        if (i + 1 < source.length) {
+          out += source[i + 1]!;
+          i += 2;
+          continue;
+        }
+      } else if (ch === '"') {
+        inString = false;
+      }
+      i++;
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+      out += ch;
+      i++;
+      continue;
+    }
+    if (ch === "#") {
+      while (i < source.length && source[i] !== "\n") i++;
+      continue;
+    }
+    out += ch;
+    i++;
+  }
+  return out;
+}
+
+/**
+ * Body of a trailing top-level record literal, or null when the module's final
+ * expression is not one.
+ *
+ * Aven's module value is the final expression. The contract tells the model to
+ * end the file with `{ f, g }`; reference solutions and the verify stubs all do.
+ * A bare identifier that happens to name a record elsewhere in the file is not
+ * accepted here — that shape is rare under the contract, and reporting it as
+ * "no export record" still points the repair at the fix the prompt already
+ * describes.
+ *
+ * The open brace must begin its own line (or the file). That rejects a record
+ * that is only an argument or operand of some other final expression
+ * (`f({ a })`, `x + { a }`) without needing a full Aven parser.
+ */
+function trailingRecordBody(source: string): string | null {
+  const text = stripAvenLineComments(source).trimEnd();
+  if (!text.endsWith("}")) return null;
+
+  let depth = 0;
+  let inString = false;
+  const end = text.length - 1;
+  let start = -1;
+  for (let i = end; i >= 0; i--) {
+    const ch = text[i]!;
+    if (inString) {
+      // Walking backwards: a quote ends the string unless it is escaped by an
+      // odd run of backslashes immediately before it.
+      if (ch === '"') {
+        let bs = 0;
+        for (let j = i - 1; j >= 0 && text[j] === "\\"; j--) bs++;
+        if (bs % 2 === 0) inString = false;
+      }
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+      continue;
+    }
+    if (ch === "}") {
+      depth++;
+      continue;
+    }
+    if (ch === "{") {
+      depth--;
+      if (depth === 0) {
+        start = i;
+        break;
+      }
+    }
+  }
+  if (start < 0) return null;
+
+  const lineStart = text.lastIndexOf("\n", start - 1) + 1;
+  if (text.slice(lineStart, start).trim() !== "") return null;
+  return text.slice(start + 1, end);
+}
+
+/**
+ * Field names of a record body, top-level only.
+ *
+ * Understands the shapes models actually write: shorthand `{ f, g }`, explicit
+ * `{ f: f, g: g }`, and multi-line forms. Nested braces/brackets/parens and
+ * strings keep field values from being split on interior commas.
+ */
+function recordFieldNames(body: string): string[] {
+  const names: string[] = [];
+  let i = 0;
+  let depth = 0;
+  let inString = false;
+  let fieldStart = 0;
+
+  const pushField = (from: number, to: number) => {
+    const raw = body.slice(from, to).trim();
+    if (raw === "") return;
+    // `name` or `name: value` or `"name": value`. The name is the first token.
+    const m = /^([A-Za-z_][A-Za-z0-9_]*|"([^"\\]|\\.)*")/.exec(raw);
+    if (!m) return;
+    const tok = m[1]!;
+    names.push(tok.startsWith('"') ? JSON.parse(tok) as string : tok);
+  };
+
+  while (i < body.length) {
+    const ch = body[i]!;
+    if (inString) {
+      if (ch === "\\") {
+        i += 2;
+        continue;
+      }
+      if (ch === '"') inString = false;
+      i++;
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+      i++;
+      continue;
+    }
+    if (ch === "{" || ch === "(" || ch === "[") {
+      depth++;
+      i++;
+      continue;
+    }
+    if (ch === "}" || ch === ")" || ch === "]") {
+      depth--;
+      i++;
+      continue;
+    }
+    if (ch === "," && depth === 0) {
+      pushField(fieldStart, i);
+      fieldStart = i + 1;
+      i++;
+      continue;
+    }
+    i++;
+  }
+  pushField(fieldStart, body.length);
+  return names;
+}
+
+/**
+ * Compare `solution.av` against the property names the suite is about to call.
+ *
+ * Returns a precise diagnostic the repair prompt can quote. This is a *model*
+ * failure (the solution's public surface is wrong), never a harness error.
+ */
+export function checkAvenExports(source: string, required: readonly string[]): ExportCheck {
+  const body = trailingRecordBody(source);
+  if (body === null) {
+    const example = `{ ${required.join(", ")} }`;
+    return {
+      ok: false,
+      kind: "no-export-record",
+      exported: [],
+      missing: [...required],
+      message:
+        `solution.av exports nothing: the module has no trailing export record. ` +
+        `A module must end in a literal record like \`${example}\` to export anything.`,
+    };
+  }
+  const exported = recordFieldNames(body);
+  const have = new Set(exported);
+  const missing = required.filter((name) => !have.has(name));
+  if (missing.length === 0) return { ok: true, exported };
+  return {
+    ok: false,
+    kind: "missing-names",
+    exported,
+    missing,
+    message:
+      `solution.av is missing export(s): ${missing.join(", ")}. ` +
+      `Exported: ${exported.length > 0 ? exported.join(", ") : "(none)"}.`,
+  };
+}
