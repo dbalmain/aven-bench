@@ -75,7 +75,14 @@ SELECT a.taskId,
        b.first_shot_rate AS control_rate,
        b.best_language AS control,
        a.first_shot_rate - b.first_shot_rate AS delta,
-       a.n AS aven_n
+       a.n AS aven_n,
+       -- Partial coverage is the normal state of a free-tier sweep: a provider
+       -- that dies mid-run leaves a task with some arms recorded and others not,
+       -- and the control then silently becomes "best of whichever arms finished".
+       -- A row with fewer controls than the sweep requested is not comparable to
+       -- one with all of them, so the count travels with the delta rather than
+       -- living in a view nobody selects from.
+       b.control_languages AS controls
 FROM pass_rate_by_task_language a
 JOIN baseline_by_task b USING (taskId)
 WHERE a.language = 'aven'
