@@ -26,7 +26,14 @@ import {
 } from "./gate.ts";
 import { computeShadowCost, resetPriceTableCache, type PriceTable } from "./prices.ts";
 import { runProcess, Semaphore } from "./proc.ts";
-import { buildInitialPrompt, buildRepairPrompt, buildSurveyPrompt, summarizeCaseMessage } from "./prompt.ts";
+import {
+  buildInitialPrompt,
+  buildNudgePrompt,
+  buildRepairPrompt,
+  buildSurveyPrompt,
+  hasFencedCode,
+  summarizeCaseMessage,
+} from "./prompt.ts";
 import { enclosingRepo, ModelBreaker, parseArgv, preflightModels, unknownFlags } from "./run.ts";
 import { bubblewrapCommand, sandboxAvailability } from "./sandbox.ts";
 import {
@@ -105,6 +112,8 @@ function record(over: Partial<AttemptRecord> = {}): AttemptRecord {
     suiteVisibility: "hidden",
     sandbox: "bubblewrap",
     maxRounds: 2,
+    maxNudges: 0,
+    nudges: 0,
     roundsUsed: 1,
     repairRounds: [],
     outcome: "pass",
@@ -166,7 +175,12 @@ function record(over: Partial<AttemptRecord> = {}): AttemptRecord {
 }
 
 /** A `RunContext` around a fake harness: no network, no model, no compiler. */
-function context(agent: AgentAdapter, workRoot: string, maxRounds: number): RunContext {
+function context(
+  agent: AgentAdapter,
+  workRoot: string,
+  maxRounds: number,
+  maxNudges = 0,
+): RunContext {
   return {
     runId: "test",
     agent,
@@ -186,6 +200,7 @@ function context(agent: AgentAdapter, workRoot: string, maxRounds: number): RunC
     sandbox: "none",
     avenBin: null,
     maxRounds,
+    maxNudges,
     agentTimeoutMs: 60_000,
     toolTimeoutMs: 60_000,
     mypy: false,
@@ -881,6 +896,37 @@ describe("hidden suite (the default)", () => {
       expect(record.surveyed).toBe(false);
     });
 
+    test("a nudged model is surveyed, because it did write a solution", async () => {
+      const workRoot = mkdtempSync(join(tmpdir(), "aven-bench-nudge-survey-"));
+      const right = 'def two_fer(name=None):\n    return f"One for {name or \'you\'}, one for me."\n';
+      let turn = 0;
+      const adapter: AgentAdapter = {
+        id: "spy",
+        supportsResume: true,
+        version: async () => "spy",
+        available: async () => ({ ok: true, detail: "spy" }),
+        run: async (inv) => {
+          turn++;
+          // Turn 1 answers in chat; turn 2 (the nudge) writes; turn 3 is survey.
+          if (turn === 2) writeFileSync(join(inv.dir, "solution.py"), right);
+          return emptyResult({
+            ok: true,
+            completionTokens: 5,
+            sessionRef: "ses_spy",
+            assistantText: turn === 3 ? "more error-message examples" : "```python\n…\n```",
+            wallMs: 1,
+          });
+        },
+      };
+      const record = await runAttempt(
+        { ...context(adapter, workRoot, 0, 2), resumeSessions: true },
+        spec,
+      );
+      expect(record.outcome).toBe("pass");
+      expect(record.nudges).toBe(1);
+      expect(record.surveyed).toBe(true);
+    });
+
     test("the question offers a licensed null answer, so easy tasks stop inventing findings", () => {
       const adapter = adapterFor("python");
       const prompt = buildSurveyPrompt({ adapter, passed: true, roundsUsed: 1 });
@@ -891,6 +937,164 @@ describe("hidden suite (the default)", () => {
         "no rounds left",
       );
     });
+  });
+});
+
+// --- the model that answers in chat ----------------------------------------
+
+/**
+ * The defect this section exists for, from `phase3-holdout-02`: 37 of 213 rows
+ * were scored `refusal`, and not one was a refusal. All 37 made zero tool calls
+ * and 36 replied with the finished program in a fenced block — `hello-world`'s
+ * entire turn was ` ```aven\nhello = (): Text => "Hello, World!"\n\n{ hello }\n``` `.
+ * The split was 20 Aven / 11 Ruby / 6 Python, so a harness-contract miss was
+ * being read as a language gap of up to 31 points.
+ */
+describe("a turn that wrote no file", () => {
+  const RIGHT = 'def two_fer(name=None):\n    return f"One for {name or \'you\'}, one for me."\n';
+
+  /**
+   * A harness that answers in chat for `chatTurns` turns, then writes the file.
+   * `Infinity` never writes: a model that ignores every nudge.
+   */
+  function chattyAgent(chatTurns: number, opts: { stray?: string } = {}) {
+    const prompts: string[] = [];
+    let turn = 0;
+    const adapter: AgentAdapter = {
+      id: "spy",
+      supportsResume: true,
+      version: async () => "spy",
+      available: async () => ({ ok: true, detail: "spy" }),
+      run: async (inv) => {
+        prompts.push(inv.prompt);
+        turn++;
+        if (turn > chatTurns) writeFileSync(join(inv.dir, "solution.py"), RIGHT);
+        else if (opts.stray) writeFileSync(join(inv.dir, opts.stray), RIGHT);
+        return emptyResult({
+          ok: true,
+          promptTokens: 100,
+          completionTokens: 10,
+          reportedCostUsd: 0.001,
+          sessionRef: "ses_spy",
+          assistantText: "```python\n" + RIGHT + "```",
+          wallMs: 1,
+        });
+      },
+    };
+    return { adapter, prompts };
+  }
+
+  test("the nudge rescues the solution, and it still counts as the first shot", async () => {
+    const workRoot = mkdtempSync(join(tmpdir(), "aven-bench-nudge-"));
+    const { adapter, prompts } = chattyAgent(1);
+    const record = await runAttempt({ ...context(adapter, workRoot, 2, 2), resumeSessions: true, survey: false }, TWO_FER);
+
+    expect(prompts).toHaveLength(2);
+    expect(prompts[1]).toContain("`solution.py` does not exist");
+    expect(prompts[1]).toContain("a reply is not a file");
+    // The nudge must not teach: nothing about the task or the language may leak
+    // in, or a rescued attempt would no longer be measuring the documentation.
+    expect(prompts[1]).not.toContain("two-fer");
+    expect(prompts[1]).not.toContain("One for");
+
+    expect(record.outcome).toBe("pass");
+    // The model's *first solution* passed. A nudge carries no information, so the
+    // headline metric is unchanged by it — `nudges` is how you tell either way.
+    expect(record.firstShotPass).toBe(true);
+    expect(record.roundsToGreen).toBe(0);
+    expect(record.roundsUsed).toBe(1);
+    expect(record.nudges).toBe(1);
+    expect(record.maxNudges).toBe(2);
+    expect(record.repairRounds[0]!.nudges).toBe(1);
+  });
+
+  test("a nudge's tokens and cost belong to the round that spent them", async () => {
+    const workRoot = mkdtempSync(join(tmpdir(), "aven-bench-nudge-cost-"));
+    const { adapter } = chattyAgent(1);
+    const record = await runAttempt({ ...context(adapter, workRoot, 2, 2), resumeSessions: true, survey: false }, TWO_FER);
+    // Two turns at 100/10/$0.001 each. Hiding the nudge's half would make the
+    // campaign's cost model wrong in the direction that matters.
+    expect(record.promptTokens).toBe(200);
+    expect(record.completionTokens).toBe(20);
+    expect(record.costUsd).toBeCloseTo(0.002, 9);
+    expect(record.repairRounds[0]!.agentWallMs).toBe(2);
+  });
+
+  test("a model that ignores every nudge is still a refusal", async () => {
+    const workRoot = mkdtempSync(join(tmpdir(), "aven-bench-nudge-exhaust-"));
+    const { adapter, prompts } = chattyAgent(Infinity);
+    const record = await runAttempt({ ...context(adapter, workRoot, 2, 2), resumeSessions: true, survey: false }, TWO_FER);
+    expect(prompts).toHaveLength(3);
+    expect(record.outcome).toBe("refusal");
+    expect(record.nudges).toBe(2);
+    expect(record.roundsUsed).toBe(1);
+  });
+
+  test("--max-nudges 0 reproduces the old behaviour exactly", async () => {
+    const workRoot = mkdtempSync(join(tmpdir(), "aven-bench-nudge-off-"));
+    const { adapter, prompts } = chattyAgent(1);
+    const record = await runAttempt({ ...context(adapter, workRoot, 2, 0), resumeSessions: true, survey: false }, TWO_FER);
+    expect(prompts).toHaveLength(1);
+    expect(record.outcome).toBe("refusal");
+    expect(record.nudges).toBe(0);
+  });
+
+  test("a wrong filename is named back to the model", async () => {
+    const workRoot = mkdtempSync(join(tmpdir(), "aven-bench-nudge-stray-"));
+    const { adapter, prompts } = chattyAgent(1, { stray: "main.py" });
+    const record = await runAttempt({ ...context(adapter, workRoot, 2, 2), resumeSessions: true, survey: false }, TWO_FER);
+    expect(prompts[1]).toContain("You wrote `main.py` instead");
+    expect(prompts[1]).toContain("named exactly `solution.py`");
+    expect(record.outcome).toBe("pass");
+  });
+
+  test("a dead provider is never nudged", async () => {
+    const workRoot = mkdtempSync(join(tmpdir(), "aven-bench-nudge-dead-"));
+    const prompts: string[] = [];
+    const adapter: AgentAdapter = {
+      id: "spy",
+      supportsResume: false,
+      version: async () => "spy",
+      available: async () => ({ ok: true, detail: "spy" }),
+      run: async (inv) => {
+        prompts.push(inv.prompt);
+        return emptyResult({ ok: true, wallMs: 1 });
+      },
+    };
+    const record = await runAttempt({ ...context(adapter, workRoot, 2, 2), resumeSessions: true, survey: false }, TWO_FER);
+    // Nudging a corpse pays the agent timeout twice for a row that measures
+    // nothing either way, and would hide the dead provider behind a nudge count.
+    expect(prompts).toHaveLength(1);
+    expect(record.outcome).toBe("harness_error");
+    expect(record.harnessErrorKind).toBe("agent-no-tokens");
+    expect(record.nudges).toBe(0);
+  });
+
+  test("a harness that cannot resume gets the model's own reply back", () => {
+    const adapter = adapterFor("aven");
+    const text = "```aven\nhello = (): Text => \"Hello, World!\"\n\n{ hello }\n```";
+    const resumed = buildNudgePrompt({ adapter, assistantText: text, strayFiles: [], resumed: true });
+    const fresh = buildNudgePrompt({ adapter, assistantText: text, strayFiles: [], resumed: false });
+    // Resumed, the model still has its own code in context; fresh, it does not,
+    // and a nudge with nothing to write is just a second refusal.
+    expect(resumed).not.toContain("Hello, World!");
+    expect(fresh).toContain("Hello, World!");
+    expect(fresh).toContain("Your previous reply");
+  });
+
+  test("an empty reply gets a nudge that claims nothing about it", () => {
+    // `zebra-puzzle` burned 32 000 completion tokens and surfaced no text at all.
+    // The fenced-code sentence would be a lie there, so it is not said.
+    const prompt = buildNudgePrompt({
+      adapter: adapterFor("python"),
+      assistantText: "",
+      strayFiles: [],
+      resumed: true,
+    });
+    expect(prompt).toContain("`solution.py` does not exist");
+    expect(prompt).not.toContain("a reply is not a file");
+    expect(hasFencedCode("")).toBe(false);
+    expect(hasFencedCode("here you go\n```python\nx = 1\n```")).toBe(true);
   });
 });
 

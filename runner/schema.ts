@@ -105,9 +105,17 @@ import type { ContaminationHit, ContaminationTier } from "./contamination.ts";
  *   and therefore manufacture an Aven gap. `contaminated` /
  *   `contaminationTier` / `upstreamHits` record it; `contractGeneration` moves
  *   to `shapes-v2` because the prompt now prohibits lookup.
+ * - **8** — the nudge loop. 37 of 213 holdout rows scored `refusal`; none were
+ *   refusals. Every one made zero tool calls and 36 answered with the finished
+ *   program in a fenced block, `hello-world` among them. The split was 20 Aven /
+ *   11 Ruby / 6 Python, so a harness-contract miss was being read as a language
+ *   difference of up to 31 points. `maxNudges` / `nudges` record the deterministic
+ *   re-ask and its cost. `contractGeneration` stays `shapes-v2`: the round-0
+ *   prompt is untouched, so what the model is asked for has not changed — only
+ *   what happens when it answers in the wrong channel.
  */
 
-export const SCHEMA_VERSION = 7 as const;
+export const SCHEMA_VERSION = 8 as const;
 
 /**
  * Generated task-contract policy embedded in every round-0 prompt.
@@ -281,6 +289,14 @@ export type RepairRound = {
   gateWallMs: number;
   timedOut: boolean;
   harnessError: string | null;
+  /**
+   * Extra "you wrote no file" turns this round needed (see `buildNudgePrompt`).
+   *
+   * Their tokens, cost and wall time are folded into this round's totals — a
+   * nudge is part of what the round cost — but the count stays separate so a
+   * rescued attempt is never mistaken for one that got it right unaided.
+   */
+  nudges: number;
   /** Content-addressed source produced by this round; null when none was written. */
   artifactHash: string | null;
   solutionBytes: number;
@@ -368,6 +384,18 @@ export type AttemptRecord = {
   maxRounds: number;
   roundsUsed: number;
   repairRounds: RepairRound[];
+
+  /**
+   * Nudge budget per round, and how much of it was spent (see `buildNudgePrompt`).
+   *
+   * `nudges` is the whole point of recording this: it is the rate at which the
+   * model answered in chat instead of writing the file, which is a property of
+   * the harness contract and not of the language. `--max-nudges 0` reproduces the
+   * old behaviour exactly, and joins the natural key so an ablation resumes
+   * against the right rows instead of the nudged ones.
+   */
+  maxNudges: number;
+  nudges: number;
 
   outcome: Outcome;
   outcomeDetail: string | null;
@@ -508,7 +536,7 @@ export function attemptKey(
     | "toolPolicy"
     | "suiteVisibility"
     | "sandbox"
-  > & { contractGeneration: string },
+  > & { contractGeneration: string; maxNudges?: number },
 ): string {
   return [
     r.taskId,
@@ -524,5 +552,9 @@ export function attemptKey(
     // Rows written before schema 6 have no field at runtime. Naming that legacy
     // generation keeps their resume keys stable and distinct from shapes-v1.
     r.contractGeneration ?? "names-v0",
+    // Rows written before schema 8 had no nudge loop, which is `--max-nudges 0`.
+    // Appended only when nonzero so those keys stay byte-identical: a `0`
+    // ablation then resumes against the existing rows instead of re-buying them.
+    ...(r.maxNudges ? [`nudges${r.maxNudges}`] : []),
   ].join(" ");
 }

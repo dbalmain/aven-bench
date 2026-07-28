@@ -236,7 +236,7 @@ deliberately; it appends a new row and leaves the old one alone.
 | bad model id, provider error, opencode ≠ 0 | `harness_error`                      |
 | harness or tool exceeded its timeout       | `timeout`                            |
 | agent turn returned **no tokens at all**   | `harness_error` (`agent-no-tokens`)  |
-| model wrote no solution file               | `refusal`                            |
+| model wrote no solution file, after nudges  | `refusal`                            |
 | gate tool could not be run at all          | `harness_error` (`gate-unavailable`) |
 | suite would not load / parse               | `parse_error`                        |
 | `aven check` rejected it                   | `check_error`                        |
@@ -249,6 +249,19 @@ never folded into a model failure or retried in place.
 
 `harnessErrorKind` (schema 5) names the cause when the runner recognises one:
 `agent-no-tokens`, `agent-failed`, `gate-unavailable`, `runner-exception`.
+
+**A model that answers in chat is nudged, not scored as a refusal.** A turn that
+writes no file gets up to `--max-nudges` (default 2) deterministic re-asks naming
+the missing file, then the round proceeds normally; `nudges` on the row says it
+happened. This is not politeness — in `phase3-holdout-02` 37 of 213 rows were
+scored `refusal` and none were refusals: all 37 made zero tool calls and 36
+replied with the finished program in a fenced block, `hello-world` among them.
+The miss split 20 Aven / 11 Ruby / 6 Python, so a harness-contract failure was
+being read as a language gap of up to 31 points. The nudge says nothing about the
+task or the language, so a rescued solution is still the model's first shot and
+still scores `firstShotPass`; filter on `nudges` if you disagree. `--max-nudges 0`
+restores the old behaviour and resumes against the pre-schema-8 rows, because the
+nudge budget joins the natural key.
 
 **A turn that billed nothing measured nothing.** Zero tokens in every category
 _and_ no solution file is the provider, not the model, so it outranks both

@@ -115,6 +115,7 @@ const KNOWN_FLAGS = new Set([
   "doc-id",
   "samples",
   "rounds",
+  "max-nudges",
   "jobs",
   "agent-jobs",
   "lang-jobs",
@@ -190,6 +191,7 @@ selection
 
 experiment
   --rounds N                   max repair rounds after round 0 (default 2)
+  --max-nudges N               re-asks per round when the model wrote no file (default 2; 0 = off)
   --doc PATH                   skill doc to inline into the prompt (Aven arm)
   --doc-id ID                  label for that doc (default: its file name)
   --self-verify                let the model run the compiler/suite itself
@@ -562,6 +564,7 @@ async function main(): Promise<number> {
 
   const samples = num(args, "samples", 1);
   const maxRounds = num(args, "rounds", 2);
+  const maxNudges = num(args, "max-nudges", 2);
   const agentJobs = num(args, "agent-jobs", 3);
   const langJobs = num(args, "lang-jobs", 8);
   const jobs = num(args, "jobs", agentJobs);
@@ -797,7 +800,7 @@ async function main(): Promise<number> {
   if (avenNeeded) {
     console.log(`aven          commit ${avenCommit ?? "unknown"}  binary ${avenBinary?.slice(0, 12) ?? "(cargo run)"}`);
   }
-  console.log(`tasks         ${taskIds.length} (${wantedSet})   samples ${samples}   rounds<=${maxRounds}`);
+  console.log(`tasks         ${taskIds.length} (${wantedSet})   samples ${samples}   rounds<=${maxRounds}   nudges<=${maxNudges}`);
   if (empty.length > 0) {
     console.log(
       `excluded      ${empty.length} (task, lang) pair(s) with no renderable cases: ` +
@@ -864,6 +867,7 @@ async function main(): Promise<number> {
       sandbox,
       avenBin,
       maxRounds,
+      maxNudges,
       agentTimeoutMs,
       toolTimeoutMs,
       mypy,
@@ -976,6 +980,8 @@ function harnessErrorRecord(ctx: RunContext, spec: AttemptSpec, err: unknown): A
     maxRounds: ctx.maxRounds,
     roundsUsed: 0,
     repairRounds: [],
+    maxNudges: ctx.maxNudges,
+    nudges: 0,
     outcome: "harness_error",
     outcomeDetail: String(err).slice(0, 500),
     harnessError: String(err).slice(0, 500),

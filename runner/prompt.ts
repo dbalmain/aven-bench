@@ -128,6 +128,77 @@ export function buildInitialPrompt(inputs: PromptInputs): string {
   return `${parts.join("\n\n---\n\n")}\n`;
 }
 
+/**
+ * The nudge: deterministic feedback for a turn that produced no file.
+ *
+ * The holdout sweep scored 37 attempts as `refusal`. None of them were refusals.
+ * All 37 made zero tool calls of any kind, and 36 replied with the finished
+ * program in a fenced block — including `hello-world`, whose entire model turn
+ * was ` ```aven\nhello = (): Text => "Hello, World!"\n\n{ hello }\n``` ` and a
+ * `stop`. The model solved the task and answered in chat; the harness read an
+ * empty directory and recorded that as the model declining. Worse, the miss was
+ * asymmetric — 20 Aven, 11 Ruby, 6 Python — so it inflated exactly the gap the
+ * campaign exists to measure.
+ *
+ * That is a protocol failure, and a protocol failure has a deterministic repair:
+ * say which file is missing and ask for it again. No AI in the loop, no judgement
+ * about the code, and — the part that matters for the measurement — **not one
+ * word about the task or the language**. A nudge tells the model nothing it could
+ * have learned from the documentation, so a solution rescued by one is still the
+ * model's first shot and still scores `firstShotPass`. `nudges` on the round says
+ * it happened, so any analysis that disagrees can filter on it.
+ *
+ * The branch on `strayFiles` / fenced code is a regex, not a classifier: it picks
+ * which true sentence to lead with. Naming the wrong file the model actually
+ * wrote is worth the six lines — a model that wrote `main.av` has already done
+ * the work and needs one word to fix it.
+ */
+export type NudgeInputs = {
+  adapter: LangAdapter;
+  /** The reply that wrote nothing. Echoed back when the session cannot resume. */
+  assistantText: string;
+  /** Files left in the working directory under some other name. */
+  strayFiles: string[];
+  /** Whether the harness kept the conversation; a fresh one has to be re-shown. */
+  resumed: boolean;
+};
+
+const MAX_NUDGE_ECHO_CHARS = 12_000;
+
+/** Does this text contain a fenced code block? */
+export function hasFencedCode(text: string): boolean {
+  return /^[ \t]*```/m.test(text);
+}
+
+export function buildNudgePrompt(inputs: NudgeInputs): string {
+  const file = inputs.adapter.solutionFile;
+  const parts: string[] = [
+    `\`${file}\` does not exist in the working directory, so there is nothing to score.`,
+  ];
+
+  if (inputs.strayFiles.length > 0) {
+    const names = inputs.strayFiles.map((f) => `\`${f}\``).join(", ");
+    parts.push(`You wrote ${names} instead. The file has to be named exactly \`${file}\`.`);
+  } else if (hasFencedCode(inputs.assistantText)) {
+    parts.push(
+      `Your reply contained the code, but a reply is not a file: only \`${file}\` on disk is read.`,
+    );
+  }
+
+  parts.push(
+    inputs.resumed
+      ? `Write that code to \`${file}\` now, using your file-writing tool. Do not change the solution and do not explain it — write the file and stop.`
+      : `Write \`${file}\` now, using your file-writing tool, containing the code from your previous reply (reproduced below). Do not change it and do not explain it — write the file and stop.`,
+  );
+
+  const echo = inputs.assistantText.trim();
+  if (!inputs.resumed && echo !== "") {
+    parts.push(`## Your previous reply\n\n${echo.slice(0, MAX_NUDGE_ECHO_CHARS)}`);
+  }
+
+  return `${parts.join("\n\n")}\n`;
+}
+
 export type RepairInputs = {
   adapter: LangAdapter;
   round: number;

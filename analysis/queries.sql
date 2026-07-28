@@ -13,7 +13,8 @@ CREATE OR REPLACE VIEW attempts AS
   SELECT * FROM read_json_auto('data/runs/*.jsonl', union_by_name = true)
   UNION ALL BY NAME
   SELECT false AS contaminated, NULL::VARCHAR AS contaminationTier,
-         NULL::VARCHAR AS contractGeneration WHERE false;
+         NULL::VARCHAR AS contractGeneration,
+         NULL::BIGINT AS nudges, NULL::BIGINT AS maxNudges WHERE false;
 
 CREATE OR REPLACE VIEW split AS
   SELECT unnest(holdout) AS task_id, 'holdout' AS task_set FROM read_json_auto('corpus/split.json')
@@ -146,6 +147,34 @@ SELECT coalesce(trim(CAST(contractGeneration AS VARCHAR), '"'), 'names-v0') AS c
 FROM attempts
 GROUP BY 1
 ORDER BY 1;
+
+-- 2c. Wrong-channel rate. Read this before trusting any pass rate.
+--
+-- The model that answers in chat instead of writing the file is scored a
+-- `refusal`, and a refusal counts against the pass rate — it is in `measured`,
+-- unlike a harness error. In `phase3-holdout-02` that happened 37 times in 213
+-- rows with the finished program sitting in the reply, split 20 Aven / 11 Ruby /
+-- 6 Python. A protocol miss with a 3× arm skew lands entirely on the number the
+-- campaign is trying to read.
+--
+-- `nudges > 0` is the honest rate of the miss; `rescued` is how much of it the
+-- deterministic re-ask recovered. If `pct_wrong_channel` is materially different
+-- across arms, the residual `refusals` are still biasing the delta and the
+-- nudge budget (or the round-0 wording) needs another look before the ranked
+-- worklists mean anything. `max_nudges = 0` rows are pre-schema-8 or a
+-- deliberate ablation: there the miss is invisible and `refusals` absorbs it.
+.print "--- 2c. wrong-channel rate (nudges) by arm ---"
+SELECT language,
+       coalesce(maxNudges, 0) AS max_nudges,
+       count(*) AS rows_total,
+       count(*) FILTER (WHERE coalesce(nudges, 0) > 0) AS needed_a_nudge,
+       count(*) FILTER (WHERE coalesce(nudges, 0) > 0 AND outcome <> 'refusal') AS rescued,
+       count(*) FILTER (WHERE outcome = 'refusal') AS refusals,
+       round(100.0 * count(*) FILTER (WHERE coalesce(nudges, 0) > 0) / nullif(count(*), 0), 1)
+         AS pct_wrong_channel
+FROM holdout
+GROUP BY 1, 2
+ORDER BY 1, 2;
 
 .print "--- harness health (excluded rows by model; expect zeros) ---"
 SELECT modelId,

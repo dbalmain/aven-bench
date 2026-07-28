@@ -18,7 +18,7 @@ import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync } from "node:f
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { adapterFor, type LangAdapter } from "../adapters/lang/index.ts";
-import type { AgentAdapter } from "../adapters/agent/index.ts";
+import type { AgentAdapter, AgentResult } from "../adapters/agent/index.ts";
 import { CORPUS_DIR } from "../ingest/paths.ts";
 import { loadTask, type Task } from "../ingest/task.ts";
 import {
@@ -30,7 +30,13 @@ import {
 import { avenCheckText, probeMirrors, runGate, type GateContext } from "./gate.ts";
 import { computeShadowCost } from "./prices.ts";
 import { Semaphore } from "./proc.ts";
-import { buildInitialPrompt, buildRepairPrompt, buildSurveyPrompt, type SuiteVisibility } from "./prompt.ts";
+import {
+  buildInitialPrompt,
+  buildNudgePrompt,
+  buildRepairPrompt,
+  buildSurveyPrompt,
+  type SuiteVisibility,
+} from "./prompt.ts";
 import {
   CONTRACT_GENERATION,
   SCHEMA_VERSION,
@@ -81,6 +87,14 @@ export type RunContext = {
   maxRounds: number;
   agentTimeoutMs: number;
   toolTimeoutMs: number;
+  /**
+   * Extra "you wrote no file" turns allowed per round (`buildNudgePrompt`).
+   *
+   * 0 restores the pre-schema-8 behaviour, where a turn that wrote nothing ended
+   * the attempt as a refusal — which is how 37 finished programs came to be
+   * recorded as models declining to answer.
+   */
+  maxNudges: number;
   mypy: boolean;
   temperature: number | null;
   seed: number | null;
@@ -164,6 +178,7 @@ export function attemptIdFor(ctx: RunContext, spec: AttemptSpec): string {
     suiteVisibility: ctx.suiteVisibility,
     sandbox: ctx.sandbox,
     contractGeneration: CONTRACT_GENERATION,
+    maxNudges: ctx.maxNudges,
   });
   return `${ctx.runId}-${sha256(key).slice(0, 12)}`;
 }
@@ -227,6 +242,62 @@ function copyFixtures(taskId: string, dir: string): string[] {
     names.push(name);
   }
   return names.sort();
+}
+
+/**
+ * Files the model left behind under a name that is not the one it was asked for.
+ *
+ * Only used to make the nudge concrete — a model that wrote `main.av` has done
+ * the work and needs one word, not a re-solve. The known-name set is everything
+ * the harness itself puts in the directory: the suite, the session log, the git
+ * repo from `freshDir`, opencode's `.agent-state` store, and the gate's caches.
+ */
+function strayFiles(dir: string, adapter: LangAdapter, fixtures: readonly string[]): string[] {
+  const known = new Set([
+    adapter.solutionFile,
+    adapter.testFile,
+    "session.jsonl",
+    ".git",
+    ".agent-state",
+    "__pycache__",
+    ".mypy_cache",
+    ...fixtures,
+  ]);
+  try {
+    return readdirSync(dir)
+      .filter((name) => !known.has(name))
+      .sort()
+      .slice(0, 8);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Fold a round's agent turns — the first one plus any nudges — into one total.
+ *
+ * Everything a round was charged for belongs to the round: a nudge costs real
+ * tokens and real seconds, and hiding them would make the campaign's cost model
+ * wrong. Only the count of nudges is kept apart (`RepairRound.nudges`), because
+ * that is the number the experiment is about. Verdict fields — `ok`, `timedOut`,
+ * `assistantText`, `sessionRef` — are not folded: they belong to the last turn,
+ * which is the one the round ended on.
+ */
+function foldTurns(turns: readonly AgentResult[]) {
+  const sum = (f: (t: AgentResult) => number) => turns.reduce((n, t) => n + f(t), 0);
+  const costs = turns.map((t) => t.reportedCostUsd).filter((c): c is number => c !== null);
+  return {
+    promptTokens: sum((t) => t.promptTokens),
+    completionTokens: sum((t) => t.completionTokens),
+    cachedPromptTokens: sum((t) => t.cachedPromptTokens),
+    cachedWriteTokens: sum((t) => t.cachedWriteTokens),
+    reasoningTokens: sum((t) => t.reasoningTokens),
+    reportedCostUsd: costs.length > 0 ? costs.reduce((a, b) => a + b, 0) : null,
+    wallMs: sum((t) => t.wallMs),
+    shellCommands: sum((t) => t.shellCommands),
+    touchedPaths: turns.flatMap((t) => t.touchedPaths),
+    log: turns.map((t) => t.log).join("\n"),
+  };
 }
 
 type SolutionSnapshot = {
@@ -326,23 +397,61 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
 
   for (let round = 0; round <= ctx.maxRounds; round++) {
     const roundStarted = performance.now();
-    const agentResult = await ctx.agentSem.with(() =>
-      ctx.agent.run({
-        dir,
-        language: spec.language,
-        prompt,
-        model: ctx.modelId,
-        timeoutMs: ctx.agentTimeoutMs,
-        sessionRef: ctx.resumeSessions && ctx.agent.supportsResume ? sessionRef : null,
-        env: agentEnv,
-        sandbox: ctx.sandbox,
-        avenBin: spec.language === "aven" ? ctx.avenBin : null,
-        temperature: ctx.temperature,
-        seed: ctx.seed,
-      }),
-    );
+    const runTurn = (text: string) =>
+      ctx.agentSem.with(() =>
+        ctx.agent.run({
+          dir,
+          language: spec.language,
+          prompt: text,
+          model: ctx.modelId,
+          // Read here rather than closed over: a nudge has to continue the turn
+          // it is nudging, or the model has no code left to write to the file.
+          sessionRef: ctx.resumeSessions && ctx.agent.supportsResume ? sessionRef : null,
+          timeoutMs: ctx.agentTimeoutMs,
+          env: agentEnv,
+          sandbox: ctx.sandbox,
+          avenBin: spec.language === "aven" ? ctx.avenBin : null,
+          temperature: ctx.temperature,
+          seed: ctx.seed,
+        }),
+      );
+
+    let agentResult = await runTurn(prompt);
     if (agentResult.sessionRef) sessionRef = agentResult.sessionRef;
-    const agentLogHash = agentResult.log === "" ? null : putArtifact(agentResult.log, "log");
+    const turns: AgentResult[] = [agentResult];
+    const promptsThisRound: string[] = [prompt];
+    let solution = agentResult.ok
+      ? await snapshotSolution(dir, adapter)
+      : { exists: false, text: "", hash: null, bytes: 0, loc: 0, tokens: 0 };
+    let nudges = 0;
+
+    // The model answered, wrote no file, and has budget left: say so and ask
+    // again. Deterministic, task-free, and bounded — see `buildNudgePrompt`.
+    // A turn that billed nothing is a dead provider, not a model in the wrong
+    // channel, so it is never nudged: that would pay the agent timeout twice
+    // for a row that measures nothing either way.
+    while (
+      agentResult.ok &&
+      !solution.exists &&
+      !agentMeasuredNothing(agentResult) &&
+      nudges < ctx.maxNudges
+    ) {
+      nudges++;
+      const nudgePrompt = buildNudgePrompt({
+        adapter,
+        assistantText: agentResult.assistantText,
+        strayFiles: strayFiles(dir, adapter, fixtures),
+        resumed: ctx.resumeSessions && ctx.agent.supportsResume && sessionRef !== null,
+      });
+      promptsThisRound.push(nudgePrompt);
+      agentResult = await runTurn(nudgePrompt);
+      if (agentResult.sessionRef) sessionRef = agentResult.sessionRef;
+      turns.push(agentResult);
+      if (agentResult.ok) solution = await snapshotSolution(dir, adapter);
+    }
+
+    const folded = foldTurns(turns);
+    const agentLogHash = folded.log === "" ? null : putArtifact(folded.log, "log");
 
     // `aven` runs the *model* made this round: everything in the session log not
     // tagged as one of the gate's own invocations.
@@ -354,27 +463,28 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
     // Anything the harness named outside the work directory. Without the
     // sandbox, a pass with a nonzero count may have copied this repo's reference
     // answer. With bubblewrap, it records the attempt even though access failed.
-    const escaped = agentResult.touchedPaths.filter((p) => !isInside(dir, p));
+    const escaped = folded.touchedPaths.filter((p) => !isInside(dir, p));
 
-    // Did the model go and read the answer? The prompt is subtracted first: the
-    // harness writes it into the log verbatim and the exercise text carries
+    // Did the model go and read the answer? The prompts are subtracted first: the
+    // harness writes them into the log verbatim and the exercise text carries
     // Exercism attribution URLs, so a naive scan would flag our own writing.
-    const upstreamHits = detectContamination(agentResult.log, prompt);
+    const upstreamHits = detectContamination(folded.log, promptsThisRound.join("\n"));
 
     const baseRound = {
       round,
       promptHash: round === 0 ? promptHash : putArtifact(prompt, "md"),
+      nudges,
       outsideWorkdirTouches: escaped.length,
       escapedPaths: escaped.slice(0, 8),
-      shellCommands: agentResult.shellCommands,
+      shellCommands: folded.shellCommands,
       upstreamHits,
-      promptTokens: agentResult.promptTokens,
-      completionTokens: agentResult.completionTokens,
-      cachedPromptTokens: agentResult.cachedPromptTokens,
-      cachedWriteTokens: agentResult.cachedWriteTokens,
-      reasoningTokens: agentResult.reasoningTokens,
-      reportedCostUsd: agentResult.reportedCostUsd,
-      agentWallMs: agentResult.wallMs,
+      promptTokens: folded.promptTokens,
+      completionTokens: folded.completionTokens,
+      cachedPromptTokens: folded.cachedPromptTokens,
+      cachedWriteTokens: folded.cachedWriteTokens,
+      reasoningTokens: folded.reasoningTokens,
+      reportedCostUsd: folded.reportedCostUsd,
+      agentWallMs: folded.wallMs,
       agentLogHash,
       modelToolInvocations: modelRunsThisRound,
     };
@@ -388,7 +498,12 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
       // provider that never answered, and a sweep of those rows reads as a model
       // failing every remaining task slowly (observed: ten consecutive
       // 420s/zero-token rows after `opencode/big-pickle` went dead mid-run).
-      const measuredNothing = agentMeasuredNothing(agentResult);
+      //
+      // Judged on the round's total, not the failing turn: if the model answered
+      // and only the nudge turn hit a dead provider, the round did measure
+      // something, and calling that "no tokens" would send it to the quarantine
+      // script as evidence-free when it is not.
+      const measuredNothing = agentMeasuredNothing(folded);
       outcome = agentResult.timedOut && !measuredNothing ? "timeout" : "harness_error";
       timedOut = agentResult.timedOut;
       harnessError = measuredNothing
@@ -419,16 +534,15 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
       break;
     }
 
-    const solution = await snapshotSolution(dir, adapter);
     if (solution.exists) lastSolution = solution;
     if (!solution.exists) {
-      // The harness ran and wrote nothing. That is a refusal (or a model that
-      // answered in prose), not a wrong answer — *if* the model said anything at
-      // all. A turn that reported success, billed nothing and wrote nothing said
-      // nothing, so it is the provider's failure and not a measurement of the
-      // model. Refusals bill tokens for the prose they refuse in, which is what
-      // keeps them on their own side of this line.
-      const measuredNothing = agentMeasuredNothing(agentResult);
+      // Still nothing after the nudge budget was spent. Only now is this a
+      // refusal (or a model that answered in prose), and not a wrong answer — *if*
+      // the model said anything at all. A turn that reported success, billed
+      // nothing and wrote nothing said nothing, so it is the provider's failure
+      // and not a measurement of the model. Refusals bill tokens for the prose
+      // they refuse in, which is what keeps them on their own side of this line.
+      const measuredNothing = agentMeasuredNothing(folded);
       outcome = measuredNothing ? "harness_error" : "refusal";
       if (measuredNothing) {
         harnessError = `${NO_TOKENS_DETAIL}: the harness reported success, no tokens and no solution file`;
@@ -672,6 +786,8 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
     maxRounds: ctx.maxRounds,
     roundsUsed: rounds.length,
     repairRounds: rounds,
+    maxNudges: ctx.maxNudges,
+    nudges: rounds.reduce((n, r) => n + r.nudges, 0),
 
     outcome,
     outcomeDetail,
