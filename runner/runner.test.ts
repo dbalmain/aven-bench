@@ -1426,6 +1426,32 @@ describe("store", () => {
     expect(key).not.toBe(attemptKey(record({ sandbox: "none" })));
     expect(key).not.toBe(attemptKey({ ...record(), contractGeneration: "names-v0" }));
   });
+
+  test("the nudge loop is part of the key, and both sides of resume include it", () => {
+    // A nudge budget changes what the model is asked, so it must split the key.
+    expect(attemptKey(record({ maxNudges: 2 }))).not.toBe(attemptKey(record({ maxNudges: 0 })));
+
+    // The bug this pins: the planner built its key from loose fields while the
+    // resume index built its key from the recorded row. Omitting `maxNudges` on
+    // the planning side made every key miss its own row, so a resumed sweep
+    // re-ran all 71 attempts and paid for them again. Both sides must agree.
+    const stored = record({ maxNudges: 2 });
+    const planned = attemptKey({
+      taskId: stored.taskId,
+      language: stored.language,
+      modelId: stored.modelId,
+      agentHarness: stored.agentHarness,
+      docId: stored.docId,
+      sampleIndex: stored.sampleIndex,
+      avenCommit: stored.avenCommit,
+      toolPolicy: stored.toolPolicy,
+      suiteVisibility: stored.suiteVisibility,
+      sandbox: stored.sandbox,
+      contractGeneration: stored.contractGeneration,
+      maxNudges: stored.maxNudges,
+    });
+    expect(planned).toBe(attemptKey(stored));
+  });
 });
 
 // --- session log -----------------------------------------------------------

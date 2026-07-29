@@ -781,6 +781,10 @@ async function main(): Promise<number> {
             suiteVisibility,
             sandbox,
             contractGeneration: CONTRACT_GENERATION,
+            // Recorded rows carry `maxNudges`, so their keys pick up the
+            // `nudges<N>` segment. Omitting it here made every planned key miss
+            // its own recorded row and re-buy the whole sweep.
+            maxNudges,
           });
           const { done, outcomes } = isDone(resume, key, retryHarnessErrors);
           planned.push({ spec, modelId, key, done, outcomes });

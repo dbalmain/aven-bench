@@ -536,7 +536,13 @@ export function attemptKey(
     | "toolPolicy"
     | "suiteVisibility"
     | "sandbox"
-  > & { contractGeneration: string; maxNudges?: number },
+    // Required, not optional: an optional `maxNudges` let a caller omit it and
+    // build a key that could never match the one `loadResumeIndex` derives from
+    // the recorded row, which silently re-buys an entire sweep. Legacy rows that
+    // predate the field still read as `undefined` at runtime, which is what the
+    // `nudges<N>` segment below is written to tolerate.
+    | "maxNudges"
+  > & { contractGeneration: string },
 ): string {
   return [
     r.taskId,
