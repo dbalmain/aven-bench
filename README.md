@@ -17,6 +17,8 @@ corpus/                 generated, committed. The oracle.
   ingest-report.json    everything questionable the ingest found
   <task>/task.json      normalized cases: {property, args[], expected}
   <task>/prompt.md      the task statement, language-agnostic
+annotations/            hand-authored; never wiped by ingest
+  types/<task>.json     sparse type annotations (Map / variant) for Aven rendering
 adapters/lang/          one adapter per language: render tests, run them, read exit codes
   common.ts             the LangAdapter interface
   aven.ts               the measured arm
@@ -37,6 +39,11 @@ data/                   gitignored. Run logs + content-addressed artifacts.
 `corpus/` is committed and fully generated. Nothing in it is hand-authored, and
 nothing in the generators is task-specific: a task the generator cannot express
 is reported as omitted, not special-cased.
+
+`annotations/types/` is the opposite: hand-authored, sparse type annotations
+(Aven type strings + optional variant encodings) consumed when rendering Aven
+suites and contracts. Ingest never deletes this tree. Validate with
+`bun run check-types` (see `annotations/README.md`).
 
 ## Corpus
 
@@ -62,6 +69,7 @@ bun run ingest                     # vendor/ -> corpus/   (regenerates it wholes
 bun run split                      # extend corpus/split.json with any new tasks
 bun run generate --lang aven,python --intersect
 bun run verify                     # prove the generated suites are real
+bun run check-types                # validate annotations/types against corpus
 bun test                           # unit tests for the ingest, adapters and runner
 bun run typecheck                  # bunx tsc --noEmit
 ```
