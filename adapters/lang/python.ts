@@ -18,6 +18,7 @@
 import { fromPythonSafe } from "./python-values.ts";
 import { fromPortable } from "../../ingest/json.ts";
 import type { Task } from "../../ingest/task.ts";
+import type { ResolvedTypeAnn } from "../../ingest/type-annotations.ts";
 import {
   orderedArgs,
   propertyOf,
@@ -96,7 +97,11 @@ function renderArg(task: Task, value: unknown): string {
   return fromPythonSafe(fromPortable(value as Parameters<typeof fromPortable>[0]));
 }
 
-function render(task: Task, only?: ReadonlySet<string>): RenderedSuite {
+function render(
+  task: Task,
+  only?: ReadonlySet<string>,
+  _ann?: ResolvedTypeAnn | null,
+): RenderedSuite {
   const omitted: OmittedCase[] = [];
   const body: string[] = [];
   let index = 0;
@@ -234,7 +239,7 @@ function pythonShapeDescription(shape: Shape): string {
   }
 }
 
-function contract(task: Task): string {
+function contract(task: Task, _ann?: ResolvedTypeAnn | null): string {
   const lines = [
     "## Your task",
     "",

@@ -21,6 +21,10 @@ import { cpSync, existsSync, mkdirSync, rmSync } from "node:fs";
 import { adapterFor, type LangAdapter, type OmittedCase } from "../adapters/lang/index.ts";
 import { CORPUS_DIR, DATA_DIR, REFERENCES_DIR } from "./paths.ts";
 import { loadIndex, loadTask, type Task } from "./task.ts";
+import {
+  loadAndValidateAnnotations,
+  type ResolvedTypeAnn,
+} from "./type-annotations.ts";
 
 export type GenerateOptions = {
   languages: string[];
@@ -83,8 +87,12 @@ export function parseArgs(argv: string[]): GenerateOptions {
 }
 
 /** Which cases can this adapter render? Derived by rendering and diffing. */
-function renderableUuids(adapter: LangAdapter, task: Task): Set<string> {
-  const { omitted } = adapter.renderTests(task);
+function renderableUuids(
+  adapter: LangAdapter,
+  task: Task,
+  ann: ResolvedTypeAnn | null,
+): Set<string> {
+  const { omitted } = adapter.renderTests(task, undefined, ann);
   const bad = new Set(omitted.map((o) => o.uuid));
   return new Set(task.cases.map((c) => c.uuid).filter((u) => !bad.has(u)));
 }
@@ -118,23 +126,24 @@ export async function generate(opts: GenerateOptions): Promise<GenerateReport> {
 
   for (const id of ids) {
     const task = await loadTask(CORPUS_DIR, id);
+    const ann = await loadAndValidateAnnotations(task);
     const promptBody = await Bun.file(`${CORPUS_DIR}/${id}/prompt.md`).text();
 
     let only: ReadonlySet<string> | undefined;
     if (opts.intersect) {
-      const sets = adapters.map((a) => renderableUuids(a, task));
+      const sets = adapters.map((a) => renderableUuids(a, task, ann));
       only = new Set(task.cases.map((c) => c.uuid).filter((u) => sets.every((s) => s.has(u))));
     }
 
     for (const adapter of adapters) {
       const stats = report.perLanguage[adapter.id]!;
-      const { contents, omitted } = adapter.renderTests(task, only);
+      const { contents, omitted } = adapter.renderTests(task, only, ann);
       const dir = `${opts.outDir}/${adapter.id}/${id}`;
       mkdirSync(dir, { recursive: true });
       await Bun.write(`${dir}/${adapter.testFile}`, contents);
       await Bun.write(
         `${dir}/prompt.md`,
-        `${promptBody.trimEnd()}\n\n${adapter.renderContract(task)}\n`,
+        `${promptBody.trimEnd()}\n\n${adapter.renderContract(task, ann)}\n`,
       );
 
       if (opts.withReference) {

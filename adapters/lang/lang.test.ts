@@ -17,6 +17,17 @@ import {
   type Task,
   type TaskProperty,
 } from "../../ingest/task.ts";
+import {
+  resolveAnnFile,
+  type TypeAnnFile,
+  type TypePosition,
+} from "../../ingest/type-annotations.ts";
+
+/** Synthetic resolved annotations for emission/contract fixture tests. */
+function annFor(taskId: string, positions: TypePosition[]) {
+  const file: TypeAnnFile = { schemaVersion: 1, task: taskId, positions };
+  return resolveAnnFile(file, "fixture.json");
+}
 
 const prop = (over: Partial<TaskProperty> = {}): TaskProperty => ({
   name: "f",
@@ -299,6 +310,183 @@ describe("Aven value rendering", () => {
     expect(renderAvenValue({ $n: "115132219018763992565095597973971522401" })).toBe(
       "115132219018763992565095597973971522401",
     );
+  });
+});
+
+describe("Aven annotated emission (maps / variants)", () => {
+  const expectedPath = ["f", "expected"] as const;
+
+  test("empty map-annotated object → Map([]); unannotated empty object → {}", () => {
+    const ann = annFor("demo", [{ at: "f.expected", type: "Map(Text, Int)" }]);
+    expect(renderAvenValue({}, ann, expectedPath)).toBe("Map([])");
+    expect(renderAvenValue({})).toBe("{}");
+  });
+
+  test("text-key map always quotes keys (never bare IDENT — K13)", () => {
+    const ann = annFor("demo", [{ at: "f.expected", type: "Map(Text, Int)" }]);
+    const rendered = renderAvenValue({ word: 1, the: 2 }, ann, expectedPath);
+    expect(rendered).toBe('Map([("word", 1), ("the", 2)])');
+    // Bare `word` would be name.unbound in Aven.
+    expect(rendered).not.toMatch(/\(\s*word\s*,/);
+    expect(rendered).not.toContain("(word,");
+  });
+
+  test("int-key map (etl $o style) emits integer key literals", () => {
+    const ann = annFor("demo", [{ at: "f.expected", type: "Map(Int, Array(Text))" }]);
+    // After fromPortable, $o is an ordinary object with string keys "1", …
+    const rendered = renderAvenValue(
+      { $o: [["1", ["A"]], ["2", ["B", "C"]]] },
+      ann,
+      expectedPath,
+    );
+    expect(rendered).toBe('Map([(1, ["A"]), (2, ["B", "C"])])');
+  });
+
+  test("?T whole-value null → null", () => {
+    const ann = annFor("demo", [{ at: "f.expected", type: "?Map(Text, Int)" }]);
+    expect(renderAvenValue(null, ann, expectedPath)).toBe("null");
+    expect(renderAvenValue({ a: 1 }, ann, expectedPath)).toBe('Map([("a", 1)])');
+  });
+
+  test("Map(Text, ?Object) admits null and object entry values", () => {
+    const ann = annFor("demo", [{ at: "f.expected", type: "Map(Text, ?Object)" }]);
+    const rendered = renderAvenValue(
+      { found: { start: 1, end: 2 }, missing: null },
+      ann,
+      expectedPath,
+    );
+    expect(rendered).toBe('Map([("found", { start: 1, end: 2 }), ("missing", null)])');
+  });
+
+  test("Float over integer raw forces float spelling (K15)", () => {
+    const ann = annFor("demo", [{ at: "f.expected", type: "Float" }]);
+    expect(renderAvenValue(3, ann, expectedPath)).toBe("3.0");
+    expect(renderAvenValue({ $n: "3" }, ann, expectedPath)).toBe("3.0");
+    // Unannotated integer stays Int.
+    expect(renderAvenValue(3)).toBe("3");
+  });
+
+  test("nested annotated field under unannotated parent record", () => {
+    // rest-api style: parent is a record; only owes is a map.
+    const ann = annFor("demo", [
+      { at: "f.expected.users[].owes", type: "Map(Text, Float)" },
+    ]);
+    const value = {
+      users: [
+        { name: "Adam", owes: { Bob: 3 }, balance: 0 },
+      ],
+    };
+    const rendered = renderAvenValue(value, ann, expectedPath);
+    expect(rendered).toContain('owes: Map([("Bob", 3.0)])');
+    expect(rendered).toContain("name: \"Adam\"");
+    // Parent stays a record, not Map.
+    expect(rendered.startsWith("{")).toBe(true);
+    expect(rendered).not.toMatch(/^Map\(/);
+  });
+
+  test("tagField variant emission including payload-free tag", () => {
+    const ann = annFor("demo", [
+      {
+        at: "f.arg.operations[]",
+        type: "@Open | @Deposit(Int)",
+        encoding: {
+          kind: "tagField",
+          field: "operation",
+          tags: {
+            open: { ctor: "Open", payload: { from: "none" } },
+            deposit: { ctor: "Deposit", payload: { from: "field", name: "amount" } },
+          },
+        },
+      },
+    ]);
+    const t = task({
+      properties: [prop({ name: "f", argNames: ["operations"], arity: 1 })],
+      cases: [
+        {
+          uuid: "u1",
+          name: "ops",
+          group: [],
+          description: "d",
+          property: "f",
+          args: [
+            {
+              name: "operations",
+              value: [
+                { operation: "open" },
+                { operation: "deposit", amount: 10 },
+              ],
+            },
+          ],
+          expected: { kind: "value" as const, value: 0 },
+        },
+      ],
+    });
+    const { contents, omitted } = avenAdapter.renderTests(t, undefined, ann);
+    expect(omitted).toEqual([]);
+    expect(contents).toContain("solution.f([@Open, @Deposit(10)])");
+  });
+
+  test("exclusiveKey variant emission", () => {
+    const ann = annFor("demo", [
+      {
+        at: "f.expected",
+        type: "@Years(Object) | @Months(Object)",
+        encoding: {
+          kind: "exclusiveKey",
+          keys: {
+            years: { ctor: "Years", payload: { from: "value" } },
+            months: { ctor: "Months", payload: { from: "value" } },
+          },
+        },
+      },
+    ]);
+    expect(renderAvenValue({ years: { a: 1 } }, ann, expectedPath)).toBe("@Years({ a: 1 })");
+    expect(renderAvenValue({ months: {} }, ann, expectedPath)).toBe("@Months({})");
+  });
+
+  test("contract bullet contains the Aven type for an annotated position", () => {
+    const ann = annFor("demo", [{ at: "f.expected", type: "Map(Text, Int)" }]);
+    const t = task({
+      properties: [prop({ argNames: ["sentence"], arity: 1, name: "f" })],
+      cases: [
+        {
+          uuid: "u1",
+          name: "n",
+          group: [],
+          description: "d",
+          property: "f",
+          args: [{ name: "sentence", value: "word" }],
+          expected: { kind: "value" as const, value: { word: 1 } },
+        },
+      ],
+    });
+    const contract = avenAdapter.renderContract(t, ann);
+    expect(contract).toContain("Map(Text, Int)");
+    // Without annotation the return is withheld-record prose.
+    const bare = avenAdapter.renderContract(t);
+    expect(bare).toContain("keys not enumerated");
+    expect(bare).not.toContain("Map(Text, Int)");
+  });
+
+  test("suite expected values use Map when annotated", () => {
+    const ann = annFor("demo", [{ at: "f.expected", type: "Map(Text, Int)" }]);
+    const t = task({
+      properties: [prop({ argNames: ["sentence"], arity: 1, name: "f" })],
+      cases: [
+        {
+          uuid: "u1",
+          name: "counts",
+          group: [],
+          description: "d",
+          property: "f",
+          args: [{ name: "sentence", value: "word" }],
+          expected: { kind: "value" as const, value: { word: 1 } },
+        },
+      ],
+    });
+    const { contents } = avenAdapter.renderTests(t, undefined, ann);
+    expect(contents).toContain('Map([("word", 1)])');
+    expect(contents).not.toContain("word: 1");
   });
 });
 

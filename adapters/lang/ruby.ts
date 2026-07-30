@@ -28,6 +28,7 @@
 import { fromRubySafe, rubyString } from "./ruby-values.ts";
 import { fromPortable, type Portable } from "../../ingest/json.ts";
 import type { Task } from "../../ingest/task.ts";
+import type { ResolvedTypeAnn } from "../../ingest/type-annotations.ts";
 import {
   orderedArgs,
   propertyOf,
@@ -127,7 +128,11 @@ function renderArg(task: Task, value: unknown): string {
   return fromRubySafe(fromPortable(value as Portable));
 }
 
-function render(task: Task, only?: ReadonlySet<string>): RenderedSuite {
+function render(
+  task: Task,
+  only?: ReadonlySet<string>,
+  _ann?: ResolvedTypeAnn | null,
+): RenderedSuite {
   const omitted: OmittedCase[] = [];
   const body: string[] = [];
   /** `method name -> upstream description`, for the suite's CASE_NAMES table. */
@@ -245,7 +250,7 @@ function rubyShapeDescription(shape: Shape): string {
   }
 }
 
-function contract(task: Task): string {
+function contract(task: Task, _ann?: ResolvedTypeAnn | null): string {
   const lines = [
     "## Your task",
     "",

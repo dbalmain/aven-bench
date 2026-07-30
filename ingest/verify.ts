@@ -34,6 +34,10 @@ import { pyName } from "../adapters/lang/python.ts";
 import { rbName } from "../adapters/lang/ruby.ts";
 import { renderAvenValue } from "../adapters/lang/aven.ts";
 import { loadIndex, loadTask, type Task } from "./task.ts";
+import {
+  loadAndValidateAnnotations,
+  type ResolvedTypeAnn,
+} from "./type-annotations.ts";
 
 const CONCURRENCY = Number(process.env["AVEN_BENCH_CONCURRENCY"] ?? 12);
 
@@ -60,7 +64,7 @@ type Outcome = {
  * is the question being asked. Fallible properties also join `@Err` so
  * `expectEq(_, @Ok(v))` and `expectErr(_)` both type-check.
  */
-function stubSolution(task: Task, lang: string): string {
+function stubSolution(task: Task, lang: string, ann: ResolvedTypeAnn | null = null): string {
   if (lang === "aven") {
     const defs = task.properties.map((p) => {
       const params = p.argNames.map((_, i) => `a${i}`);
@@ -68,7 +72,7 @@ function stubSolution(task: Task, lang: string): string {
       for (const c of casesOf(task, p.name)) {
         if (c.expected.kind !== "value") continue;
         try {
-          const text = renderAvenValue(c.expected.value);
+          const text = renderAvenValue(c.expected.value, ann, [p.name, "expected"]);
           if (!values.includes(text)) values.push(text);
         } catch {
           // Unrenderable expected value: its case is omitted from the suite too.
@@ -225,11 +229,12 @@ async function materialize(
   task: Task,
   root: string,
   solution: string,
+  ann: ResolvedTypeAnn | null,
 ): Promise<string> {
   const dir = `${root}/${adapter.id}/${task.id}`;
   rmSync(dir, { recursive: true, force: true });
   mkdirSync(dir, { recursive: true });
-  await Bun.write(`${dir}/${adapter.testFile}`, adapter.renderTests(task).contents);
+  await Bun.write(`${dir}/${adapter.testFile}`, adapter.renderTests(task, undefined, ann).contents);
   await Bun.write(`${dir}/${adapter.solutionFile}`, solution);
   return dir;
 }
@@ -258,8 +263,9 @@ async function main(): Promise<void> {
       (t) => referenced.includes(t.id) && existsSync(`${REFERENCES_DIR}/${t.id}/${adapter.solutionFile}`),
     );
     const refOutcomes = await pool(refTasks, CONCURRENCY, async (task) => {
+      const ann = await loadAndValidateAnnotations(task);
       const solution = await Bun.file(`${REFERENCES_DIR}/${task.id}/${adapter.solutionFile}`).text();
-      const dir = await materialize(adapter, task, refRoot, solution);
+      const dir = await materialize(adapter, task, refRoot, solution, ann);
       return { ...(await runSuite(adapter, dir)), task: task.id };
     });
 
@@ -269,8 +275,9 @@ async function main(): Promise<void> {
       (t) => referenced.includes(t.id) && existsSync(`${REFERENCES_DIR}/${t.id}/${brokenName}`),
     );
     const brokenOutcomes = await pool(brokenTasks, CONCURRENCY, async (task) => {
+      const ann = await loadAndValidateAnnotations(task);
       const solution = await Bun.file(`${REFERENCES_DIR}/${task.id}/${brokenName}`).text();
-      const dir = await materialize(adapter, task, `${DATA_DIR}/verify/broken`, solution);
+      const dir = await materialize(adapter, task, `${DATA_DIR}/verify/broken`, solution, ann);
       return { ...(await runSuite(adapter, dir)), task: task.id };
     });
     // "fail" is the only acceptable verdict: `pass` is a false green, and
@@ -281,7 +288,14 @@ async function main(): Promise<void> {
     const sweepOutcomes = onlyReferences
       ? []
       : await pool(tasks, CONCURRENCY, async (task) => {
-          const dir = await materialize(adapter, task, `${DATA_DIR}/verify/stub`, stubSolution(task, lang));
+          const ann = await loadAndValidateAnnotations(task);
+          const dir = await materialize(
+            adapter,
+            task,
+            `${DATA_DIR}/verify/stub`,
+            stubSolution(task, lang, ann),
+            ann,
+          );
           return { ...(await runSuite(adapter, dir)), task: task.id };
         });
 

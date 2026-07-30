@@ -6,6 +6,7 @@
  * which is a measurement, not a bug to paper over.
  */
 
+import type { ResolvedTypeAnn } from "../../ingest/type-annotations.ts";
 import type { Task, TaskCase, TaskProperty } from "../../ingest/task.ts";
 
 /** A case the adapter refused to render, with the reason it refused. */
@@ -29,11 +30,21 @@ export type LangAdapter = {
   /**
    * Render the suite. `only` restricts to a set of case uuids, which the runner
    * uses to compare arms over an identical case set.
+   *
+   * `ann` is the shared validated type annotation for this task (or null when
+   * none). Aven uses it for map/variant emission; other arms ignore it.
    */
-  renderTests(task: Task, only?: ReadonlySet<string>): RenderedSuite;
+  renderTests(
+    task: Task,
+    only?: ReadonlySet<string>,
+    ann?: ResolvedTypeAnn | null,
+  ): RenderedSuite;
 
-  /** Language-specific half of the prompt: naming, signatures, error style. */
-  renderContract(task: Task): string;
+  /**
+   * Language-specific half of the prompt: naming, signatures, error style.
+   * `ann` matches `renderTests` so suite oracles and contract prose stay aligned.
+   */
+  renderContract(task: Task, ann?: ResolvedTypeAnn | null): string;
 
   /** Argv to run the suite, given the directory holding solution + test file. */
   testCommand(dir: string): { argv: string[]; cwd: string };

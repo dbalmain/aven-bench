@@ -20,6 +20,15 @@
 import { fromPortable, isIntegerLiteral, type JVal, type Portable } from "../../ingest/json.ts";
 import type { Task } from "../../ingest/task.ts";
 import {
+  extractVariant,
+  matches,
+  type PrimitiveKind,
+  type ResolvedPosition,
+  type ResolvedTypeAnn,
+  type TypeExpr,
+  type VariantEncoding,
+} from "../../ingest/type-annotations.ts";
+import {
   orderedArgs,
   propertyOf,
   type LangAdapter,
@@ -72,7 +81,62 @@ function avenNumber(raw: string): string {
   return /\./.test(raw) ? raw : `${raw}.0`;
 }
 
-function avenValue(v: JVal): string {
+// ---------------------------------------------------------------------------
+// Annotation path index (exact segment match at the current cursor)
+// ---------------------------------------------------------------------------
+
+type AnnEnv = Map<string, ResolvedPosition>;
+
+function pathKey(path: readonly string[]): string {
+  return path.join("\0");
+}
+
+function buildAnnEnv(ann: ResolvedTypeAnn | null | undefined): AnnEnv | null {
+  if (!ann || ann.positions.length === 0) return null;
+  const env: AnnEnv = new Map();
+  for (const pos of ann.positions) env.set(pathKey(pos.segments), pos);
+  return env;
+}
+
+function lookupAnn(env: AnnEnv | null, path: readonly string[]): ResolvedPosition | undefined {
+  return env?.get(pathKey(path));
+}
+
+/** Annotations whose segment path has `path` as a proper prefix. */
+function childAnnotations(env: AnnEnv | null, path: readonly string[]): ResolvedPosition[] {
+  if (!env) return [];
+  const out: ResolvedPosition[] = [];
+  for (const pos of env.values()) {
+    if (pos.segments.length <= path.length) continue;
+    if (path.every((s, i) => s === pos.segments[i])) out.push(pos);
+  }
+  return out;
+}
+
+/** `users` + `[]` + `owes` → `users[].owes` (for contract prose). */
+function formatPathTail(segments: readonly string[]): string {
+  let out = "";
+  for (const s of segments) {
+    if (s === "[]") out += "[]";
+    else out += (out.length === 0 ? "" : ".") + s;
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------------------
+// Value emission (default record/array walk; annotated positions by type)
+// ---------------------------------------------------------------------------
+
+/**
+ * Render a value. `path` is the property-scoped segment cursor
+ * (`[property, "expected", …]` or `[property, "arg", name, …]`). When `env`
+ * has a position at that path, emission follows the type; otherwise the walk
+ * is structural and the cursor still descends so nested annotations are found.
+ */
+function avenValue(v: JVal, env: AnnEnv | null = null, path: readonly string[] = []): string {
+  const pos = lookupAnn(env, path);
+  if (pos) return emitByType(pos.type, v, pos.encoding, env, path);
+
   switch (v.kind) {
     case "null":
       return "null";
@@ -83,16 +147,129 @@ function avenValue(v: JVal): string {
     case "string":
       return avenText(v.value);
     case "array":
-      return `[${v.items.map(avenValue).join(", ")}]`;
+      return `[${v.items.map((item) => avenValue(item, env, [...path, "[]"])).join(", ")}]`;
     case "object": {
       if (v.entries.length === 0) return "{}";
       const fields = v.entries.map((e) => {
         const key = IDENT.test(e.key) ? e.key : avenText(e.key);
-        return `${key}: ${avenValue(e.value)}`;
+        return `${key}: ${avenValue(e.value, env, [...path, e.key])}`;
       });
       return `{ ${fields.join(", ")} }`;
     }
   }
+}
+
+function emitByType(
+  type: TypeExpr,
+  v: JVal,
+  encoding: VariantEncoding | undefined,
+  env: AnnEnv | null,
+  path: readonly string[],
+): string {
+  switch (type.kind) {
+    case "optional":
+      if (v.kind === "null") return "null";
+      return emitByType(type.inner, v, encoding, env, path);
+    case "union": {
+      for (const member of type.members) {
+        if (matches(member, v, encoding ? { encoding } : {})) {
+          return emitByType(member, v, encoding, env, path);
+        }
+      }
+      throw new Unrenderable(`no union member matched at ${formatPathTail(path)}`);
+    }
+    case "map":
+      return emitMap(type, v, env, path);
+    case "variant":
+      return emitVariant(type, v, encoding);
+    case "array": {
+      if (v.kind !== "array") {
+        throw new Unrenderable(`expected Array at ${formatPathTail(path)}`);
+      }
+      return `[${v.items
+        .map((item) => emitByType(type.element, item, undefined, env, path))
+        .join(", ")}]`;
+    }
+    case "object":
+      // Opaque Object: record spelling; no nested path annotations under a
+      // typed Object (path overlap forbids annotating both).
+      return emitRecordDefault(v);
+    case "primitive":
+      return emitPrimitive(type.of, v);
+  }
+}
+
+function emitPrimitive(of: PrimitiveKind, v: JVal): string {
+  switch (of) {
+    case "null":
+      return "null";
+    case "bool":
+      if (v.kind !== "bool") throw new Unrenderable("expected Bool");
+      return v.value ? "true" : "false";
+    case "text":
+      if (v.kind !== "string") throw new Unrenderable("expected Text");
+      return avenText(v.value);
+    case "int":
+      if (v.kind !== "number" || !isIntegerLiteral(v.raw)) {
+        throw new Unrenderable("expected Int");
+      }
+      return v.raw;
+    case "float":
+      // K15: typed Float forces float spelling even when the raw text is an
+      // integer literal (`3` → `3.0`).
+      if (v.kind !== "number") throw new Unrenderable("expected Float");
+      if (isIntegerLiteral(v.raw)) return `${v.raw}.0`;
+      return avenNumber(v.raw);
+  }
+}
+
+function emitMap(
+  type: Extract<TypeExpr, { kind: "map" }>,
+  v: JVal,
+  env: AnnEnv | null,
+  path: readonly string[],
+): string {
+  if (v.kind !== "object") throw new Unrenderable("expected Map object");
+  if (v.entries.length === 0) return "Map([])";
+  const pairs = v.entries.map((e) => {
+    // K13: Text keys always via avenText — bare IDENT is name.unbound in Aven.
+    const key = type.key === "int" ? e.key : avenText(e.key);
+    const val = emitByType(type.value, e.value, undefined, env, path);
+    return `(${key}, ${val})`;
+  });
+  return `Map([${pairs.join(", ")}])`;
+}
+
+function emitVariant(
+  type: Extract<TypeExpr, { kind: "variant" }>,
+  v: JVal,
+  encoding: VariantEncoding | undefined,
+): string {
+  if (!encoding) throw new Unrenderable("variant emission requires encoding");
+  if (v.kind !== "object") throw new Unrenderable("expected variant object");
+  const extracted = extractVariant(v, encoding);
+  if (!extracted) throw new Unrenderable("variant extraction failed");
+  const alt = type.alts.find((a) => a.tag === extracted.ctor);
+  if (!alt) throw new Unrenderable(`unknown variant ctor @${extracted.ctor}`);
+  if (alt.payload === null || extracted.payload === null) {
+    // Nullary, or empty rest payload → `@Ctor` (design: empty rest is nullary).
+    return `@${extracted.ctor}`;
+  }
+  // Payload types have no nested variants in the corpus subset; emit by type
+  // (so Float spelling applies) without a path cursor for nested annotations.
+  const payload = emitByType(alt.payload, extracted.payload, undefined, null, []);
+  return `@${extracted.ctor}(${payload})`;
+}
+
+/** Record literal without path annotations (Object payloads, typed Object). */
+function emitRecordDefault(v: JVal): string {
+  if (v.kind !== "object") throw new Unrenderable("expected object");
+  if (v.entries.length === 0) return "{}";
+  const fields = v.entries.map((e) => {
+    const key = IDENT.test(e.key) ? e.key : avenText(e.key);
+    return `${key}: ${avenValue(e.value)}`;
+  });
+  return `{ ${fields.join(", ")} }`;
 }
 
 /**
@@ -137,14 +314,24 @@ const AVEN_EMIT: EmitTarget = {
 };
 
 /** An argument: pseudocode functions become real lambdas, everything else is data. */
-function renderAvenArg(task: Task, value: unknown): string {
+function renderAvenArg(
+  task: Task,
+  value: unknown,
+  env: AnnEnv | null,
+  path: readonly string[],
+): string {
   if (typeof value === "string" && isPseudocodeFunction(value)) {
     return renderPseudocode(value, AVEN_EMIT, new Set(task.properties.map((p) => p.name)));
   }
-  return avenValue(fromPortable(value as Portable));
+  return avenValue(fromPortable(value as Portable), env, path);
 }
 
-function render(task: Task, only?: ReadonlySet<string>): RenderedSuite {
+function render(
+  task: Task,
+  only?: ReadonlySet<string>,
+  ann?: ResolvedTypeAnn | null,
+): RenderedSuite {
+  const env = buildAnnEnv(ann);
   const omitted: OmittedCase[] = [];
   const lines: string[] = [];
 
@@ -153,15 +340,16 @@ function render(task: Task, only?: ReadonlySet<string>): RenderedSuite {
     const prop = propertyOf(task, c.property);
     try {
       const args = orderedArgs(prop, c)
-        .map((a) => renderAvenArg(task, a.value))
+        .map((a) => renderAvenArg(task, a.value, env, [c.property, "arg", a.name]))
         .join(", ");
       const call = `solution.${c.property}(${args})`;
+      const expectedPath = [c.property, "expected"] as const;
       const assertion =
         c.expected.kind === "error"
           ? `test.expectErr(${call})`
           : prop.returnsResult
-            ? `test.expectEq(${call}, @Ok(${avenValue(fromPortable(c.expected.value))}))`
-            : `test.expectEq(${call}, ${avenValue(fromPortable(c.expected.value))})`;
+            ? `test.expectEq(${call}, @Ok(${avenValue(fromPortable(c.expected.value), env, expectedPath)}))`
+            : `test.expectEq(${call}, ${avenValue(fromPortable(c.expected.value), env, expectedPath)})`;
       lines.push(`  ${avenText(c.name)}: () => ${assertion},`);
     } catch (err) {
       if (!(err instanceof Unrenderable)) throw err;
@@ -197,8 +385,19 @@ function avenFieldName(name: string): string {
  * base types. Rendering `Int | Text` would therefore turn an observation into a
  * false signature. Those shapes fall back to prose made from valid type
  * fragments below.
+ *
+ * When `env` has a position at `path`, the stored annotation type string is
+ * used verbatim (K8 — contract and suite share the same spelling).
  */
-function avenShape(shape: Shape, absentAsOptional = false): string | null {
+function avenShape(
+  shape: Shape,
+  absentAsOptional = false,
+  env: AnnEnv | null = null,
+  path: readonly string[] = [],
+): string | null {
+  const pos = lookupAnn(env, path);
+  if (pos) return pos.typeString;
+
   switch (shape.kind) {
     case "unknown":
       return null;
@@ -218,14 +417,14 @@ function avenShape(shape: Shape, absentAsOptional = false): string | null {
       // Arity alone cannot honestly supply the parameter and result types.
       return null;
     case "array": {
-      const element = avenShape(shape.element);
+      const element = avenShape(shape.element, false, env, [...path, "[]"]);
       return element === null ? null : `Array(${element})`;
     }
     case "record": {
       if (shape.keys === "withheld") return null;
       if (shape.fields.length === 0) return "{}";
       const fields = shape.fields.map((field) => {
-        const value = avenShape(field.shape, true);
+        const value = avenShape(field.shape, true, env, [...path, field.name]);
         return value === null ? null : `${avenFieldName(field.name)}: ${value}`;
       });
       return fields.some((field) => field === null)
@@ -246,14 +445,21 @@ function avenShape(shape: Shape, absentAsOptional = false): string | null {
         return absent ? "Undefined" : "Null";
       }
       if (values.length !== 1) return null;
-      const value = avenShape(values[0]!);
+      const value = avenShape(values[0]!, false, env, path);
       return value === null ? null : `${absent ? "?" : ""}${value}${nullable ? "?" : ""}`;
     }
   }
 }
 
-function avenShapeDescription(shape: Shape): string {
-  const exact = avenShape(shape);
+function avenShapeDescription(
+  shape: Shape,
+  env: AnnEnv | null = null,
+  path: readonly string[] = [],
+): string {
+  const pos = lookupAnn(env, path);
+  if (pos) return `\`${pos.typeString}\``;
+
+  const exact = avenShape(shape, false, env, path);
   if (exact !== null) return `\`${exact}\``;
   switch (shape.kind) {
     case "unknown":
@@ -264,32 +470,71 @@ function avenShapeDescription(shape: Shape): string {
         : `a function accepting ${shape.arity} positional argument${shape.arity === 1 ? "" : "s"}` +
             " (its parameter and return shapes were not inferred)";
     case "array":
-      return `an \`Array\` whose elements are ${avenShapeDescription(shape.element)}`;
+      return (
+        `an \`Array\` whose elements are ` +
+        avenShapeDescription(shape.element, env, [...path, "[]"])
+      );
     case "record": {
       if (shape.keys === "withheld") {
-        return (
+        const base =
           "a record with keys not enumerated by this contract and values of shape " +
-          avenShapeDescription(shape.value)
-        );
+          avenShapeDescription(shape.value, env, path);
+        // Nested annotations under a withheld key set never appear in the
+        // shape tree; surface their type strings so the contract still names
+        // every annotated path (K8).
+        const nested = childAnnotations(env, path);
+        if (nested.length === 0) return base;
+        const bits = nested.map((child) => {
+          const rel = formatPathTail(child.segments.slice(path.length));
+          return `\`${rel}\` is \`${child.typeString}\``;
+        });
+        return `${base} (${bits.join("; ")})`;
       }
       if (shape.fields.length === 0) return "a record with no observed keys";
       const fields = shape.fields.map((field) => {
+        const fieldPath = [...path, field.name];
+        const fieldPos = lookupAnn(env, fieldPath);
         const members = membersOf(field.shape);
         const optional = members.some((member) => member.kind === "absent");
+        if (fieldPos) {
+          return `\`${field.name}\` (${optional ? "optional; " : ""}\`${fieldPos.typeString}\`)`;
+        }
         const value = mergeShapes(members.filter((member) => member.kind !== "absent"));
-        return `\`${field.name}\` (${optional ? "optional; " : ""}${avenShapeDescription(value)})`;
+        return `\`${field.name}\` (${optional ? "optional; " : ""}${avenShapeDescription(value, env, fieldPath)})`;
       });
       return `a record with observed keys ${fields.join(", ")}`;
     }
     case "union":
-      return `either ${shape.members.map(avenShapeDescription).join(" or ")}`;
+      return `either ${shape.members.map((m) => avenShapeDescription(m, env, path)).join(" or ")}`;
     // Every other shape has an exact spelling and returned above.
     default:
       return "a value whose shape could not be expressed";
   }
 }
 
-function contract(task: Task): string {
+/**
+ * Ensure every annotation under this property appears in the bullet (K8).
+ * Root and known-field rewrites usually already include the type string;
+ * this covers residual nested paths under withheld structure.
+ */
+function ensureAnnotatedTypesInBullet(
+  bullet: string,
+  env: AnnEnv | null,
+  property: string,
+): string {
+  if (!env) return bullet;
+  let out = bullet;
+  for (const pos of env.values()) {
+    if (pos.segments[0] !== property) continue;
+    if (out.includes(pos.typeString)) continue;
+    const rel = formatPathTail(pos.segments.slice(1));
+    out = out.replace(/\.$/, "") + `; \`${rel}\` is \`${pos.typeString}\`.`;
+  }
+  return out;
+}
+
+function contract(task: Task, ann?: ResolvedTypeAnn | null): string {
+  const env = buildAnnEnv(ann);
   const lines = [
     "## Your task",
     "",
@@ -301,10 +546,16 @@ function contract(task: Task): string {
   for (const observed of inferTaskShapes(task)) {
     const p = observed.property;
     const args = observed.args.map((argument) => argument.name).join(", ");
-    const argumentTypes = observed.args.map((argument) => avenShape(argument.shape));
-    const returnType = avenShape(observed.returns);
+    const argumentTypes = observed.args.map((argument) =>
+      avenShape(argument.shape, false, env, [p.name, "arg", argument.name]),
+    );
+    const returnType = avenShape(observed.returns, false, env, [p.name, "expected"]);
     const successType =
       returnType === null ? null : p.returnsResult ? `Result(${returnType}, Text)` : returnType;
+    const error = p.returnsResult
+      ? " Return `@Ok(value)` on success and `@Err(message)` when the input is invalid."
+      : "";
+    let bullet: string;
     if (argumentTypes.every((type) => type !== null) && successType !== null) {
       const inputType =
         argumentTypes.length === 0
@@ -312,12 +563,7 @@ function contract(task: Task): string {
           : argumentTypes.length === 1
             ? argumentTypes[0]!
             : `(${argumentTypes.join(", ")})`;
-      const error = p.returnsResult
-        ? " Return `@Ok(value)` on success and `@Err(message)` when the input is invalid."
-        : "";
-      lines.push(
-        `- \`${p.name}(${args})\` — observed type \`${inputType} -> ${successType}\`.${error}`,
-      );
+      bullet = `- \`${p.name}(${args})\` — observed type \`${inputType} -> ${successType}\`.${error}`;
     } else {
       const argumentsDescription =
         observed.args.length === 0
@@ -325,17 +571,14 @@ function contract(task: Task): string {
           : `observed arguments: ${observed.args
               .map(
                 (argument) =>
-                  `\`${argument.name}\` is ${avenShapeDescription(argument.shape)}`,
+                  `\`${argument.name}\` is ${avenShapeDescription(argument.shape, env, [p.name, "arg", argument.name])}`,
               )
               .join("; ")}`;
-      const error = p.returnsResult
-        ? " Return `@Ok(value)` on success and `@Err(message)` when the input is invalid."
-        : "";
-      lines.push(
+      bullet =
         `- \`${p.name}(${args})\` — ${argumentsDescription}; observed successful return:` +
-          ` ${avenShapeDescription(observed.returns)}.${error}`,
-      );
+        ` ${avenShapeDescription(observed.returns, env, [p.name, "expected"])}.${error}`;
     }
+    lines.push(ensureAnnotatedTypesInBullet(bullet, env, p.name));
   }
   const exportList = task.properties.map((p) => p.name).join(", ");
   lines.push(
@@ -377,9 +620,16 @@ export const avenAdapter: LangAdapter = {
   classifyExit: (code) => (code === 0 ? "pass" : code === 1 ? "fail" : "load-error"),
 };
 
-/** Exported for tests: the value renderer, in isolation. */
-export function renderAvenValue(p: Portable): string {
-  return avenValue(fromPortable(p));
+/**
+ * Exported for tests and the verify stub: the value renderer, in isolation.
+ * Optional `ann` + `path` drive map/variant emission the same way as suites.
+ */
+export function renderAvenValue(
+  p: Portable,
+  ann?: ResolvedTypeAnn | null,
+  path: readonly string[] = [],
+): string {
+  return avenValue(fromPortable(p), buildAnnEnv(ann), path);
 }
 
 // --- export-surface check --------------------------------------------------

@@ -21,6 +21,7 @@ import { adapterFor, type LangAdapter } from "../adapters/lang/index.ts";
 import type { AgentAdapter, AgentResult } from "../adapters/agent/index.ts";
 import { CORPUS_DIR } from "../ingest/paths.ts";
 import { loadTask, type Task } from "../ingest/task.ts";
+import { loadAndValidateAnnotations } from "../ingest/type-annotations.ts";
 import {
   detectContamination,
   isDisqualifying,
@@ -336,7 +337,8 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
   freshDir(dir);
   const fixtures = copyFixtures(spec.taskId, dir);
 
-  const { contents: suite, omitted } = adapter.renderTests(task, spec.only);
+  const ann = await loadAndValidateAnnotations(task);
+  const { contents: suite, omitted } = adapter.renderTests(task, spec.only, ann);
   const suiteHash = putArtifact(suite, adapter.testFile.replace(/^.*\./, ""));
   const suitePath = `${dir}/${adapter.testFile}`;
   const writeSuite = async () => Bun.write(suitePath, suite);
@@ -358,7 +360,7 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
   };
   if (ctx.suiteVisibility === "visible") await writeSuite();
 
-  const taskPrompt = `${(await Bun.file(`${CORPUS_DIR}/${spec.taskId}/prompt.md`).text()).trimEnd()}\n\n${adapter.renderContract(task)}`;
+  const taskPrompt = `${(await Bun.file(`${CORPUS_DIR}/${spec.taskId}/prompt.md`).text()).trimEnd()}\n\n${adapter.renderContract(task, ann)}`;
   const { argv } = adapter.testCommand(dir);
   // Trusted gates use their normal host-side wrappers. A self-verifying model
   // needs a command made only from binaries and files present in its namespace,

@@ -38,6 +38,7 @@ import { basename, dirname, join, resolve } from "node:path";
 import { adapterFor } from "../adapters/lang/index.ts";
 import { agentFor, type AgentAdapter } from "../adapters/agent/index.ts";
 import { AVEN_LANG_DIR, CORPUS_DIR } from "../ingest/paths.ts";
+import { loadAndValidateAnnotations } from "../ingest/type-annotations.ts";
 import { loadIndex, loadTask, type Split } from "../ingest/task.ts";
 import { pool, runProcess, Semaphore } from "./proc.ts";
 import { priceTable } from "./prices.ts";
@@ -714,8 +715,9 @@ async function main(): Promise<number> {
     const adapters = languages.map(adapterFor);
     for (const id of taskIds) {
       const task = await loadTask(CORPUS_DIR, id);
+      const ann = await loadAndValidateAnnotations(task);
       const sets = adapters.map((a) => {
-        const bad = new Set(a.renderTests(task).omitted.map((o) => o.uuid));
+        const bad = new Set(a.renderTests(task, undefined, ann).omitted.map((o) => o.uuid));
         return new Set(task.cases.map((c) => c.uuid).filter((u) => !bad.has(u)));
       });
       onlyByTask.set(id, new Set(task.cases.map((c) => c.uuid).filter((u) => sets.every((s) => s.has(u)))));
@@ -738,9 +740,12 @@ async function main(): Promise<number> {
   const empty: { taskId: string; language: string }[] = [];
   for (const taskId of taskIds) {
     const task = await loadTask(CORPUS_DIR, taskId);
+    const ann = await loadAndValidateAnnotations(task);
     const only = onlyByTask.get(taskId);
     for (const language of languages) {
-      const omitted = new Set(adapterFor(language).renderTests(task, only).omitted.map((o) => o.uuid));
+      const omitted = new Set(
+        adapterFor(language).renderTests(task, only, ann).omitted.map((o) => o.uuid),
+      );
       const renderable = task.cases.filter(
         (c) => !omitted.has(c.uuid) && (!only || only.has(c.uuid)),
       ).length;
