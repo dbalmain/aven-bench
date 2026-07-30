@@ -744,6 +744,39 @@ function typeStringOf(t: TypeExpr): string {
   }
 }
 
+/**
+ * Corpus `object` is a match/emit placeholder ("any JSON object → record"), not
+ * an Aven type name. Contracts must never print it; use {@link avenSpellableType}
+ * or shape prose instead.
+ */
+export function typeContainsObject(t: TypeExpr): boolean {
+  switch (t.kind) {
+    case "object":
+      return true;
+    case "optional":
+      return typeContainsObject(t.inner);
+    case "array":
+      return typeContainsObject(t.element);
+    case "map":
+      return typeContainsObject(t.value);
+    case "union":
+      return t.members.some(typeContainsObject);
+    case "variant":
+      return t.alts.some((a) => a.payload !== null && typeContainsObject(a.payload));
+    case "primitive":
+      return false;
+  }
+}
+
+/**
+ * Exact Aven type surface for contract bullets, or null when the expression
+ * mentions corpus `object` (which has no Aven spelling).
+ */
+export function avenSpellableType(t: TypeExpr): string | null {
+  if (typeContainsObject(t)) return null;
+  return typeStringOf(t);
+}
+
 // ---------------------------------------------------------------------------
 // matches
 // ---------------------------------------------------------------------------

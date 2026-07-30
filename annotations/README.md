@@ -24,7 +24,11 @@ the copy under the parent `clex` tree.
 2. `type` is an **Aven type string** in the **corpus subset** only: `Null`,
    `Bool`, `Int`, `Float`, `Text`, `Object`, `Array(T)`, `Map(Text|Int, T)`,
    `?T`, `T | U`, `@Tag`, `@Tag(T)`. Anything else fails as _unsupported in
-   corpus annotations_.
+   corpus annotations_. **`Object` is corpus vocabulary only** (opaque JSON
+   object → record for match/emit); it is not an Aven type name. Contract
+   rendering never prints `Object` — it falls back to observed-record shape
+   prose or an opaque-record phrase, while still naming `Map` / `@Tag`
+   structure around those slots.
 3. **Maps:** choose key kind from the domain (word counts → `Text` keys; etl
    legacy scores → `Int` keys; IOU amounts → `Float` values).
 4. **Variants:** always supply `encoding` (`tagField` or `exclusiveKey`). Never

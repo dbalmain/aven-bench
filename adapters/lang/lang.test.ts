@@ -468,6 +468,70 @@ describe("Aven annotated emission (maps / variants)", () => {
     expect(bare).not.toContain("Map(Text, Int)");
   });
 
+  test("contract never prints Object as a type (corpus object → prose)", () => {
+    // Regression: pos.typeString used to paste Object into prompts; Aven has no
+    // such type (type.unknown-name). Covers bare, ?object, Map value, variant payload.
+    const ann = annFor("demo", [
+      { at: "f.arg.blob", type: "Object" },
+      {
+        at: "f.arg.ops[]",
+        type: "@Go | @Bump(Int) | @Bag(Object) | @Maybe(?Object)",
+        encoding: {
+          kind: "tagField",
+          field: "op",
+          tags: {
+            go: { ctor: "Go", payload: { from: "none" } },
+            bump: { ctor: "Bump", payload: { from: "field", name: "n" } },
+            bag: { ctor: "Bag", payload: { from: "rest" } },
+            maybe: { ctor: "Maybe", payload: { from: "field", name: "item" } },
+          },
+        },
+      },
+      { at: "f.expected", type: "Map(Text, ?Object)" },
+    ]);
+    const t = task({
+      properties: [prop({ argNames: ["blob", "ops"], arity: 2, name: "f" })],
+      cases: [
+        {
+          uuid: "u1",
+          name: "n",
+          group: [],
+          description: "d",
+          property: "f",
+          args: [
+            { name: "blob", value: { x: 1, y: 2 } },
+            {
+              name: "ops",
+              value: [
+                { op: "go" },
+                { op: "bump", n: 3 },
+                { op: "bag", extra: true },
+                { op: "maybe", item: null },
+              ],
+            },
+          ],
+          expected: {
+            kind: "value" as const,
+            value: { word: { start: { row: 1 }, end: { row: 2 } } },
+          },
+        },
+      ],
+    });
+    const contract = avenAdapter.renderContract(t, ann);
+    // Token boundary: avoid false positives like nodeObject identifiers.
+    expect(contract).not.toMatch(/(?<![A-Za-z])Object(?![A-Za-z])/);
+    // Concrete spellings in the same annotation still appear exactly.
+    expect(contract).toContain("`@Go`");
+    expect(contract).toContain("`@Bump(Int)`");
+    // Object payloads stay useful (tag + payload presence), not bare @Bag.
+    expect(contract).toContain("`@Bag` (with a record payload)");
+    expect(contract).toContain("`@Maybe` (with an optional record payload)");
+    // Map structure retained; value is prose rather than Object.
+    expect(contract).toMatch(/`Map` with `Text` keys/);
+    // Bare Object arg uses observed record shape when known.
+    expect(contract).toContain("`{ x: Int, y: Int }`");
+  });
+
   test("union of withheld returns emits each annotated note once (rest-api post)", () => {
     // Two success shapes merge into a union of withheld-key records. Nested
     // annotations at that path must appear once per bullet, not once per member.

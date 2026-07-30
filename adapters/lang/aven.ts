@@ -20,12 +20,14 @@
 import { fromPortable, isIntegerLiteral, type JVal, type Portable } from "../../ingest/json.ts";
 import type { Task } from "../../ingest/task.ts";
 import {
+  avenSpellableType,
   extractVariant,
   matches,
   type PrimitiveKind,
   type ResolvedPosition,
   type ResolvedTypeAnn,
   type TypeExpr,
+  type VariantAlt,
   type VariantEncoding,
 } from "../../ingest/type-annotations.ts";
 import {
@@ -385,8 +387,10 @@ function avenFieldName(name: string): string {
  * false signature. Those shapes fall back to prose made from valid type
  * fragments below.
  *
- * When `env` has a position at `path`, the stored annotation type string is
- * used verbatim (K8 — contract and suite share the same spelling).
+ * When `env` has a position at `path` whose type is fully spellable as Aven
+ * (no corpus `object`), that spelling is used (K8). Corpus `object` is not an
+ * Aven type name — those slots return null so the description path can fall
+ * back to shape prose while still naming maps/variants.
  */
 function avenShape(
   shape: Shape,
@@ -397,8 +401,13 @@ function avenShape(
 ): string | null {
   const pos = lookupAnn(env, path);
   if (pos) {
-    markCovered(covered, path);
-    return pos.typeString;
+    const exact = avenSpellableType(pos.type);
+    if (exact !== null) {
+      markCovered(covered, path);
+      return exact;
+    }
+    // Unspellable annotation: leave uncovered for the description walk.
+    return null;
   }
 
   switch (shape.kind) {
@@ -454,6 +463,101 @@ function avenShape(
   }
 }
 
+/** Drop null/absent union members so `?Object` prose describes the non-null side. */
+function nonNullShape(shape: Shape): Shape {
+  const members = membersOf(shape).filter((m) => m.kind !== "null" && m.kind !== "absent");
+  return members.length === 0 ? { kind: "unknown" } : mergeShapes(members);
+}
+
+/**
+ * Shape prose for a corpus `object` slot: prefer the observed record when the
+ * shape tree already has it; otherwise a short opaque-record phrase. Never
+ * consults annotations (those would re-enter and try to print `Object`).
+ */
+function describeObjectSlot(shape: Shape): string {
+  const exact = avenShape(shape, false, null, []);
+  if (exact !== null) return `\`${exact}\``;
+  return avenShapeDescription(shape, null, []);
+}
+
+/** Variant alt for contracts: concrete payloads keep Aven spelling; object uses prose. */
+function describeVariantAlt(alt: VariantAlt): string {
+  if (alt.payload === null) return `\`@${alt.tag}\``;
+  const exact = avenSpellableType(alt.payload);
+  if (exact !== null) return `\`@${alt.tag}(${exact})\``;
+  if (alt.payload.kind === "object") {
+    return `\`@${alt.tag}\` (with a record payload)`;
+  }
+  if (alt.payload.kind === "optional" && alt.payload.inner.kind === "object") {
+    return `\`@${alt.tag}\` (with an optional record payload)`;
+  }
+  return `\`@${alt.tag}\` (with a payload)`;
+}
+
+/**
+ * Contract prose for an annotated TypeExpr that is not fully Aven-spellable
+ * (contains corpus `object`). Outer Map / Array / variant structure stays;
+ * each `object` leaf falls back to shape prose or an opaque-record phrase.
+ */
+function describeAnnotatedType(type: TypeExpr, shape: Shape): string {
+  const exact = avenSpellableType(type);
+  if (exact !== null) return `\`${exact}\``;
+
+  switch (type.kind) {
+    case "object":
+      return describeObjectSlot(shape);
+    case "optional": {
+      const innerShape = nonNullShape(shape);
+      if (type.inner.kind === "object") {
+        return `either \`Null\` or ${describeObjectSlot(innerShape)}`;
+      }
+      return `either \`Null\` or ${describeAnnotatedType(type.inner, innerShape)}`;
+    }
+    case "array": {
+      const elShape = shape.kind === "array" ? shape.element : { kind: "unknown" as const };
+      return (
+        `an \`Array\` whose elements are ` + describeAnnotatedType(type.element, elShape)
+      );
+    }
+    case "map": {
+      const key = type.key === "text" ? "Text" : "Int";
+      // Annotated maps usually land on withheld-key record shapes (expected
+      // maps) or known-key records (arg maps); values are what Object describes.
+      const valShape =
+        shape.kind === "record" && shape.keys === "withheld"
+          ? shape.value
+          : shape.kind === "record" && shape.keys === "known"
+            ? mergeShapes(shape.fields.map((f) => f.shape))
+            : { kind: "unknown" as const };
+      return (
+        `a \`Map\` with \`${key}\` keys and values of shape ` +
+        describeAnnotatedType(type.value, valShape)
+      );
+    }
+    case "variant": {
+      const parts = type.alts.map(describeVariantAlt);
+      if (parts.length === 1) return parts[0]!;
+      if (parts.length === 2) return `either ${parts[0]} or ${parts[1]}`;
+      return `one of ${parts.slice(0, -1).join(", ")}, or ${parts[parts.length - 1]}`;
+    }
+    case "union":
+      return `either ${type.members.map((m) => describeAnnotatedType(m, shape)).join(" or ")}`;
+    case "primitive":
+      return `\`${avenSpellableType(type)}\``;
+  }
+}
+
+/**
+ * Residual note text for an annotation not already embedded in the bullet.
+ * Never prints corpus `Object` as a type name.
+ */
+function annotatedTypeNote(pos: ResolvedPosition): string {
+  const rel = formatPathTail(pos.segments.slice(1));
+  const exact = avenSpellableType(pos.type);
+  if (exact !== null) return `\`${rel}\` is \`${exact}\``;
+  return `\`${rel}\` is ${describeAnnotatedType(pos.type, { kind: "unknown" })}`;
+}
+
 function avenShapeDescription(
   shape: Shape,
   env: AnnEnv | null = null,
@@ -463,7 +567,9 @@ function avenShapeDescription(
   const pos = lookupAnn(env, path);
   if (pos) {
     markCovered(covered, path);
-    return `\`${pos.typeString}\``;
+    const exact = avenSpellableType(pos.type);
+    if (exact !== null) return `\`${exact}\``;
+    return describeAnnotatedType(pos.type, shape);
   }
 
   const exact = avenShape(shape, false, env, path, covered);
@@ -498,7 +604,12 @@ function avenShapeDescription(
         const optional = members.some((member) => member.kind === "absent");
         if (fieldPos) {
           markCovered(covered, fieldPath);
-          return `\`${field.name}\` (${optional ? "optional; " : ""}\`${fieldPos.typeString}\`)`;
+          const fieldExact = avenSpellableType(fieldPos.type);
+          if (fieldExact !== null) {
+            return `\`${field.name}\` (${optional ? "optional; " : ""}\`${fieldExact}\`)`;
+          }
+          const value = mergeShapes(members.filter((member) => member.kind !== "absent"));
+          return `\`${field.name}\` (${optional ? "optional; " : ""}${describeAnnotatedType(fieldPos.type, value)})`;
         }
         const value = mergeShapes(members.filter((member) => member.kind !== "absent"));
         return `\`${field.name}\` (${optional ? "optional; " : ""}${avenShapeDescription(value, env, fieldPath, covered)})`;
@@ -515,7 +626,7 @@ function avenShapeDescription(
 
 /**
  * Ensure every annotation under this property appears in the bullet (K8).
- * Root and known-field rewrites already embed the type string (tracked in
+ * Root and known-field rewrites already embed the type (tracked in
  * `covered`); this covers residual nested paths under withheld structure.
  * Guard is per-position note text so two paths sharing a type string both emit.
  */
@@ -530,8 +641,7 @@ function ensureAnnotatedTypesInBullet(
   for (const pos of env.values()) {
     if (pos.segments[0] !== property) continue;
     if (covered?.has(pathKey(pos.segments))) continue;
-    const rel = formatPathTail(pos.segments.slice(1));
-    const note = `\`${rel}\` is \`${pos.typeString}\``;
+    const note = annotatedTypeNote(pos);
     if (out.includes(note)) continue;
     out = out.replace(/\.$/, "") + `; ${note}.`;
   }

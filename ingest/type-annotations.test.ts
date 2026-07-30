@@ -3,6 +3,7 @@ import { fromPortable, type JVal, type Portable } from "./json.ts";
 import {
   asTypeAnnFile,
   assertMatches,
+  avenSpellableType,
   checkPathOverlaps,
   isSegmentPrefix,
   matches,
@@ -10,6 +11,7 @@ import {
   parseTypeString,
   resolveAnnFile,
   rootForEncoding,
+  typeContainsObject,
   TypeAnnError,
   type TypeAnnFile,
   type TypeExpr,
@@ -107,6 +109,22 @@ describe("parseTypeString — accepted", () => {
       kind: "union",
       members: [{ kind: "primitive", of: "null" }, { kind: "object" }],
     });
+  });
+});
+
+describe("avenSpellableType / typeContainsObject", () => {
+  test("spellable types round-trip; object-bearing types are null", () => {
+    expect(avenSpellableType(parseTypeString("Map(Text, Int)"))).toBe("Map(Text, Int)");
+    expect(avenSpellableType(parseTypeString("@Open | @Deposit(Int)"))).toBe(
+      "@Open | @Deposit(Int)",
+    );
+    expect(avenSpellableType(parseTypeString("?Map(Text, Int)"))).toBe("?Map(Text, Int)");
+    expect(avenSpellableType(parseTypeString("Object"))).toBeNull();
+    expect(avenSpellableType(parseTypeString("?Object"))).toBeNull();
+    expect(avenSpellableType(parseTypeString("Map(Text, ?Object)"))).toBeNull();
+    expect(avenSpellableType(parseTypeString("@Concurrent(Object)"))).toBeNull();
+    expect(typeContainsObject(parseTypeString("Int"))).toBe(false);
+    expect(typeContainsObject(parseTypeString("@Bag(Object)"))).toBe(true);
   });
 });
 
