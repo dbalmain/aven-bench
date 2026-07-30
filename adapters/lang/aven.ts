@@ -102,15 +102,14 @@ function lookupAnn(env: AnnEnv | null, path: readonly string[]): ResolvedPositio
   return env?.get(pathKey(path));
 }
 
-/** Annotations whose segment path has `path` as a proper prefix. */
-function childAnnotations(env: AnnEnv | null, path: readonly string[]): ResolvedPosition[] {
-  if (!env) return [];
-  const out: ResolvedPosition[] = [];
-  for (const pos of env.values()) {
-    if (pos.segments.length <= path.length) continue;
-    if (path.every((s, i) => s === pos.segments[i])) out.push(pos);
-  }
-  return out;
+/**
+ * Record that `path` was already spelled into the bullet via an exact type
+ * rewrite (`avenShape` / `avenShapeDescription` hit `lookupAnn`). Residual
+ * notes only cover annotations that never land on that walk (nested under
+ * withheld-key structure).
+ */
+function markCovered(covered: Set<string> | undefined, path: readonly string[]): void {
+  covered?.add(pathKey(path));
 }
 
 /** `users` + `[]` + `owes` → `users[].owes` (for contract prose). */
@@ -394,9 +393,13 @@ function avenShape(
   absentAsOptional = false,
   env: AnnEnv | null = null,
   path: readonly string[] = [],
+  covered?: Set<string>,
 ): string | null {
   const pos = lookupAnn(env, path);
-  if (pos) return pos.typeString;
+  if (pos) {
+    markCovered(covered, path);
+    return pos.typeString;
+  }
 
   switch (shape.kind) {
     case "unknown":
@@ -417,14 +420,14 @@ function avenShape(
       // Arity alone cannot honestly supply the parameter and result types.
       return null;
     case "array": {
-      const element = avenShape(shape.element, false, env, [...path, "[]"]);
+      const element = avenShape(shape.element, false, env, [...path, "[]"], covered);
       return element === null ? null : `Array(${element})`;
     }
     case "record": {
       if (shape.keys === "withheld") return null;
       if (shape.fields.length === 0) return "{}";
       const fields = shape.fields.map((field) => {
-        const value = avenShape(field.shape, true, env, [...path, field.name]);
+        const value = avenShape(field.shape, true, env, [...path, field.name], covered);
         return value === null ? null : `${avenFieldName(field.name)}: ${value}`;
       });
       return fields.some((field) => field === null)
@@ -445,7 +448,7 @@ function avenShape(
         return absent ? "Undefined" : "Null";
       }
       if (values.length !== 1) return null;
-      const value = avenShape(values[0]!, false, env, path);
+      const value = avenShape(values[0]!, false, env, path, covered);
       return value === null ? null : `${absent ? "?" : ""}${value}${nullable ? "?" : ""}`;
     }
   }
@@ -455,11 +458,15 @@ function avenShapeDescription(
   shape: Shape,
   env: AnnEnv | null = null,
   path: readonly string[] = [],
+  covered?: Set<string>,
 ): string {
   const pos = lookupAnn(env, path);
-  if (pos) return `\`${pos.typeString}\``;
+  if (pos) {
+    markCovered(covered, path);
+    return `\`${pos.typeString}\``;
+  }
 
-  const exact = avenShape(shape, false, env, path);
+  const exact = avenShape(shape, false, env, path, covered);
   if (exact !== null) return `\`${exact}\``;
   switch (shape.kind) {
     case "unknown":
@@ -472,23 +479,16 @@ function avenShapeDescription(
     case "array":
       return (
         `an \`Array\` whose elements are ` +
-        avenShapeDescription(shape.element, env, [...path, "[]"])
+        avenShapeDescription(shape.element, env, [...path, "[]"], covered)
       );
     case "record": {
       if (shape.keys === "withheld") {
-        const base =
-          "a record with keys not enumerated by this contract and values of shape " +
-          avenShapeDescription(shape.value, env, path);
         // Nested annotations under a withheld key set never appear in the
-        // shape tree; surface their type strings so the contract still names
-        // every annotated path (K8).
-        const nested = childAnnotations(env, path);
-        if (nested.length === 0) return base;
-        const bits = nested.map((child) => {
-          const rel = formatPathTail(child.segments.slice(path.length));
-          return `\`${rel}\` is \`${child.typeString}\``;
-        });
-        return `${base} (${bits.join("; ")})`;
+        // shape tree; residual notes are appended once per bullet (K8).
+        return (
+          "a record with keys not enumerated by this contract and values of shape " +
+          avenShapeDescription(shape.value, env, path, covered)
+        );
       }
       if (shape.fields.length === 0) return "a record with no observed keys";
       const fields = shape.fields.map((field) => {
@@ -497,15 +497,16 @@ function avenShapeDescription(
         const members = membersOf(field.shape);
         const optional = members.some((member) => member.kind === "absent");
         if (fieldPos) {
+          markCovered(covered, fieldPath);
           return `\`${field.name}\` (${optional ? "optional; " : ""}\`${fieldPos.typeString}\`)`;
         }
         const value = mergeShapes(members.filter((member) => member.kind !== "absent"));
-        return `\`${field.name}\` (${optional ? "optional; " : ""}${avenShapeDescription(value, env, fieldPath)})`;
+        return `\`${field.name}\` (${optional ? "optional; " : ""}${avenShapeDescription(value, env, fieldPath, covered)})`;
       });
       return `a record with observed keys ${fields.join(", ")}`;
     }
     case "union":
-      return `either ${shape.members.map((m) => avenShapeDescription(m, env, path)).join(" or ")}`;
+      return `either ${shape.members.map((m) => avenShapeDescription(m, env, path, covered)).join(" or ")}`;
     // Every other shape has an exact spelling and returned above.
     default:
       return "a value whose shape could not be expressed";
@@ -514,21 +515,25 @@ function avenShapeDescription(
 
 /**
  * Ensure every annotation under this property appears in the bullet (K8).
- * Root and known-field rewrites usually already include the type string;
- * this covers residual nested paths under withheld structure.
+ * Root and known-field rewrites already embed the type string (tracked in
+ * `covered`); this covers residual nested paths under withheld structure.
+ * Guard is per-position note text so two paths sharing a type string both emit.
  */
 function ensureAnnotatedTypesInBullet(
   bullet: string,
   env: AnnEnv | null,
   property: string,
+  covered?: Set<string>,
 ): string {
   if (!env) return bullet;
   let out = bullet;
   for (const pos of env.values()) {
     if (pos.segments[0] !== property) continue;
-    if (out.includes(pos.typeString)) continue;
+    if (covered?.has(pathKey(pos.segments))) continue;
     const rel = formatPathTail(pos.segments.slice(1));
-    out = out.replace(/\.$/, "") + `; \`${rel}\` is \`${pos.typeString}\`.`;
+    const note = `\`${rel}\` is \`${pos.typeString}\``;
+    if (out.includes(note)) continue;
+    out = out.replace(/\.$/, "") + `; ${note}.`;
   }
   return out;
 }
@@ -545,11 +550,12 @@ function contract(task: Task, ann?: ResolvedTypeAnn | null): string {
   ];
   for (const observed of inferTaskShapes(task)) {
     const p = observed.property;
+    const covered = new Set<string>();
     const args = observed.args.map((argument) => argument.name).join(", ");
     const argumentTypes = observed.args.map((argument) =>
-      avenShape(argument.shape, false, env, [p.name, "arg", argument.name]),
+      avenShape(argument.shape, false, env, [p.name, "arg", argument.name], covered),
     );
-    const returnType = avenShape(observed.returns, false, env, [p.name, "expected"]);
+    const returnType = avenShape(observed.returns, false, env, [p.name, "expected"], covered);
     const successType =
       returnType === null ? null : p.returnsResult ? `Result(${returnType}, Text)` : returnType;
     const error = p.returnsResult
@@ -571,14 +577,14 @@ function contract(task: Task, ann?: ResolvedTypeAnn | null): string {
           : `observed arguments: ${observed.args
               .map(
                 (argument) =>
-                  `\`${argument.name}\` is ${avenShapeDescription(argument.shape, env, [p.name, "arg", argument.name])}`,
+                  `\`${argument.name}\` is ${avenShapeDescription(argument.shape, env, [p.name, "arg", argument.name], covered)}`,
               )
               .join("; ")}`;
       bullet =
         `- \`${p.name}(${args})\` — ${argumentsDescription}; observed successful return:` +
-        ` ${avenShapeDescription(observed.returns, env, [p.name, "expected"])}.${error}`;
+        ` ${avenShapeDescription(observed.returns, env, [p.name, "expected"], covered)}.${error}`;
     }
-    lines.push(ensureAnnotatedTypesInBullet(bullet, env, p.name));
+    lines.push(ensureAnnotatedTypesInBullet(bullet, env, p.name, covered));
   }
   const exportList = task.properties.map((p) => p.name).join(", ");
   lines.push(

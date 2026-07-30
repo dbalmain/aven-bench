@@ -468,6 +468,100 @@ describe("Aven annotated emission (maps / variants)", () => {
     expect(bare).not.toContain("Map(Text, Int)");
   });
 
+  test("union of withheld returns emits each annotated note once (rest-api post)", () => {
+    // Two success shapes merge into a union of withheld-key records. Nested
+    // annotations at that path must appear once per bullet, not once per member.
+    const ann = annFor("demo", [
+      { at: "f.expected.users[].owes", type: "Map(Text, Float)" },
+      { at: "f.expected.owes", type: "Map(Text, Float)" },
+    ]);
+    const t = task({
+      properties: [prop({ argNames: ["x"], arity: 1, name: "f" })],
+      cases: [
+        {
+          uuid: "u1",
+          name: "users",
+          group: [],
+          description: "d",
+          property: "f",
+          args: [{ name: "x", value: 1 }],
+          expected: {
+            kind: "value" as const,
+            value: { users: [{ owes: { Bob: 3.0 } }] },
+          },
+        },
+        {
+          uuid: "u2",
+          name: "direct",
+          group: [],
+          description: "d",
+          property: "f",
+          args: [{ name: "x", value: 2 }],
+          expected: {
+            kind: "value" as const,
+            value: { owes: { Alice: 1.5 } },
+          },
+        },
+      ],
+    });
+    const contract = avenAdapter.renderContract(t, ann);
+    const noteUsers = "`expected.users[].owes` is `Map(Text, Float)`";
+    const noteOwes = "`expected.owes` is `Map(Text, Float)`";
+    expect(contract.split(noteUsers).length - 1).toBe(1);
+    expect(contract.split(noteOwes).length - 1).toBe(1);
+  });
+
+  test("two annotated positions sharing a type string both appear", () => {
+    const ann = annFor("demo", [
+      { at: "f.expected.owes", type: "Map(Text, Float)" },
+      { at: "f.expected.owed_by", type: "Map(Text, Float)" },
+    ]);
+    const t = task({
+      properties: [prop({ argNames: ["x"], arity: 1, name: "f" })],
+      cases: [
+        {
+          uuid: "u1",
+          name: "n",
+          group: [],
+          description: "d",
+          property: "f",
+          args: [{ name: "x", value: 1 }],
+          expected: {
+            kind: "value" as const,
+            value: { owes: { A: 1.0 }, owed_by: { B: 2.0 } },
+          },
+        },
+      ],
+    });
+    const contract = avenAdapter.renderContract(t, ann);
+    expect(contract).toContain("`expected.owes` is `Map(Text, Float)`");
+    expect(contract).toContain("`expected.owed_by` is `Map(Text, Float)`");
+  });
+
+  test("unannotated task contract is free of residual type notes", () => {
+    const t = task({
+      properties: [prop({ argNames: ["x"], arity: 1, name: "f" })],
+      cases: [
+        {
+          uuid: "u1",
+          name: "n",
+          group: [],
+          description: "d",
+          property: "f",
+          args: [{ name: "x", value: 1 }],
+          expected: {
+            kind: "value" as const,
+            value: { owes: { A: 1.0 }, owed_by: { B: 2.0 } },
+          },
+        },
+      ],
+    });
+    const contract = avenAdapter.renderContract(t);
+    expect(contract).toContain("keys not enumerated");
+    expect(contract).not.toMatch(/`[^`]+` is `Map\(/);
+    expect(contract).toBe(avenAdapter.renderContract(t, null));
+  });
+
   test("suite expected values use Map when annotated", () => {
     const ann = annFor("demo", [{ at: "f.expected", type: "Map(Text, Int)" }]);
     const t = task({
