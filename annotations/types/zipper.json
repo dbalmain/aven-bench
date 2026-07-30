@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "task": "zipper",
+  "positions": [
+    {
+      "at": "expectedValue.expected",
+      "type": "@Tree(Object) | @Int(Int) | @Zipper(Object)",
+      "encoding": {
+        "kind": "tagField",
+        "field": "type",
+        "tags": {
+          "tree": {
+            "ctor": "Tree",
+            "payload": { "from": "field", "name": "value" }
+          },
+          "int": {
+            "ctor": "Int",
+            "payload": { "from": "field", "name": "value" }
+          },
+          "zipper": {
+            "ctor": "Zipper",
+            "payload": { "from": "rest" }
+          }
+        }
+      }
+    },
+    {
+      "at": "sameResultFromOperations.expected",
+      "type": "@Tree(Object) | @Int(Int) | @Zipper(Object)",
+      "encoding": {
+        "kind": "tagField",
+        "field": "type",
+        "tags": {
+          "tree": {
+            "ctor": "Tree",
+            "payload": { "from": "field", "name": "value" }
+          },
+          "int": {
+            "ctor": "Int",
+            "payload": { "from": "field", "name": "value" }
+          },
+          "zipper": {
+            "ctor": "Zipper",
+            "payload": { "from": "rest" }
+          }
+        }
+      }
+    },
+    {
+      "at": "expectedValue.arg.operations[]",
+      "type": "@ToTree | @Left | @Right | @Value | @Up | @SetValue(Int) | @SetLeft(?Object) | @SetRight(?Object)",
+      "encoding": {
+        "kind": "tagField",
+        "field": "operation",
+        "tags": {
+          "to_tree": { "ctor": "ToTree", "payload": { "from": "none" } },
+          "left": { "ctor": "Left", "payload": { "from": "none" } },
+          "right": { "ctor": "Right", "payload": { "from": "none" } },
+          "value": { "ctor": "Value", "payload": { "from": "none" } },
+          "up": { "ctor": "Up", "payload": { "from": "none" } },
+          "set_value": {
+            "ctor": "SetValue",
+            "payload": { "from": "field", "name": "item" }
+          },
+          "set_left": {
+            "ctor": "SetLeft",
+            "payload": { "from": "field", "name": "item" }
+          },
+          "set_right": {
+            "ctor": "SetRight",
+            "payload": { "from": "field", "name": "item" }
+          }
+        }
+      }
+    },
+    {
+      "at": "sameResultFromOperations.arg.operations[]",
+      "type": "@ToTree | @Left | @Right | @Value | @Up | @SetValue(Int) | @SetLeft(?Object) | @SetRight(?Object)",
+      "encoding": {
+        "kind": "tagField",
+        "field": "operation",
+        "tags": {
+          "to_tree": { "ctor": "ToTree", "payload": { "from": "none" } },
+          "left": { "ctor": "Left", "payload": { "from": "none" } },
+          "right": { "ctor": "Right", "payload": { "from": "none" } },
+          "value": { "ctor": "Value", "payload": { "from": "none" } },
+          "up": { "ctor": "Up", "payload": { "from": "none" } },
+          "set_value": {
+            "ctor": "SetValue",
+            "payload": { "from": "field", "name": "item" }
+          },
+          "set_left": {
+            "ctor": "SetLeft",
+            "payload": { "from": "field", "name": "item" }
+          },
+          "set_right": {
+            "ctor": "SetRight",
+            "payload": { "from": "field", "name": "item" }
+          }
+        }
+      }
+    }
+  ]
+}

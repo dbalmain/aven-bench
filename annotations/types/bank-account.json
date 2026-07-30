@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "task": "bank-account",
+  "positions": [
+    {
+      "at": "bankAccount.arg.operations[]",
+      "type": "@Open | @Close | @Balance | @Deposit(Int) | @Withdraw(Int) | @Concurrent(Object)",
+      "encoding": {
+        "kind": "tagField",
+        "field": "operation",
+        "tags": {
+          "open": { "ctor": "Open", "payload": { "from": "none" } },
+          "close": { "ctor": "Close", "payload": { "from": "none" } },
+          "balance": { "ctor": "Balance", "payload": { "from": "none" } },
+          "deposit": {
+            "ctor": "Deposit",
+            "payload": { "from": "field", "name": "amount" }
+          },
+          "withdraw": {
+            "ctor": "Withdraw",
+            "payload": { "from": "field", "name": "amount" }
+          },
+          "concurrent": {
+            "ctor": "Concurrent",
+            "payload": { "from": "rest" }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "task": "react",
+  "positions": [
+    {
+      "at": "react.arg.cells[]",
+      "type": "@Input(Object) | @Compute(Object)",
+      "encoding": {
+        "kind": "tagField",
+        "field": "type",
+        "tags": {
+          "input": {
+            "ctor": "Input",
+            "payload": { "from": "rest" }
+          },
+          "compute": {
+            "ctor": "Compute",
+            "payload": { "from": "rest" }
+          }
+        }
+      }
+    },
+    {
+      "at": "react.arg.operations[]",
+      "type": "@ExpectCellValue(Object) | @SetValue(Object) | @AddCallback(Object) | @RemoveCallback(Object)",
+      "encoding": {
+        "kind": "tagField",
+        "field": "type",
+        "tags": {
+          "expect_cell_value": {
+            "ctor": "ExpectCellValue",
+            "payload": { "from": "rest" }
+          },
+          "set_value": {
+            "ctor": "SetValue",
+            "payload": { "from": "rest" }
+          },
+          "add_callback": {
+            "ctor": "AddCallback",
+            "payload": { "from": "rest" }
+          },
+          "remove_callback": {
+            "ctor": "RemoveCallback",
+            "payload": { "from": "rest" }
+          }
+        }
+      }
+    }
+  ]
+}
