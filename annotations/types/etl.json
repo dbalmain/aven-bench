@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "task": "etl",
+  "positions": [
+    { "at": "transform.arg.legacy", "type": "Map(Int, Array(Text))" },
+    { "at": "transform.expected", "type": "Map(Text, Int)" }
+  ]
+}

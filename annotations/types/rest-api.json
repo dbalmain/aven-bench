@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "task": "rest-api",
+  "positions": [
+    { "at": "get.arg.database.users[].owes", "type": "Map(Text, Float)" },
+    { "at": "get.arg.database.users[].owed_by", "type": "Map(Text, Float)" },
+    { "at": "get.expected.users[].owes", "type": "Map(Text, Float)" },
+    { "at": "get.expected.users[].owed_by", "type": "Map(Text, Float)" },
+    { "at": "post.arg.database.users[].owes", "type": "Map(Text, Float)" },
+    { "at": "post.arg.database.users[].owed_by", "type": "Map(Text, Float)" },
+    { "at": "post.expected.users[].owes", "type": "Map(Text, Float)" },
+    { "at": "post.expected.users[].owed_by", "type": "Map(Text, Float)" },
+    { "at": "post.expected.owes", "type": "Map(Text, Float)" },
+    { "at": "post.expected.owed_by", "type": "Map(Text, Float)" }
+  ]
+}

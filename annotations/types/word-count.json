@@ -1,0 +1,5 @@
+{
+  "schemaVersion": 1,
+  "task": "word-count",
+  "positions": [{ "at": "countWords.expected", "type": "Map(Text, Int)" }]
+}

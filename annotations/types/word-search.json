@@ -1,0 +1,5 @@
+{
+  "schemaVersion": 1,
+  "task": "word-search",
+  "positions": [{ "at": "search.expected", "type": "Map(Text, ?Object)" }]
+}

@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "task": "parallel-letter-frequency",
+  "positions": [
+    { "at": "calculateFrequencies.expected", "type": "Map(Text, Int)" }
+  ]
+}

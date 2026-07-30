@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "task": "relative-distance",
+  "positions": [
+    {
+      "at": "degreeOfSeparation.arg.familyTree",
+      "type": "Map(Text, Array(Text))"
+    }
+  ]
+}
