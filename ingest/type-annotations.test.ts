@@ -544,19 +544,22 @@ describe("resolveAnnFile", () => {
     expect(() => resolveAnnFile(file, "test.json")).toThrow(/variants may only appear/);
   });
 
-  test("nullOk field rejected with ?T guidance", () => {
-    expect(() =>
+  test("a field the schema does not define is rejected, not ignored", () => {
+    const withUnknown = (field: string) => () =>
       asTypeAnnFile(
         {
           schemaVersion: 1,
           task: "alphametics",
           positions: [
-            { at: "solve.expected", type: "Map(Text, Int)", nullOk: true },
+            { at: "solve.expected", type: "Map(Text, Int)", [field]: true },
           ],
         },
         "test.json",
-      ),
-    ).toThrow(/nullOk is removed/);
+      );
+    // A typo and an invented field are the same defect: the annotation would
+    // not say what its author meant, and silence would hide it.
+    expect(withUnknown("typeo")).toThrow(/unknown field "typeo"/);
+    expect(withUnknown("nullOk")).toThrow(/unknown field "nullOk"/);
   });
 
   test("optional variant root is accepted with encoding", () => {

@@ -1126,7 +1126,9 @@ function assertMatchVariant(
 // Load + validate
 // ---------------------------------------------------------------------------
 
-/** Parse raw JSON into TypeAnnFile (rejects removed fields such as nullOk). */
+const POSITION_FIELDS = new Set(["at", "type", "encoding"]);
+
+/** Parse raw JSON into TypeAnnFile, rejecting any field this schema does not define. */
 export function asTypeAnnFile(raw: unknown, fileLabel: string): TypeAnnFile {
   if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
     throw new TypeAnnError(`${fileLabel}: root must be an object`);
@@ -1149,10 +1151,15 @@ export function asTypeAnnFile(raw: unknown, fileLabel: string): TypeAnnFile {
     const p = pos as Record<string, unknown>;
     if (typeof p["at"] !== "string") throw new TypeAnnError(`${ctx}: at required`);
     if (typeof p["type"] !== "string") throw new TypeAnnError(`${ctx}: type required`);
-    if (p["nullOk"] !== undefined) {
-      throw new TypeAnnError(
-        `${ctx}: nullOk is removed; write nullability as ?T in the type string (e.g. "?Map(Text, Int)")`,
-      );
+    // A field this code does not read is either a typo or an invention, and
+    // silently dropping it would mean an annotation that does not say what its
+    // author thinks it says.
+    for (const key of Object.keys(p)) {
+      if (!POSITION_FIELDS.has(key)) {
+        throw new TypeAnnError(
+          `${ctx}: unknown field ${JSON.stringify(key)} (expected ${[...POSITION_FIELDS].join(", ")})`,
+        );
+      }
     }
     const out: TypePosition = { at: p["at"], type: p["type"] };
     if (p["encoding"] !== undefined) {
