@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { fromPortable, type JVal, type Portable } from "./json.ts";
 import {
+  asTypeAnnFile,
   assertMatches,
   checkPathOverlaps,
   isSegmentPrefix,
@@ -8,6 +9,7 @@ import {
   parsePath,
   parseTypeString,
   resolveAnnFile,
+  rootForEncoding,
   TypeAnnError,
   type TypeAnnFile,
   type TypeExpr,
@@ -289,6 +291,66 @@ describe("matches matrix", () => {
     ).toBe(true);
     expect(matches(t, j({ bad: 1 }))).toBe(false);
   });
+
+  test("nested nullability: Map(Text, ?Int) vs Map(Text, Int)", () => {
+    const optVals = parseTypeString("Map(Text, ?Int)");
+    const bareVals = parseTypeString("Map(Text, Int)");
+    const withNullEntry = j({ a: 1, b: null });
+    expect(matches(optVals, withNullEntry)).toBe(true);
+    expect(matches(bareVals, withNullEntry)).toBe(false);
+    expect(matches(optVals, j({ a: 1 }))).toBe(true);
+    expect(matches(bareVals, j({ a: 1 }))).toBe(true);
+  });
+
+  test("top-level optional map: ?Map(Text, Int) accepts null whole value", () => {
+    const t = parseTypeString("?Map(Text, Int)");
+    expect(matches(t, j(null))).toBe(true);
+    expect(matches(t, j({ a: 1 }))).toBe(true);
+    expect(matches(t, j({ a: "x" }))).toBe(false);
+    // Bare Map does not accept whole-value null.
+    expect(matches(parseTypeString("Map(Text, Int)"), j(null))).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// assertMatches diagnostics
+// ---------------------------------------------------------------------------
+
+describe("assertMatches messages", () => {
+  test("map key kind names the key", () => {
+    const t = parseTypeString("Map(Int, Int)");
+    expect(() => assertMatches(t, j({ word: 1 }), { ctx: "hit" })).toThrow(
+      /key "word" is not an integer/,
+    );
+  });
+
+  test("map value mismatch names the key and types", () => {
+    const t = parseTypeString("Map(Text, Int)");
+    expect(() => assertMatches(t, j({ word: "x" }), { ctx: "hit" })).toThrow(
+      /value at key "word".*expected Int, got Text/,
+    );
+  });
+
+  test("array element names the index", () => {
+    const t = parseTypeString("Array(Int)");
+    expect(() => assertMatches(t, j([1, "x"]), { ctx: "hit" })).toThrow(
+      /element\[1\].*expected Int, got Text/,
+    );
+  });
+
+  test("union lists members tried", () => {
+    const t = parseTypeString("Null | Object");
+    expect(() => assertMatches(t, j(1), { ctx: "hit" })).toThrow(
+      /no union member matched among Null, Object/,
+    );
+  });
+
+  test("optional at position accepts null; bare type rejects", () => {
+    assertMatches(parseTypeString("?Int"), j(null), { ctx: "hit" });
+    expect(() =>
+      assertMatches(parseTypeString("Int"), j(null), { ctx: "hit" }),
+    ).toThrow(/expected Int, got Null/);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -480,5 +542,46 @@ describe("resolveAnnFile", () => {
       ],
     };
     expect(() => resolveAnnFile(file, "test.json")).toThrow(/variants may only appear/);
+  });
+
+  test("nullOk field rejected with ?T guidance", () => {
+    expect(() =>
+      asTypeAnnFile(
+        {
+          schemaVersion: 1,
+          task: "alphametics",
+          positions: [
+            { at: "solve.expected", type: "Map(Text, Int)", nullOk: true },
+          ],
+        },
+        "test.json",
+      ),
+    ).toThrow(/nullOk is removed/);
+  });
+
+  test("optional variant root is accepted with encoding", () => {
+    // Parentheses required: `?@Open | @Deposit(Int)` is optional@Open | @Deposit,
+    // not optional of a collapsed variant.
+    const file: TypeAnnFile = {
+      schemaVersion: 1,
+      task: "bank-account",
+      positions: [
+        {
+          at: "bankAccount.arg.operations[]",
+          type: "?(@Open | @Deposit(Int))",
+          encoding: {
+            kind: "tagField",
+            field: "operation",
+            tags: {
+              open: { ctor: "Open", payload: { from: "none" } },
+              deposit: { ctor: "Deposit", payload: { from: "field", name: "amount" } },
+            },
+          },
+        },
+      ],
+    };
+    const r = resolveAnnFile(file, "test.json");
+    expect(r.positions[0]!.type.kind).toBe("optional");
+    expect(rootForEncoding(r.positions[0]!.type).kind).toBe("variant");
   });
 });

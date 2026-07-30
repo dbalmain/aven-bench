@@ -14,7 +14,7 @@ Ingest does not touch this tree. After `bun run ingest`, run:
 bun run check-types
 ```
 
-Design: `../.ai/corpus-type-annotations-draft.md` (rev 4) in the monorepo, or
+Design: `../.ai/corpus-type-annotations-draft.md` (rev 5) in the monorepo, or
 the copy under the parent `clex` tree.
 
 ## Authoring checklist
@@ -30,13 +30,16 @@ the copy under the parent `clex` tree.
 4. **Variants:** always supply `encoding` (`tagField` or `exclusiveKey`). Never
    add task-specific branches in the generator. Constructor names in the type
    string and encoding must match.
-5. Whole-value null (alphametics) → `"nullOk": true`. Entry nulls
-   (word-search) → `Null | …` inside the type.
+5. **Nullability is only `?T`** (Aven spelling). Whole-value null
+   (alphametics) → `"?Map(Text, Int)"`. Entry nulls → `Map(Text, ?Int)` or
+   `Map(Text, Null | Object)` when the non-null side is not a single
+   non-optional type. There is no `nullOk` flag — a position-level boolean
+   cannot express nested nullability.
 6. **Never** annotate fixed-alphabet oracles such as `nucleotide-count`
    (`A,C,G,T`) as maps — they *validate* as maps but are records. See design
    doc Appendix A.
-7. **word-search** map values as `Null | Object` is an accepted **partial**
-   fix: the inner location record stays opaque.
+7. **word-search** map values as `Map(Text, ?Object)` (or `Null | Object`) is
+   an accepted **partial** fix: the inner location record stays opaque.
 8. After editing, `bun run check-types` must be green.
 9. When annotation files land, regenerate Aven suites and confirm the **suite
    oracle and contract prose both** show `Map` / `@Tag` (never one without the
@@ -52,6 +55,18 @@ Map:
   "task": "word-count",
   "positions": [
     { "at": "countWords.expected", "type": "Map(Text, Int)" }
+  ]
+}
+```
+
+Nullable whole map (alphametics):
+
+```json
+{
+  "schemaVersion": 1,
+  "task": "alphametics",
+  "positions": [
+    { "at": "solve.expected", "type": "?Map(Text, Int)" }
   ]
 }
 ```

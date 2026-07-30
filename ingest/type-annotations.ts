@@ -8,7 +8,7 @@
  * discriminators to `@Tag` constructors — the adapter must never branch on
  * `task.id`.
  *
- * See `.ai/corpus-type-annotations-draft.md` (rev 4).
+ * See `.ai/corpus-type-annotations-draft.md` (rev 5).
  */
 
 import { readdir } from "node:fs/promises";
@@ -48,7 +48,6 @@ export type TypePosition = {
   at: string;
   /** Aven type surface string in the corpus subset. */
   type: string;
-  nullOk?: boolean;
   encoding?: VariantEncoding;
 };
 
@@ -64,7 +63,6 @@ export type ResolvedPosition = {
   segments: string[];
   typeString: string;
   type: TypeExpr;
-  nullOk: boolean;
   encoding?: VariantEncoding;
 };
 
@@ -898,23 +896,146 @@ function extractPayload(
   return null;
 }
 
+/** Human label for a JVal in mismatch messages (type-ish, not JVal.kind). */
+function valueTypeLabel(value: JVal): string {
+  switch (value.kind) {
+    case "null":
+      return "Null";
+    case "bool":
+      return "Bool";
+    case "string":
+      return "Text";
+    case "number":
+      return isIntegerLiteral(value.raw) ? "Int" : "Float";
+    case "array":
+      return "Array";
+    case "object":
+      return "Object";
+  }
+}
+
 /**
- * Like matches, but throws TypeAnnError with detail on failure — used by
- * validation so wrong tags/payloads fail loudly.
+ * Like matches, but throws TypeAnnError with a specific cause on failure.
+ * Used by validation so wrong annotations name the offending key/index/member.
+ *
+ * Walks the same structure as `matches` (accept/reject rules unchanged) and
+ * threads a breadcrumb site string so the message names the failure without a
+ * second explain pass.
  */
 export function assertMatches(
   type: TypeExpr,
   value: JVal,
   opts: MatchOptions & { ctx: string },
 ): void {
-  if (type.kind === "variant") {
-    assertMatchVariant(type, value, opts);
-    return;
+  assertMatchAt(type, value, opts.ctx, "", opts);
+}
+
+/** `site` is a relative breadcrumb under `ctx` (e.g. ` value at key "word"`). */
+function fail(ctx: string, site: string, detail: string): never {
+  throw new TypeAnnError(`${ctx}${site}: ${detail}`);
+}
+
+function assertMatchAt(
+  type: TypeExpr,
+  value: JVal,
+  ctx: string,
+  site: string,
+  opts: MatchOptions,
+): void {
+  switch (type.kind) {
+    case "optional":
+      if (value.kind === "null") return;
+      assertMatchAt(type.inner, value, ctx, site, opts);
+      return;
+    case "union": {
+      if (type.members.some((m) => matches(m, value, opts))) return;
+      const tried = type.members.map(typeStringOf).join(", ");
+      fail(
+        ctx,
+        site,
+        `no union member matched among ${tried} (got ${valueTypeLabel(value)})`,
+      );
+    }
+    case "variant":
+      // Variants keep their own diagnostics; fold site into ctx for the prefix.
+      assertMatchVariant(type, value, {
+        ...opts,
+        ctx: site ? `${ctx}${site}` : ctx,
+      });
+      return;
+    case "map":
+      assertMatchMap(type, value, ctx, site, opts);
+      return;
+    case "array":
+      assertMatchArray(type, value, ctx, site, opts);
+      return;
+    case "object":
+      if (value.kind !== "object") {
+        fail(ctx, site, `expected Object, got ${valueTypeLabel(value)}`);
+      }
+      return;
+    case "primitive":
+      assertMatchPrimitive(type.of, value, ctx, site);
+      return;
   }
-  if (!matches(type, value, opts)) {
-    throw new TypeAnnError(
-      `${opts.ctx}: value does not match type ${JSON.stringify(typeStringOf(type))} (got ${value.kind})`,
+}
+
+function assertMatchPrimitive(
+  of: PrimitiveKind,
+  value: JVal,
+  ctx: string,
+  site: string,
+): void {
+  if (matchPrimitive(of, value)) return;
+  const want =
+    of === "null"
+      ? "Null"
+      : of === "bool"
+        ? "Bool"
+        : of === "int"
+          ? "Int"
+          : of === "float"
+            ? "Float"
+            : "Text";
+  fail(ctx, site, `expected ${want}, got ${valueTypeLabel(value)}`);
+}
+
+function assertMatchMap(
+  type: Extract<TypeExpr, { kind: "map" }>,
+  value: JVal,
+  ctx: string,
+  site: string,
+  opts: MatchOptions,
+): void {
+  if (value.kind !== "object") {
+    fail(ctx, site, `expected Map, got ${valueTypeLabel(value)}`);
+  }
+  for (const e of value.entries) {
+    if (type.key === "int" && !/^-?[0-9]+$/.test(e.key)) {
+      fail(ctx, site, `key ${JSON.stringify(e.key)} is not an integer`);
+    }
+    assertMatchAt(
+      type.value,
+      e.value,
+      ctx,
+      `${site} value at key ${JSON.stringify(e.key)}`,
+      opts,
     );
+  }
+}
+
+function assertMatchArray(
+  type: Extract<TypeExpr, { kind: "array" }>,
+  value: JVal,
+  ctx: string,
+  site: string,
+  opts: MatchOptions,
+): void {
+  if (value.kind !== "array") {
+    fail(ctx, site, `expected Array, got ${valueTypeLabel(value)}`);
+  }
+  for (let i = 0; i < value.items.length; i++) {
+    assertMatchAt(type.element, value.items[i]!, ctx, `${site} element[${i}]`, opts);
   }
 }
 
@@ -927,7 +1048,9 @@ function assertMatchVariant(
     throw new TypeAnnError(`${opts.ctx}: variant type requires encoding`);
   }
   if (value.kind !== "object") {
-    throw new TypeAnnError(`${opts.ctx}: variant expects object, got ${value.kind}`);
+    throw new TypeAnnError(
+      `${opts.ctx}: variant expects object, got ${valueTypeLabel(value)}`,
+    );
   }
   const enc = opts.encoding;
   if (enc.kind === "tagField") {
@@ -1003,7 +1126,8 @@ function assertMatchVariant(
 // Load + validate
 // ---------------------------------------------------------------------------
 
-function asTypeAnnFile(raw: unknown, fileLabel: string): TypeAnnFile {
+/** Parse raw JSON into TypeAnnFile (rejects removed fields such as nullOk). */
+export function asTypeAnnFile(raw: unknown, fileLabel: string): TypeAnnFile {
   if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
     throw new TypeAnnError(`${fileLabel}: root must be an object`);
   }
@@ -1025,13 +1149,12 @@ function asTypeAnnFile(raw: unknown, fileLabel: string): TypeAnnFile {
     const p = pos as Record<string, unknown>;
     if (typeof p["at"] !== "string") throw new TypeAnnError(`${ctx}: at required`);
     if (typeof p["type"] !== "string") throw new TypeAnnError(`${ctx}: type required`);
-    const out: TypePosition = { at: p["at"], type: p["type"] };
     if (p["nullOk"] !== undefined) {
-      if (typeof p["nullOk"] !== "boolean") {
-        throw new TypeAnnError(`${ctx}: nullOk must be boolean`);
-      }
-      out.nullOk = p["nullOk"];
+      throw new TypeAnnError(
+        `${ctx}: nullOk is removed; write nullability as ?T in the type string (e.g. "?Map(Text, Int)")`,
+      );
     }
+    const out: TypePosition = { at: p["at"], type: p["type"] };
     if (p["encoding"] !== undefined) {
       out.encoding = parseEncoding(p["encoding"], `${ctx}.encoding`);
     }
@@ -1074,7 +1197,6 @@ export function resolveAnnFile(file: TypeAnnFile, fileLabel: string): ResolvedTy
       segments,
       typeString: pos.type,
       type,
-      nullOk: pos.nullOk === true,
       ...(pos.encoding ? { encoding: pos.encoding } : {}),
     };
   });
@@ -1119,10 +1241,8 @@ export function validateTypeAnnotations(task: Task, ann: ResolvedTypeAnn): void 
     }
     for (let i = 0; i < hits.length; i++) {
       const hit = hits[i]!;
-      const hitCtx = `${ctx} hit[${i}]`;
-      if (hit.kind === "null" && pos.nullOk) continue;
       assertMatches(pos.type, hit, {
-        ctx: hitCtx,
+        ctx: `${ctx} hit[${i}]`,
         ...(pos.encoding ? { encoding: pos.encoding } : {}),
       });
     }
