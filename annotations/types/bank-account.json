@@ -26,6 +26,24 @@
           }
         }
       }
+    },
+    {
+      "at": "bankAccount.arg.operations[].operations[]",
+      "type": "@Deposit(Int) | @Withdraw(Int)",
+      "encoding": {
+        "kind": "tagField",
+        "field": "operation",
+        "tags": {
+          "deposit": {
+            "ctor": "Deposit",
+            "payload": { "from": "field", "name": "amount" }
+          },
+          "withdraw": {
+            "ctor": "Withdraw",
+            "payload": { "from": "field", "name": "amount" }
+          }
+        }
+      }
     }
   ]
 }

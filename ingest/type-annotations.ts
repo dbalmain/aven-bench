@@ -8,7 +8,7 @@
  * discriminators to `@Tag` constructors — the adapter must never branch on
  * `task.id`.
  *
- * See `.ai/corpus-type-annotations-draft.md` (rev 5).
+ * See `.ai/corpus-type-annotations-draft.md` (rev 6).
  */
 
 import { readdir } from "node:fs/promises";
@@ -518,14 +518,36 @@ export function isSegmentPrefix(
   return a.every((s, i) => s === b[i]);
 }
 
-export function checkPathOverlaps(positions: { at: string; segments: string[] }[]): void {
+/**
+ * Equal paths are always ambiguous. A proper descendant is allowed only below
+ * an annotation containing opaque corpus Object: the ancestor controls its
+ * exact node, then default record traversal resumes inside Object and an exact
+ * descendant annotation takes over there.
+ */
+export function checkPathOverlaps(
+  positions: { at: string; segments: string[]; type: TypeExpr }[],
+): void {
   for (let i = 0; i < positions.length; i++) {
     for (let j = i + 1; j < positions.length; j++) {
       const a = positions[i]!;
       const b = positions[j]!;
-      if (isSegmentPrefix(a.segments, b.segments, true) || isSegmentPrefix(b.segments, a.segments, true)) {
+      if (
+        isSegmentPrefix(a.segments, b.segments, true) &&
+        isSegmentPrefix(b.segments, a.segments, true)
+      ) {
         throw new TypeAnnError(
           `path overlap (segment prefix): ${JSON.stringify(a.at)} vs ${JSON.stringify(b.at)}`,
+        );
+      }
+      const ancestor = isSegmentPrefix(a.segments, b.segments)
+        ? a
+        : isSegmentPrefix(b.segments, a.segments)
+          ? b
+          : null;
+      if (ancestor && !typeContainsObject(ancestor.type)) {
+        throw new TypeAnnError(
+          `path overlap requires an opaque Object in ancestor ${JSON.stringify(ancestor.at)}: ` +
+            `${JSON.stringify(a.at)} vs ${JSON.stringify(b.at)}`,
         );
       }
     }
@@ -863,6 +885,8 @@ function matchVariant(
 export type ExtractedVariant = {
   ctor: string;
   payload: JVal | null;
+  /** Original-JSON path from the variant object to the extracted payload. */
+  payloadPath: string[];
 };
 
 /**
@@ -898,12 +922,12 @@ function extractPayload(
   if (payload.from === "none") {
     if (mode === "tagField") {
       if (value.entries.some((e) => e.key !== discKey)) return null;
-      return { ctor, payload: null };
+      return { ctor, payload: null, payloadPath: [] };
     }
     // exclusiveKey: value under the exclusive key must be null
     const only = value.entries[0]!;
     if (only.value.kind !== "null") return null;
-    return { ctor, payload: null };
+    return { ctor, payload: null, payloadPath: [discKey] };
   }
   if (payload.from === "field") {
     if (mode !== "tagField") return null;
@@ -913,18 +937,22 @@ function extractPayload(
     for (const e of value.entries) {
       if (e.key !== discKey && e.key !== payload.name) return null;
     }
-    return { ctor, payload: field.value };
+    return { ctor, payload: field.value, payloadPath: [payload.name] };
   }
   if (payload.from === "rest") {
     if (mode !== "tagField") return null;
     const rest = value.entries.filter((e) => e.key !== discKey);
-    if (rest.length === 0) return { ctor, payload: null };
-    return { ctor, payload: { kind: "object", entries: rest } };
+    if (rest.length === 0) return { ctor, payload: null, payloadPath: [] };
+    return {
+      ctor,
+      payload: { kind: "object", entries: rest },
+      payloadPath: [],
+    };
   }
   if (payload.from === "value") {
     if (mode !== "exclusiveKey") return null;
     const only = value.entries[0]!;
-    return { ctor, payload: only.value };
+    return { ctor, payload: only.value, payloadPath: [discKey] };
   }
   return null;
 }

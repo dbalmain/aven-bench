@@ -193,10 +193,54 @@ describe("segment-prefix overlap", () => {
     expect(isSegmentPrefix(a, b)).toBe(true);
     expect(() =>
       checkPathOverlaps([
-        { at: "post.expected.users", segments: a },
-        { at: "post.expected.users[].owes", segments: b },
+        {
+          at: "post.expected.users",
+          segments: a,
+          type: parseTypeString("Int"),
+        },
+        {
+          at: "post.expected.users[].owes",
+          segments: b,
+          type: parseTypeString("Int"),
+        },
       ]),
     ).toThrow(/overlap/);
+  });
+
+  test("allows a descendant beneath an opaque Object-bearing type", () => {
+    const outer = parsePath("bankAccount.arg.operations[]");
+    const nested = parsePath("bankAccount.arg.operations[].operations[]");
+    checkPathOverlaps([
+      {
+        at: "bankAccount.arg.operations[]",
+        segments: outer,
+        type: parseTypeString("@Concurrent(Object)"),
+      },
+      {
+        at: "bankAccount.arg.operations[].operations[]",
+        segments: nested,
+        type: parseTypeString("@Deposit(Int)"),
+      },
+    ]);
+  });
+
+  test("rejects a descendant beneath a fully concrete type", () => {
+    const outer = parsePath("f.arg.values");
+    const nested = parsePath("f.arg.values[]");
+    expect(() =>
+      checkPathOverlaps([
+        {
+          at: "f.arg.values",
+          segments: outer,
+          type: parseTypeString("Array(Int)"),
+        },
+        {
+          at: "f.arg.values[]",
+          segments: nested,
+          type: parseTypeString("Int"),
+        },
+      ]),
+    ).toThrow(/requires an opaque Object/);
   });
 
   test("owes vs owed_by allowed", () => {
@@ -205,8 +249,16 @@ describe("segment-prefix overlap", () => {
     expect(isSegmentPrefix(a, b)).toBe(false);
     expect(isSegmentPrefix(b, a)).toBe(false);
     checkPathOverlaps([
-      { at: "post.expected.users[].owes", segments: a },
-      { at: "post.expected.users[].owed_by", segments: b },
+      {
+        at: "post.expected.users[].owes",
+        segments: a,
+        type: parseTypeString("Int"),
+      },
+      {
+        at: "post.expected.users[].owed_by",
+        segments: b,
+        type: parseTypeString("Int"),
+      },
     ]);
   });
 
@@ -215,8 +267,16 @@ describe("segment-prefix overlap", () => {
     const b = parsePath("post.expected.users");
     expect(isSegmentPrefix(a, b)).toBe(false);
     checkPathOverlaps([
-      { at: "post.expected.user", segments: a },
-      { at: "post.expected.users", segments: b },
+      {
+        at: "post.expected.user",
+        segments: a,
+        type: parseTypeString("Int"),
+      },
+      {
+        at: "post.expected.users",
+        segments: b,
+        type: parseTypeString("Int"),
+      },
     ]);
   });
 
@@ -224,8 +284,16 @@ describe("segment-prefix overlap", () => {
     const a = parsePath("countWords.expected");
     expect(() =>
       checkPathOverlaps([
-        { at: "countWords.expected", segments: a },
-        { at: "countWords.expected", segments: a },
+        {
+          at: "countWords.expected",
+          segments: a,
+          type: parseTypeString("Int"),
+        },
+        {
+          at: "countWords.expected",
+          segments: a,
+          type: parseTypeString("Int"),
+        },
       ]),
     ).toThrow(/overlap/);
   });

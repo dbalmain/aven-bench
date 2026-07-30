@@ -14,13 +14,17 @@ Ingest does not touch this tree. After `bun run ingest`, run:
 bun run check-types
 ```
 
-Design: `../.ai/corpus-type-annotations-draft.md` (rev 5) in the monorepo, or
+Design: `../.ai/corpus-type-annotations-draft.md` (rev 6) in the monorepo, or
 the copy under the parent `clex` tree.
 
 ## Authoring checklist
 
 1. Prefer **sparse paths** only — annotate the map or variant root, not whole
-   record trees the default already handles.
+   record trees the default already handles. A descendant path may overlap an
+   annotated ancestor only when the ancestor type contains opaque `Object`.
+   The ancestor controls its exact node; default record traversal resumes
+   inside `Object`, where the exact descendant annotation takes over. An
+   overlap beneath a fully concrete type is rejected.
 2. `type` is an **Aven type string** in the **corpus subset** only: `Null`,
    `Bool`, `Int`, `Float`, `Text`, `Object`, `Array(T)`, `Map(Text|Int, T)`,
    `?T`, `T | U`, `@Tag`, `@Tag(T)`. Anything else fails as _unsupported in

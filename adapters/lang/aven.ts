@@ -182,22 +182,36 @@ function emitByType(
     case "map":
       return emitMap(type, v, env, path);
     case "variant":
-      return emitVariant(type, v, encoding);
+      return emitVariant(type, v, encoding, env, path);
     case "array": {
       if (v.kind !== "array") {
         throw new Unrenderable(`expected Array at ${formatPathTail(path)}`);
       }
       return `[${v.items
-        .map((item) => emitByType(type.element, item, undefined, env, path))
+        .map((item) =>
+          emitNestedByType(type.element, item, env, [...path, "[]"]),
+        )
         .join(", ")}]`;
     }
     case "object":
-      // Opaque Object: record spelling; no nested path annotations under a
-      // typed Object (path overlap forbids annotating both).
-      return emitRecordDefault(v);
+      // Object is deliberately opaque: resume the normal structural walk so a
+      // more specific descendant annotation can take over at its exact path.
+      return emitRecordDefault(v, env, path);
     case "primitive":
       return emitPrimitive(type.of, v);
   }
+}
+
+function emitNestedByType(
+  type: TypeExpr,
+  v: JVal,
+  env: AnnEnv | null,
+  path: readonly string[],
+): string {
+  const pos = lookupAnn(env, path);
+  return pos
+    ? emitByType(pos.type, v, pos.encoding, env, path)
+    : emitByType(type, v, undefined, env, path);
 }
 
 function emitPrimitive(of: PrimitiveKind, v: JVal): string {
@@ -235,7 +249,7 @@ function emitMap(
   const pairs = v.entries.map((e) => {
     // K13: Text keys always via avenText — bare IDENT is name.unbound in Aven.
     const key = type.key === "int" ? e.key : avenText(e.key);
-    const val = emitByType(type.value, e.value, undefined, env, path);
+    const val = emitNestedByType(type.value, e.value, env, [...path, e.key]);
     return `(${key}, ${val})`;
   });
   return `Map([${pairs.join(", ")}])`;
@@ -245,6 +259,8 @@ function emitVariant(
   type: Extract<TypeExpr, { kind: "variant" }>,
   v: JVal,
   encoding: VariantEncoding | undefined,
+  env: AnnEnv | null,
+  path: readonly string[],
 ): string {
   if (!encoding) throw new Unrenderable("variant emission requires encoding");
   if (v.kind !== "object") throw new Unrenderable("expected variant object");
@@ -256,19 +272,25 @@ function emitVariant(
     // Nullary, or empty rest payload → `@Ctor` (design: empty rest is nullary).
     return `@${extracted.ctor}`;
   }
-  // Payload types have no nested variants in the corpus subset; emit by type
-  // (so Float spelling applies) without a path cursor for nested annotations.
-  const payload = emitByType(alt.payload, extracted.payload, undefined, null, []);
+  const payloadPath = [...path, ...extracted.payloadPath];
+  const payload =
+    extracted.payloadPath.length === 0
+      ? emitByType(alt.payload, extracted.payload, undefined, env, payloadPath)
+      : emitNestedByType(alt.payload, extracted.payload, env, payloadPath);
   return `@${extracted.ctor}(${payload})`;
 }
 
-/** Record literal without path annotations (Object payloads, typed Object). */
-function emitRecordDefault(v: JVal): string {
+/** Record literal that resumes path-aware traversal inside opaque Object. */
+function emitRecordDefault(
+  v: JVal,
+  env: AnnEnv | null,
+  path: readonly string[],
+): string {
   if (v.kind !== "object") throw new Unrenderable("expected object");
   if (v.entries.length === 0) return "{}";
   const fields = v.entries.map((e) => {
     const key = IDENT.test(e.key) ? e.key : avenText(e.key);
-    return `${key}: ${avenValue(e.value)}`;
+    return `${key}: ${avenValue(e.value, env, [...path, e.key])}`;
   });
   return `{ ${fields.join(", ")} }`;
 }

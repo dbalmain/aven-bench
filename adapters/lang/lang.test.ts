@@ -29,6 +29,43 @@ function annFor(taskId: string, positions: TypePosition[]) {
   return resolveAnnFile(file, "fixture.json");
 }
 
+function nestedOperationsAnn() {
+  return annFor("demo", [
+    {
+      at: "f.arg.operations[]",
+      type: "@Concurrent(Object)",
+      encoding: {
+        kind: "tagField",
+        field: "operation",
+        tags: {
+          concurrent: {
+            ctor: "Concurrent",
+            payload: { from: "rest" },
+          },
+        },
+      },
+    },
+    {
+      at: "f.arg.operations[].operations[]",
+      type: "@Deposit(Int) | @Withdraw(Int)",
+      encoding: {
+        kind: "tagField",
+        field: "operation",
+        tags: {
+          deposit: {
+            ctor: "Deposit",
+            payload: { from: "field", name: "amount" },
+          },
+          withdraw: {
+            ctor: "Withdraw",
+            payload: { from: "field", name: "amount" },
+          },
+        },
+      },
+    },
+  ]);
+}
+
 const prop = (over: Partial<TaskProperty> = {}): TaskProperty => ({
   name: "f",
   argNames: ["a", "b"],
@@ -426,6 +463,23 @@ describe("Aven annotated emission (maps / variants)", () => {
     expect(contents).toContain("solution.f([@Open, @Deposit(10)])");
   });
 
+  test("a descendant annotation takes over inside an opaque variant payload", () => {
+    const ann = nestedOperationsAnn();
+    const value = {
+      operation: "concurrent",
+      number: 2,
+      operations: [
+        { operation: "deposit", amount: 1 },
+        { operation: "withdraw", amount: 1 },
+      ],
+    };
+    expect(
+      renderAvenValue(value, ann, ["f", "arg", "operations", "[]"]),
+    ).toBe(
+      "@Concurrent({ number: 2, operations: [@Deposit(1), @Withdraw(1)] })",
+    );
+  });
+
   test("exclusiveKey variant emission", () => {
     const ann = annFor("demo", [
       {
@@ -530,6 +584,47 @@ describe("Aven annotated emission (maps / variants)", () => {
     expect(contract).toMatch(/`Map` with `Text` keys/);
     // Bare Object arg uses observed record shape when known.
     expect(contract).toContain("`{ x: Int, y: Int }`");
+  });
+
+  test("contract states a descendant variant inside an opaque payload", () => {
+    const ann = nestedOperationsAnn();
+    const t = task({
+      properties: [
+        prop({
+          name: "f",
+          argNames: ["operations"],
+          arity: 1,
+        }),
+      ],
+      cases: [
+        {
+          uuid: "u1",
+          name: "nested",
+          group: [],
+          description: "d",
+          property: "f",
+          args: [
+            {
+              name: "operations",
+              value: [
+                {
+                  operation: "concurrent",
+                  number: 2,
+                  operations: [{ operation: "deposit", amount: 1 }],
+                },
+              ],
+            },
+          ],
+          expected: { kind: "value" as const, value: 0 },
+        },
+      ],
+    });
+    const contract = avenAdapter.renderContract(t, ann);
+    expect(contract).toContain("`@Concurrent` (with a record payload)");
+    expect(contract).toContain(
+      "`arg.operations[].operations[]` is `@Deposit(Int) | @Withdraw(Int)`",
+    );
+    expect(contract).not.toMatch(/(?<![A-Za-z])Object(?![A-Za-z])/);
   });
 
   test("union of withheld returns emits each annotated note once (rest-api post)", () => {

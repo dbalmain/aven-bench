@@ -47,6 +47,17 @@
       }
     },
     {
+      "at": "sameResultFromOperations.expected.operations[]",
+      "type": "@Right",
+      "encoding": {
+        "kind": "tagField",
+        "field": "operation",
+        "tags": {
+          "right": { "ctor": "Right", "payload": { "from": "none" } }
+        }
+      }
+    },
+    {
       "at": "expectedValue.arg.operations[]",
       "type": "@ToTree | @Left | @Right | @Value | @Up | @SetValue(Int) | @SetLeft(?Object) | @SetRight(?Object)",
       "encoding": {
