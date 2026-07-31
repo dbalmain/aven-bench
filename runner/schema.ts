@@ -35,7 +35,10 @@ import type { ContaminationHit, ContaminationTier } from "./contamination.ts";
  *     compiler itself, and whether it could read the generated suite.
  *     `firstShotPass` means nothing without both.
  *   - `modelToolInvocations` — `aven` invocations the *model* made in a round,
- *     counted from the session log. Measures compliance with `no-verify`.
+ *     counted from the session log. Structurally 0 under the default
+ *     `sandbox: "bubblewrap"`, which exposes no `aven` binary; only meaningful
+ *     under `self-verify` or `--no-sandbox`. `shellCommands` is what measures
+ *     `no-verify` compliance.
  *   - `harnessError`, `outcomeDetail`, `timedOut`, `roundsUsed`, `maxRounds`.
  *   - `avenBinarySha256`, `runnerVersion`, `startedAt`, `finishedAt`,
  *     `agentWallMs`, `gateWallMs`, `sessionLogHash`, `promptHash`, `suiteHash`,
@@ -304,7 +307,15 @@ export type RepairRound = {
   solutionTokens: number;
   /** The harness's own log for this round, content-addressed. */
   agentLogHash: string | null;
-  /** `aven` invocations the model made itself this round; null off the Aven arm. */
+  /**
+   * `aven` invocations the model made itself this round; null off the Aven arm.
+   *
+   * Expect 0 on any sandboxed row: bubblewrap exposes neither the aven-lang
+   * checkout nor a built binary, so the model has nothing to invoke. A nonzero
+   * value is only reachable under `self-verify` (with `AVEN_BIN`) or
+   * `--no-sandbox`. Do not read 0 here as evidence the model ran no tools —
+   * that is `shellCommands`.
+   */
   modelToolInvocations: number | null;
   /**
    * Paths the harness touched outside the work directory.

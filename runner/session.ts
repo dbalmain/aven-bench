@@ -14,8 +14,13 @@
  * attempt id stays a prefix, so all of an attempt's records are still selectable
  * by it, and the two phases stay distinguishable — which is the only way to tell
  * an `aven` invocation the *model* made from one the harness made. That is how
- * `modelToolInvocations` is counted, and therefore how compliance with
- * `toolPolicy: "no-verify"` is measured.
+ * `modelToolInvocations` is counted.
+ *
+ * It counts 0 on every sandboxed row, because bubblewrap exposes no `aven`
+ * binary for the model to run; it can only go nonzero under `self-verify` or
+ * `--no-sandbox`. Compliance with `toolPolicy: "no-verify"` is measured by
+ * `shellCommands`, which counts tool calls the harness log reports regardless
+ * of what they ran.
  */
 
 import { existsSync, readFileSync } from "node:fs";
