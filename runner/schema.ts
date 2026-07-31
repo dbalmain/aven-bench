@@ -151,8 +151,27 @@ export type Outcome =
  * model, or a model id that does not exist. It is also the signal the per-model
  * circuit breaker counts, and matching on `harnessError` prose would be a fragile
  * way to find these rows in the dataset.
+ *
+ * `agent-timeout` is the same *record* shape — no tokens, no solution — reached a
+ * different way: the call hit `--agent-timeout` rather than returning empty. The
+ * two were pooled until holdout-05, where `alphametics` and `satellite` timed out
+ * at the 900s ceiling to the millisecond, twice each, while tasks that passed
+ * routinely spent 1.5–2.2M ms across their rounds. Pooling them reads as "the
+ * provider, not the model" and silently drops the slowest — which is to say the
+ * hardest — tasks out of the denominator. A row that returns empty in 24s and a
+ * row cut off mid-work at the ceiling are different events and want different
+ * fixes: chase the provider, or raise the ceiling.
+ *
+ * Both still count toward the circuit breaker. A dead provider's original
+ * signature was ten consecutive 420s zero-token rows, so exempting timeouts would
+ * disarm the breaker for the case that motivated it.
  */
-export type HarnessErrorKind = "agent-no-tokens" | "agent-failed" | "gate-unavailable" | "runner-exception";
+export type HarnessErrorKind =
+  | "agent-no-tokens"
+  | "agent-timeout"
+  | "agent-failed"
+  | "gate-unavailable"
+  | "runner-exception";
 
 export type TaskSet = "tune" | "holdout";
 export type TaskSource = "exercism" | "design-center" | "rosetta";

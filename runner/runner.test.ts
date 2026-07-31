@@ -1146,7 +1146,7 @@ describe("a turn that returned no tokens", () => {
     expect(record.roundsToGreen).toBeNull();
   });
 
-  test("a timeout with no tokens is the provider, not a slow model", async () => {
+  test("a timeout with no tokens is its own kind, not an empty response", async () => {
     const workRoot = mkdtempSync(join(tmpdir(), "aven-bench-deadtimeout-"));
     const agent = fixedAgent({
       ok: false,
@@ -1156,7 +1156,9 @@ describe("a turn that returned no tokens", () => {
     });
     const record = await runAttempt(context(agent, workRoot, 2), TWO_FER);
     expect(record.outcome).toBe("harness_error");
-    expect(record.harnessErrorKind).toBe("agent-no-tokens");
+    // Still evidence-free about the model, but cut off rather than dead: the fix
+    // is a longer --agent-timeout, and pooling the two hides the slowest tasks.
+    expect(record.harnessErrorKind).toBe("agent-timeout");
     expect(record.harnessError).toContain("timed out");
     // The process-level truth survives the reclassification.
     expect(record.timedOut).toBe(true);

@@ -277,7 +277,12 @@ for (const [modelId, rs] of byModel) {
     caseRate: casesTotal ? casesPassed / casesTotal : 0,
     // Counts both spellings: schema 5 labels these, older logs only reveal them
     // through the token columns.
-    noTokens: rs.filter((r) => r.harnessErrorKind === "agent-no-tokens" || poisonedLegacy(r)).length,
+    noTokens: rs.filter(
+      (r) =>
+        r.harnessErrorKind === "agent-no-tokens" ||
+        r.harnessErrorKind === "agent-timeout" ||
+        poisonedLegacy(r),
+    ).length,
     tasksAttempted: new Set(rs.map((r) => r.taskId)).size,
   });
 }

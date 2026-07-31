@@ -512,7 +512,12 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
         ? `${NO_TOKENS_DETAIL}: ${agentResult.harnessError ?? "harness reported no error"}`
         : agentResult.harnessError;
       harnessErrorKind = measuredNothing
-        ? "agent-no-tokens"
+        ? // Cut off at the ceiling, not returned empty. Same record shape, and
+          // still evidence-free about the model, but the fix is a longer timeout
+          // rather than a look at the provider.
+          agentResult.timedOut
+          ? "agent-timeout"
+          : "agent-no-tokens"
         : outcome === "harness_error"
           ? "agent-failed"
           : null;

@@ -208,7 +208,7 @@ execution
   --jobs N                     attempts in flight (default = --agent-jobs)
   --agent-jobs N               concurrent harness calls (default 3)
   --lang-jobs N                concurrent compiler/interpreter runs (default 8)
-  --agent-timeout SEC          per harness call (default 900; cold opencode start is ~2min)
+  --agent-timeout SEC          per harness call (default 1800; cold opencode start is ~2min)
   --tool-timeout SEC           per compiler/test invocation (default 120)
   --no-preflight               skip the one-turn liveness probe per model
   --preflight-timeout SEC      per liveness probe (default 120)
@@ -569,7 +569,7 @@ async function main(): Promise<number> {
   const agentJobs = num(args, "agent-jobs", 3);
   const langJobs = num(args, "lang-jobs", 8);
   const jobs = num(args, "jobs", agentJobs);
-  const agentTimeoutMs = num(args, "agent-timeout", 900) * 1000;
+  const agentTimeoutMs = num(args, "agent-timeout", 1800) * 1000;
   const toolTimeoutMs = num(args, "tool-timeout", 120) * 1000;
   const preflight = bool(args, "preflight", true);
   // 60s, not the agent timeout: the probe is one sentence with no tool calls, and
@@ -932,7 +932,11 @@ async function main(): Promise<number> {
           ` ${Math.round(record.wallMs)}ms` +
           (record.harnessError ? `  !! ${record.harnessError.slice(0, 120)}` : ""),
       );
-      if (breaker.observe(p.modelId, record.harnessErrorKind === "agent-no-tokens")) {
+      // A dead provider shows up as consecutive timeouts as often as as instant
+      // empties, so both evidence-free kinds arm the breaker.
+      const evidenceFree =
+        record.harnessErrorKind === "agent-no-tokens" || record.harnessErrorKind === "agent-timeout";
+      if (breaker.observe(p.modelId, evidenceFree)) {
         const trip = breaker.report().find((t) => t.modelId === p.modelId);
         const why =
           trip?.reason === "rate"
@@ -1074,6 +1078,7 @@ function summarize(records: AttemptRecord[], health: HealthSummary): void {
   // Harness errors are already outside the capability denominator; zero-token rows
   // are the subset of them that measured nothing at all.
   const noTokens = records.filter((r) => r.harnessErrorKind === "agent-no-tokens").length;
+  const timedOutRows = records.filter((r) => r.harnessErrorKind === "agent-timeout");
   const scored = records.filter((r) => r.outcome !== "harness_error");
   const green = records.filter((r) => r.roundsToGreen !== null);
   const cost = records.reduce((n, r) => n + (r.costUsd ?? 0), 0);
@@ -1118,6 +1123,16 @@ function summarize(records: AttemptRecord[], health: HealthSummary): void {
     console.log(
       `  !! ${noTokens} row(s) returned no tokens at all (harness_error, kind agent-no-tokens):` +
         " the provider, not the model. Excluded from the rates above; --retry-harness-errors re-attempts them.",
+    );
+  }
+  if (timedOutRows.length > 0) {
+    console.log(
+      `  !! ${timedOutRows.length} row(s) hit --agent-timeout with nothing to show (kind agent-timeout):\n` +
+        timedOutRows
+          .map((r) => `       ${r.language} ${r.taskId} s${r.sampleIndex}: ${Math.round(r.wallMs)}ms`)
+          .join("\n") +
+        "\n       These are cut off, not dead. Excluded from the rates above, which biases them" +
+        "\n       upward if the slowest tasks are the hardest — raise --agent-timeout and re-run.",
     );
   }
   const tokens = records.reduce((n, r) => n + r.promptTokens + r.completionTokens, 0);
