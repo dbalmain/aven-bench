@@ -72,6 +72,9 @@ async function main(): Promise<void> {
       rule: prior.rule,
       tune: tune.sort(),
       holdout: holdout.sort(),
+      // Hand-made moves are carried forward, not re-derived. Dropping them here
+      // would erase the only record that the file disagrees with its own rule.
+      ...(prior.exceptions ? { exceptions: prior.exceptions } : {}),
     };
     console.log(
       `extended existing split: +${added.length} new, -${removed.length} gone upstream`,

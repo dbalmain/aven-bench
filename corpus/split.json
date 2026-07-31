@@ -73,7 +73,7 @@
     "trinary",
     "twelve-days",
     "word-count",
-    "zebra-puzzle-generated"
+    "zebra-puzzle"
   ],
   "holdout": [
     "acronym",
@@ -145,7 +145,23 @@
     "word-search",
     "wordy",
     "yacht",
-    "zebra-puzzle",
+    "zebra-puzzle-generated",
     "zipper"
+  ],
+  "exceptions": [
+    {
+      "id": "zebra-puzzle",
+      "from": "holdout",
+      "to": "tune",
+      "on": "2026-08-01",
+      "why": "Upstream gives two zero-arity cases whose answers are common knowledge, so two constant returns pass it and a holdout pass carried no information. Swapped with zebra-puzzle-generated, which takes the constraints as an argument."
+    },
+    {
+      "id": "zebra-puzzle-generated",
+      "from": "tune",
+      "to": "holdout",
+      "on": "2026-08-01",
+      "why": "Placed in tune by the hash rule, but it exists to replace zebra-puzzle in the arm that is reported. Holdout sweeps before 2026-08-01 measured the memorisable task instead."
+    }
   ]
 }

@@ -96,11 +96,32 @@ export type CorpusIndex = {
   skipped: { id: string; reason: string }[];
 };
 
+/**
+ * A deliberate departure from the placement rule, kept in the file that the rule
+ * governs.
+ *
+ * The split's whole value is that nobody can quietly reshuffle it between runs,
+ * so the rule says assignments never move. When one has to — a task turns out to
+ * measure nothing, and its replacement belongs in the arm it was weakening — the
+ * move is only trustworthy if it is written down next to the assignment it
+ * contradicts. An undocumented swap and a bug look identical six weeks later.
+ */
+export type SplitException = {
+  id: string;
+  from: "tune" | "holdout";
+  to: "tune" | "holdout";
+  /** ISO date the move was made. */
+  on: string;
+  why: string;
+};
+
 export type Split = {
   frozenAt: string;
   rule: string;
   tune: string[];
   holdout: string[];
+  /** Moves made by hand against the rule. Absent when there have been none. */
+  exceptions?: SplitException[];
 };
 
 // --- loading ---------------------------------------------------------------

@@ -38,8 +38,8 @@ data/                   gitignored. Run logs + content-addressed artifacts.
 
 `corpus/` is committed and fully generated. Upstream normalization is
 task-agnostic: a task an adapter cannot express is reported as omitted, not
-special-cased. Hand-designed generated tasks live in `ingest/design-center/`
-and are appended through a separate registry after upstream ingest.
+special-cased. Hand-designed generated tasks live in `ingest/design-center/` and
+are appended through a separate registry after upstream ingest.
 
 `annotations/types/` is the opposite: hand-authored, sparse type annotations
 (Aven type strings + optional variant encodings) consumed when rendering Aven
@@ -108,27 +108,27 @@ because the harness calls a cloud API, so it is not an exfiltration boundary.
 
 ### What the first sweep showed
 
-Four tasks (`two-fer`, `leap`, `hamming`, `raindrops`), both arms, one free model
-(`opencode/deepseek-v4-flash-free`), no Aven skill doc, `--rounds 2`:
+Four tasks (`two-fer`, `leap`, `hamming`, `raindrops`), both arms, one free
+model (`opencode/deepseek-v4-flash-free`), no Aven skill doc, `--rounds 2`:
 
-|                 | Python | Aven                                    |
-| --------------- | ------ | --------------------------------------- |
-| first-shot pass | 4 / 4  | 1 / 4                                   |
-| eventually green | 4 / 4  | 2 / 4 (one at round 1)                  |
-| other outcomes  | —      | 1 `parse_error` (cap exhausted), 1 `timeout` |
+|                  | Python | Aven                                         |
+| ---------------- | ------ | -------------------------------------------- |
+| first-shot pass  | 4 / 4  | 1 / 4                                        |
+| eventually green | 4 / 4  | 2 / 4 (one at round 1)                       |
+| other outcomes   | —      | 1 `parse_error` (cap exhausted), 1 `timeout` |
 
 Three findings that matter more than the numbers:
 
 - **The models go looking for Aven examples on disk.** With no documentation,
-  every Aven attempt that failed round 0 started globbing: first `references/` in
-  this repo (the answers), then `/tmp/aven-audit/*.av` and a stray checkout of
-  `crates/aven-host/std/*.av`, then sibling attempts' work directories. See
+  every Aven attempt that failed round 0 started globbing: first `references/`
+  in this repo (the answers), then `/tmp/aven-audit/*.av` and a stray checkout
+  of `crates/aven-host/std/*.av`, then sibling attempts' work directories. See
   "Contamination" in `runner/README.md` for the current bubblewrap boundary and
   its network limitation. The runner also records `outsideWorkdirTouches`,
   `escapedPaths`, `shellCommands` and sandbox mode per row.
 - **These easy tasks do not discriminate on Python.** A free model passes all of
-  them first shot, so Phase 2's weak-model band has to be found on harder tasks —
-  this end of the corpus tells you nothing about a model.
+  them first shot, so Phase 2's weak-model band has to be found on harder tasks
+  — this end of the corpus tells you nothing about a model.
 - **`aven check` and `aven test` disagree in the field.** One `leap` solution
   passed 9/9 cases while the checker rejected it
   (`type.invalid-operator-operands`: `==` is not defined for `?Int` and `Int`).
@@ -141,12 +141,13 @@ into `vendor/`, which is gitignored. Then re-run `bun run ingest` and
 `bun run split`. Ingest wipes and rewrites every task directory, so an exercise
 removed upstream cannot linger as a stale committed task; the design-center
 registry then restores its generated tasks. `split` never moves an existing task
-between arms; it only places new ones. Use
-`bun run split --rewrite` to re-derive from scratch, which invalidates every
-prior A/B.
+between arms; it only places new ones, and it carries any recorded `exceptions`
+forward untouched. Use `bun run split --rewrite` to re-derive from scratch,
+which invalidates every prior A/B.
 
 `corpus/index.json` records the exact upstream commit. Each generated
-design-center task records its generator version and seed in its own `task.json`.
+design-center task records its generator version and seed in its own
+`task.json`.
 
 ### The tune/holdout split
 
@@ -155,6 +156,19 @@ Deterministic, no randomness: sort the task ids, key each by
 and second half holdout. Hashing rather than splitting the sorted ids keeps
 related exercises (`binary`, `binary-search`, `binary-search-tree`) from all
 landing in the same arm. Report holdout only.
+
+Assignments do not move, so that a number from one sweep means the same thing as
+a number from the next. Where one has been moved anyway, `split.json` carries an
+`exceptions` entry saying which task, which direction, when and why — an
+undocumented swap and a bug are indistinguishable after a few weeks.
+
+One such move has been made, on 2026-08-01. `zebra-puzzle` went to tune and
+`zebra-puzzle-generated` took its place in holdout. Upstream's zebra puzzle has
+two zero-arity cases whose answers are common knowledge, so two constant returns
+pass it and a holdout pass carried no information; the generated task takes the
+puzzle's constraints as an argument, so the answer has to be derived. **Holdout
+sweeps before that date measured the memorisable task**, which is worth knowing
+when comparing them to later ones.
 
 ## How a suite is generated
 
