@@ -12,8 +12,8 @@
  *   corpus/<id>/task.json         normalized cases
  *   corpus/<id>/prompt.md         the task statement, both upstream layouts
  *
- * Nothing here is hand-authored and nothing here is task-specific: if a task
- * cannot be expressed, that is a finding, not a place to add a special case.
+ * Upstream normalization remains task-agnostic. Hand-designed generated tasks
+ * are appended through the design-center registry after upstream ingest.
  */
 
 import { existsSync, mkdirSync, readdirSync, rmSync, statSync } from "node:fs";
@@ -26,6 +26,7 @@ import {
   type Portable,
 } from "./json.ts";
 import { CORPUS_DIR, VENDOR_DIR } from "./paths.ts";
+import { writeDesignCenterTasks } from "./design-center.ts";
 import {
   TASK_SCHEMA_VERSION,
   type CorpusIndex,
@@ -399,7 +400,7 @@ async function main(): Promise<void> {
     index.caseCount += task.stats.caseCount;
     index.errorCaseCount += task.stats.errorCaseCount;
   }
-  index.taskCount = index.tasks.length;
+  await writeDesignCenterTasks(index);
 
   await Bun.write(`${CORPUS_DIR}/index.json`, JSON.stringify(index, null, 2) + "\n");
   await Bun.write(

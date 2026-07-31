@@ -14,7 +14,7 @@
  *
  * The solution is a module named `Solution`, so the suite calls
  * `Solution.two_fer(…)`. That mirrors Python's `import solution` /
- * `solution.two_fer(…)` and keeps one fixed name across 142 tasks. The Exercism
+ * `solution.two_fer(…)` and keeps one fixed name across the corpus. The Exercism
  * Ruby track's own convention — a class named after the exercise, `TwoFer`,
  * `ListOps` — was the alternative, and was rejected because it makes the model
  * guess a per-task constant spelling that the Python arm never has to guess, and

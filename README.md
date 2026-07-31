@@ -36,9 +36,10 @@ vendor/                 gitignored. Upstream problem-specifications checkout.
 data/                   gitignored. Run logs + content-addressed artifacts.
 ```
 
-`corpus/` is committed and fully generated. Nothing in it is hand-authored, and
-nothing in the generators is task-specific: a task the generator cannot express
-is reported as omitted, not special-cased.
+`corpus/` is committed and fully generated. Upstream normalization is
+task-agnostic: a task an adapter cannot express is reported as omitted, not
+special-cased. Hand-designed generated tasks live in `ingest/design-center/`
+and are appended through a separate registry after upstream ingest.
 
 `annotations/types/` is the opposite: hand-authored, sparse type annotations
 (Aven type strings + optional variant encodings) consumed when rendering Aven
@@ -53,11 +54,13 @@ Spine:
 |                                    |                                                                      |
 | ---------------------------------- | -------------------------------------------------------------------- |
 | upstream exercises                 | 151                                                                  |
-| tasks (have `canonical-data.json`) | **142**                                                              |
-| cases                              | **2246** (2310 leaves, 64 superseded via `reimplements` and dropped) |
+| upstream tasks with canonical data | **142**                                                              |
+| design-center tasks                | **1**                                                                |
+| corpus tasks                       | **143**                                                              |
+| cases                              | **2256** (2310 upstream leaves, 64 superseded and dropped)           |
 | cases expecting an error           | 169 (7.5%)                                                           |
 | prompt layouts                     | 81 legacy `description.md`, 61 `introduction.md` + `instructions.md` |
-| tune / holdout                     | 71 / 71                                                              |
+| tune / holdout                     | 72 / 71                                                              |
 
 ## Running it
 
@@ -66,6 +69,7 @@ bun install
 
 scripts/fetch-corpus.sh            # clone/update vendor/problem-specifications
 bun run ingest                     # vendor/ -> corpus/   (regenerates it wholesale)
+bun run generate:design-center     # regenerate only the hand-designed tasks
 bun run split                      # extend corpus/split.json with any new tasks
 bun run generate --lang aven,python --intersect
 bun run verify                     # prove the generated suites are real
@@ -135,12 +139,14 @@ Three findings that matter more than the numbers:
 `scripts/fetch-corpus.sh` does a depth-1 clone (or `fetch` + `reset --hard`)
 into `vendor/`, which is gitignored. Then re-run `bun run ingest` and
 `bun run split`. Ingest wipes and rewrites every task directory, so an exercise
-removed upstream cannot linger as a stale committed task. `split` never moves an
-existing task between arms; it only places new ones. Use
+removed upstream cannot linger as a stale committed task; the design-center
+registry then restores its generated tasks. `split` never moves an existing task
+between arms; it only places new ones. Use
 `bun run split --rewrite` to re-derive from scratch, which invalidates every
 prior A/B.
 
-`corpus/index.json` records the exact upstream commit each generation came from.
+`corpus/index.json` records the exact upstream commit. Each generated
+design-center task records its generator version and seed in its own `task.json`.
 
 ### The tune/holdout split
 
@@ -204,7 +210,7 @@ looks questionable is listed in `corpus/ingest-report.json`.
 2. **Negative check** — every `references/*/solution.broken.*` fixture must be
    reported as _failing_. A generator that emitted a vacuous suite would pass
    check 1 and fail here.
-3. **Load sweep** — all 142 tasks, run against a generated stub solution. The
+3. **Load sweep** — all 143 tasks, run against a generated stub solution. The
    suite must fail (exit 1), never fail to load (exit 2).
 4. **Check sweep** (Aven only) — `aven check` over the same suite+stub.
    `aven test` only parses and evaluates; `check` is the static gate, and the

@@ -1,0 +1,1707 @@
+{
+  "schemaVersion": 1,
+  "id": "zebra-puzzle-generated",
+  "title": "Generated Zebra Puzzle",
+  "blurb": "Solve seeded, uniquely determined zebra-style logic puzzles.",
+  "source": "design-center",
+  "sourceCommit": "zebra-puzzle-generated-v1",
+  "generator": {
+    "name": "ingest/design-center/zebra-puzzle-generated.ts",
+    "version": 1,
+    "seed": 20260801
+  },
+  "promptFiles": [
+    "design-center/zebra-puzzle-generated.md"
+  ],
+  "comments": [],
+  "properties": [
+    {
+      "name": "solve",
+      "argNames": [
+        "categories",
+        "constraints",
+        "queries"
+      ],
+      "arity": 3,
+      "caseCount": 10,
+      "returnsResult": false,
+      "argOrderVariants": [
+        [
+          "categories",
+          "constraints",
+          "queries"
+        ]
+      ],
+      "ambiguousArgOrder": false
+    }
+  ],
+  "cases": [
+    {
+      "uuid": "99339065-e104-4661-9b01-9c50bd92acfc",
+      "name": "generated puzzle 01",
+      "group": [],
+      "description": "generated puzzle 01",
+      "property": "solve",
+      "args": [
+        {
+          "name": "categories",
+          "value": [
+            {
+              "name": "people",
+              "values": [
+                "Elin",
+                "Cora",
+                "Aria",
+                "Bram",
+                "Dax"
+              ]
+            },
+            {
+              "name": "colors",
+              "values": [
+                "jade",
+                "violet",
+                "amber",
+                "ivory",
+                "cobalt"
+              ]
+            },
+            {
+              "name": "drinks",
+              "values": [
+                "cocoa",
+                "cider",
+                "kombucha",
+                "tea",
+                "lemonade"
+              ]
+            },
+            {
+              "name": "pets",
+              "values": [
+                "turtle",
+                "rabbit",
+                "gecko",
+                "ferret",
+                "heron"
+              ]
+            },
+            {
+              "name": "hobbies",
+              "values": [
+                "rowing",
+                "stargazing",
+                "chess",
+                "pottery",
+                "weaving"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "constraints",
+          "value": [
+            {
+              "kind": "rightOf",
+              "right": "ferret",
+              "left": "gecko"
+            },
+            {
+              "kind": "rightOf",
+              "right": "gecko",
+              "left": "Bram"
+            },
+            {
+              "kind": "rightOf",
+              "right": "kombucha",
+              "left": "gecko"
+            },
+            {
+              "kind": "adjacent",
+              "a": "rabbit",
+              "b": "chess"
+            },
+            {
+              "kind": "rightOf",
+              "right": "Bram",
+              "left": "Elin"
+            },
+            {
+              "kind": "sameHouse",
+              "a": "violet",
+              "b": "tea"
+            },
+            {
+              "kind": "rightOf",
+              "right": "cider",
+              "left": "stargazing"
+            },
+            {
+              "kind": "rightOf",
+              "right": "cocoa",
+              "left": "amber"
+            },
+            {
+              "kind": "rightOf",
+              "right": "cobalt",
+              "left": "Aria"
+            },
+            {
+              "kind": "rightOf",
+              "right": "rowing",
+              "left": "heron"
+            },
+            {
+              "kind": "sameHouse",
+              "a": "violet",
+              "b": "weaving"
+            },
+            {
+              "kind": "adjacent",
+              "a": "heron",
+              "b": "amber"
+            },
+            {
+              "kind": "adjacent",
+              "a": "amber",
+              "b": "Cora"
+            },
+            {
+              "kind": "rightOf",
+              "right": "gecko",
+              "left": "cider"
+            },
+            {
+              "kind": "adjacent",
+              "a": "gecko",
+              "b": "jade"
+            }
+          ]
+        },
+        {
+          "name": "queries",
+          "value": [
+            {
+              "subject": "Aria",
+              "category": "pets"
+            },
+            {
+              "subject": "cobalt",
+              "category": "drinks"
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "turtle",
+          "lemonade"
+        ]
+      }
+    },
+    {
+      "uuid": "fb51ef20-be15-4434-86ed-027815b1863e",
+      "name": "generated puzzle 02",
+      "group": [],
+      "description": "generated puzzle 02",
+      "property": "solve",
+      "args": [
+        {
+          "name": "categories",
+          "value": [
+            {
+              "name": "people",
+              "values": [
+                "Elin",
+                "Aria",
+                "Dax",
+                "Cora",
+                "Bram"
+              ]
+            },
+            {
+              "name": "drinks",
+              "values": [
+                "cocoa",
+                "kombucha",
+                "lemonade",
+                "tea",
+                "cider"
+              ]
+            },
+            {
+              "name": "pets",
+              "values": [
+                "gecko",
+                "heron",
+                "rabbit",
+                "turtle",
+                "ferret"
+              ]
+            },
+            {
+              "name": "hobbies",
+              "values": [
+                "pottery",
+                "stargazing",
+                "rowing",
+                "weaving",
+                "chess"
+              ]
+            },
+            {
+              "name": "colors",
+              "values": [
+                "amber",
+                "ivory",
+                "cobalt",
+                "violet",
+                "jade"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "constraints",
+          "value": [
+            {
+              "kind": "atPosition",
+              "value": "kombucha",
+              "position": 1
+            },
+            {
+              "kind": "adjacent",
+              "a": "Dax",
+              "b": "cobalt"
+            },
+            {
+              "kind": "adjacent",
+              "a": "cider",
+              "b": "jade"
+            },
+            {
+              "kind": "rightOf",
+              "right": "Dax",
+              "left": "ivory"
+            },
+            {
+              "kind": "rightOf",
+              "right": "chess",
+              "left": "amber"
+            },
+            {
+              "kind": "rightOf",
+              "right": "cobalt",
+              "left": "lemonade"
+            },
+            {
+              "kind": "adjacent",
+              "a": "Bram",
+              "b": "jade"
+            },
+            {
+              "kind": "adjacent",
+              "a": "rabbit",
+              "b": "Aria"
+            },
+            {
+              "kind": "sameHouse",
+              "a": "tea",
+              "b": "stargazing"
+            },
+            {
+              "kind": "adjacent",
+              "a": "kombucha",
+              "b": "rowing"
+            },
+            {
+              "kind": "adjacent",
+              "a": "jade",
+              "b": "heron"
+            },
+            {
+              "kind": "rightOf",
+              "right": "chess",
+              "left": "gecko"
+            },
+            {
+              "kind": "rightOf",
+              "right": "weaving",
+              "left": "turtle"
+            },
+            {
+              "kind": "rightOf",
+              "right": "Elin",
+              "left": "weaving"
+            }
+          ]
+        },
+        {
+          "name": "queries",
+          "value": [
+            {
+              "subject": "Aria",
+              "category": "pets"
+            },
+            {
+              "subject": "turtle",
+              "category": "people"
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "gecko",
+          "Bram"
+        ]
+      }
+    },
+    {
+      "uuid": "fe227543-8fd1-452c-9b96-5f416b1fb738",
+      "name": "generated puzzle 03",
+      "group": [],
+      "description": "generated puzzle 03",
+      "property": "solve",
+      "args": [
+        {
+          "name": "categories",
+          "value": [
+            {
+              "name": "drinks",
+              "values": [
+                "cocoa",
+                "lemonade",
+                "tea",
+                "cider",
+                "kombucha"
+              ]
+            },
+            {
+              "name": "pets",
+              "values": [
+                "heron",
+                "gecko",
+                "turtle",
+                "ferret",
+                "rabbit"
+              ]
+            },
+            {
+              "name": "people",
+              "values": [
+                "Elin",
+                "Aria",
+                "Dax",
+                "Cora",
+                "Bram"
+              ]
+            },
+            {
+              "name": "hobbies",
+              "values": [
+                "chess",
+                "weaving",
+                "rowing",
+                "stargazing",
+                "pottery"
+              ]
+            },
+            {
+              "name": "colors",
+              "values": [
+                "violet",
+                "ivory",
+                "jade",
+                "cobalt",
+                "amber"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "constraints",
+          "value": [
+            {
+              "kind": "rightOf",
+              "right": "amber",
+              "left": "rabbit"
+            },
+            {
+              "kind": "rightOf",
+              "right": "Bram",
+              "left": "heron"
+            },
+            {
+              "kind": "adjacent",
+              "a": "Elin",
+              "b": "chess"
+            },
+            {
+              "kind": "sameHouse",
+              "a": "turtle",
+              "b": "stargazing"
+            },
+            {
+              "kind": "rightOf",
+              "right": "weaving",
+              "left": "cocoa"
+            },
+            {
+              "kind": "rightOf",
+              "right": "cocoa",
+              "left": "violet"
+            },
+            {
+              "kind": "adjacent",
+              "a": "rowing",
+              "b": "tea"
+            },
+            {
+              "kind": "rightOf",
+              "right": "cocoa",
+              "left": "Aria"
+            },
+            {
+              "kind": "sameHouse",
+              "a": "lemonade",
+              "b": "chess"
+            },
+            {
+              "kind": "adjacent",
+              "a": "turtle",
+              "b": "Dax"
+            },
+            {
+              "kind": "rightOf",
+              "right": "cobalt",
+              "left": "lemonade"
+            },
+            {
+              "kind": "sameHouse",
+              "a": "gecko",
+              "b": "weaving"
+            },
+            {
+              "kind": "adjacent",
+              "a": "cocoa",
+              "b": "cider"
+            },
+            {
+              "kind": "adjacent",
+              "a": "tea",
+              "b": "Aria"
+            },
+            {
+              "kind": "rightOf",
+              "right": "jade",
+              "left": "stargazing"
+            }
+          ]
+        },
+        {
+          "name": "queries",
+          "value": [
+            {
+              "subject": "Elin",
+              "category": "colors"
+            },
+            {
+              "subject": "cobalt",
+              "category": "people"
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "amber",
+          "Bram"
+        ]
+      }
+    },
+    {
+      "uuid": "df6db464-99a9-471c-b908-b52fe403feb6",
+      "name": "generated puzzle 04",
+      "group": [],
+      "description": "generated puzzle 04",
+      "property": "solve",
+      "args": [
+        {
+          "name": "categories",
+          "value": [
+            {
+              "name": "colors",
+              "values": [
+                "ivory",
+                "cobalt",
+                "jade",
+                "violet",
+                "amber"
+              ]
+            },
+            {
+              "name": "people",
+              "values": [
+                "Cora",
+                "Bram",
+                "Aria",
+                "Dax",
+                "Elin"
+              ]
+            },
+            {
+              "name": "pets",
+              "values": [
+                "ferret",
+                "gecko",
+                "rabbit",
+                "turtle",
+                "heron"
+              ]
+            },
+            {
+              "name": "hobbies",
+              "values": [
+                "pottery",
+                "weaving",
+                "rowing",
+                "chess",
+                "stargazing"
+              ]
+            },
+            {
+              "name": "drinks",
+              "values": [
+                "kombucha",
+                "tea",
+                "lemonade",
+                "cocoa",
+                "cider"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "constraints",
+          "value": [
+            {
+              "kind": "adjacent",
+              "a": "heron",
+              "b": "amber"
+            },
+            {
+              "kind": "adjacent",
+              "a": "rowing",
+              "b": "Dax"
+            },
+            {
+              "kind": "adjacent",
+              "a": "kombucha",
+              "b": "Elin"
+            },
+            {
+              "kind": "adjacent",
+              "a": "Aria",
+              "b": "Elin"
+            },
+            {
+              "kind": "atPosition",
+              "value": "weaving",
+              "position": 4
+            },
+            {
+              "kind": "sameHouse",
+              "a": "cobalt",
+              "b": "ferret"
+            },
+            {
+              "kind": "rightOf",
+              "right": "jade",
+              "left": "rabbit"
+            },
+            {
+              "kind": "adjacent",
+              "a": "Dax",
+              "b": "cocoa"
+            },
+            {
+              "kind": "adjacent",
+              "a": "cider",
+              "b": "cobalt"
+            },
+            {
+              "kind": "rightOf",
+              "right": "Cora",
+              "left": "pottery"
+            },
+            {
+              "kind": "rightOf",
+              "right": "chess",
+              "left": "turtle"
+            },
+            {
+              "kind": "rightOf",
+              "right": "cider",
+              "left": "lemonade"
+            },
+            {
+              "kind": "atPosition",
+              "value": "Bram",
+              "position": 1
+            },
+            {
+              "kind": "rightOf",
+              "right": "cocoa",
+              "left": "turtle"
+            },
+            {
+              "kind": "adjacent",
+              "a": "ivory",
+              "b": "Elin"
+            },
+            {
+              "kind": "adjacent",
+              "a": "Cora",
+              "b": "ivory"
+            },
+            {
+              "kind": "adjacent",
+              "a": "heron",
+              "b": "Elin"
+            }
+          ]
+        },
+        {
+          "name": "queries",
+          "value": [
+            {
+              "subject": "rowing",
+              "category": "drinks"
+            },
+            {
+              "subject": "rabbit",
+              "category": "hobbies"
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "lemonade",
+          "rowing"
+        ]
+      }
+    },
+    {
+      "uuid": "245b7e57-e126-441a-9187-a9bf997da165",
+      "name": "generated puzzle 05",
+      "group": [],
+      "description": "generated puzzle 05",
+      "property": "solve",
+      "args": [
+        {
+          "name": "categories",
+          "value": [
+            {
+              "name": "hobbies",
+              "values": [
+                "pottery",
+                "stargazing",
+                "chess",
+                "rowing",
+                "weaving"
+              ]
+            },
+            {
+              "name": "drinks",
+              "values": [
+                "cocoa",
+                "cider",
+                "kombucha",
+                "tea",
+                "lemonade"
+              ]
+            },
+            {
+              "name": "colors",
+              "values": [
+                "cobalt",
+                "ivory",
+                "violet",
+                "jade",
+                "amber"
+              ]
+            },
+            {
+              "name": "pets",
+              "values": [
+                "gecko",
+                "rabbit",
+                "turtle",
+                "heron",
+                "ferret"
+              ]
+            },
+            {
+              "name": "people",
+              "values": [
+                "Dax",
+                "Aria",
+                "Bram",
+                "Elin",
+                "Cora"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "constraints",
+          "value": [
+            {
+              "kind": "adjacent",
+              "a": "amber",
+              "b": "gecko"
+            },
+            {
+              "kind": "adjacent",
+              "a": "Bram",
+              "b": "weaving"
+            },
+            {
+              "kind": "adjacent",
+              "a": "cocoa",
+              "b": "Cora"
+            },
+            {
+              "kind": "rightOf",
+              "right": "Aria",
+              "left": "jade"
+            },
+            {
+              "kind": "rightOf",
+              "right": "lemonade",
+              "left": "Dax"
+            },
+            {
+              "kind": "rightOf",
+              "right": "tea",
+              "left": "cocoa"
+            },
+            {
+              "kind": "rightOf",
+              "right": "gecko",
+              "left": "cider"
+            },
+            {
+              "kind": "adjacent",
+              "a": "Elin",
+              "b": "cobalt"
+            },
+            {
+              "kind": "rightOf",
+              "right": "ivory",
+              "left": "Bram"
+            },
+            {
+              "kind": "rightOf",
+              "right": "chess",
+              "left": "ferret"
+            },
+            {
+              "kind": "adjacent",
+              "a": "violet",
+              "b": "turtle"
+            },
+            {
+              "kind": "rightOf",
+              "right": "Bram",
+              "left": "pottery"
+            },
+            {
+              "kind": "adjacent",
+              "a": "lemonade",
+              "b": "rabbit"
+            },
+            {
+              "kind": "rightOf",
+              "right": "violet",
+              "left": "Aria"
+            },
+            {
+              "kind": "sameHouse",
+              "a": "stargazing",
+              "b": "Elin"
+            },
+            {
+              "kind": "atPosition",
+              "value": "ferret",
+              "position": 1
+            }
+          ]
+        },
+        {
+          "name": "queries",
+          "value": [
+            {
+              "subject": "weaving",
+              "category": "pets"
+            },
+            {
+              "subject": "heron",
+              "category": "colors"
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "rabbit",
+          "violet"
+        ]
+      }
+    },
+    {
+      "uuid": "e4885ebf-301a-45b5-8272-9d679d43e75f",
+      "name": "generated puzzle 06",
+      "group": [],
+      "description": "generated puzzle 06",
+      "property": "solve",
+      "args": [
+        {
+          "name": "categories",
+          "value": [
+            {
+              "name": "drinks",
+              "values": [
+                "tea",
+                "kombucha",
+                "cocoa",
+                "cider",
+                "lemonade"
+              ]
+            },
+            {
+              "name": "colors",
+              "values": [
+                "amber",
+                "ivory",
+                "violet",
+                "cobalt",
+                "jade"
+              ]
+            },
+            {
+              "name": "pets",
+              "values": [
+                "rabbit",
+                "turtle",
+                "gecko",
+                "heron",
+                "ferret"
+              ]
+            },
+            {
+              "name": "people",
+              "values": [
+                "Aria",
+                "Elin",
+                "Dax",
+                "Cora",
+                "Bram"
+              ]
+            },
+            {
+              "name": "hobbies",
+              "values": [
+                "stargazing",
+                "pottery",
+                "chess",
+                "weaving",
+                "rowing"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "constraints",
+          "value": [
+            {
+              "kind": "rightOf",
+              "right": "tea",
+              "left": "Elin"
+            },
+            {
+              "kind": "adjacent",
+              "a": "turtle",
+              "b": "jade"
+            },
+            {
+              "kind": "rightOf",
+              "right": "heron",
+              "left": "kombucha"
+            },
+            {
+              "kind": "rightOf",
+              "right": "violet",
+              "left": "jade"
+            },
+            {
+              "kind": "rightOf",
+              "right": "pottery",
+              "left": "Cora"
+            },
+            {
+              "kind": "rightOf",
+              "right": "cider",
+              "left": "violet"
+            },
+            {
+              "kind": "sameHouse",
+              "a": "rabbit",
+              "b": "Aria"
+            },
+            {
+              "kind": "rightOf",
+              "right": "ferret",
+              "left": "Bram"
+            },
+            {
+              "kind": "sameHouse",
+              "a": "ivory",
+              "b": "Dax"
+            },
+            {
+              "kind": "sameHouse",
+              "a": "kombucha",
+              "b": "weaving"
+            },
+            {
+              "kind": "adjacent",
+              "a": "kombucha",
+              "b": "Cora"
+            },
+            {
+              "kind": "rightOf",
+              "right": "chess",
+              "left": "lemonade"
+            },
+            {
+              "kind": "rightOf",
+              "right": "Dax",
+              "left": "stargazing"
+            },
+            {
+              "kind": "rightOf",
+              "right": "cobalt",
+              "left": "Aria"
+            }
+          ]
+        },
+        {
+          "name": "queries",
+          "value": [
+            {
+              "subject": "stargazing",
+              "category": "colors"
+            },
+            {
+              "subject": "chess",
+              "category": "drinks"
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "violet",
+          "cocoa"
+        ]
+      }
+    },
+    {
+      "uuid": "1056e567-a770-46bc-904e-444e1be1b3d4",
+      "name": "generated puzzle 07",
+      "group": [],
+      "description": "generated puzzle 07",
+      "property": "solve",
+      "args": [
+        {
+          "name": "categories",
+          "value": [
+            {
+              "name": "hobbies",
+              "values": [
+                "rowing",
+                "pottery",
+                "stargazing",
+                "chess",
+                "weaving"
+              ]
+            },
+            {
+              "name": "colors",
+              "values": [
+                "ivory",
+                "cobalt",
+                "amber",
+                "violet",
+                "jade"
+              ]
+            },
+            {
+              "name": "pets",
+              "values": [
+                "rabbit",
+                "heron",
+                "gecko",
+                "ferret",
+                "turtle"
+              ]
+            },
+            {
+              "name": "people",
+              "values": [
+                "Elin",
+                "Dax",
+                "Cora",
+                "Bram",
+                "Aria"
+              ]
+            },
+            {
+              "name": "drinks",
+              "values": [
+                "cider",
+                "kombucha",
+                "cocoa",
+                "lemonade",
+                "tea"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "constraints",
+          "value": [
+            {
+              "kind": "rightOf",
+              "right": "rowing",
+              "left": "lemonade"
+            },
+            {
+              "kind": "adjacent",
+              "a": "Cora",
+              "b": "Aria"
+            },
+            {
+              "kind": "rightOf",
+              "right": "tea",
+              "left": "violet"
+            },
+            {
+              "kind": "adjacent",
+              "a": "cocoa",
+              "b": "violet"
+            },
+            {
+              "kind": "sameHouse",
+              "a": "gecko",
+              "b": "kombucha"
+            },
+            {
+              "kind": "adjacent",
+              "a": "lemonade",
+              "b": "Dax"
+            },
+            {
+              "kind": "sameHouse",
+              "a": "heron",
+              "b": "Elin"
+            },
+            {
+              "kind": "adjacent",
+              "a": "ivory",
+              "b": "cocoa"
+            },
+            {
+              "kind": "rightOf",
+              "right": "Bram",
+              "left": "amber"
+            },
+            {
+              "kind": "adjacent",
+              "a": "amber",
+              "b": "jade"
+            },
+            {
+              "kind": "rightOf",
+              "right": "heron",
+              "left": "rabbit"
+            },
+            {
+              "kind": "adjacent",
+              "a": "stargazing",
+              "b": "heron"
+            },
+            {
+              "kind": "rightOf",
+              "right": "chess",
+              "left": "Aria"
+            },
+            {
+              "kind": "adjacent",
+              "a": "rowing",
+              "b": "pottery"
+            },
+            {
+              "kind": "adjacent",
+              "a": "ferret",
+              "b": "cider"
+            }
+          ]
+        },
+        {
+          "name": "queries",
+          "value": [
+            {
+              "subject": "kombucha",
+              "category": "hobbies"
+            },
+            {
+              "subject": "turtle",
+              "category": "people"
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "weaving",
+          "Bram"
+        ]
+      }
+    },
+    {
+      "uuid": "7ae66c52-207d-4ea9-b405-0632cb0efb8c",
+      "name": "generated puzzle 08",
+      "group": [],
+      "description": "generated puzzle 08",
+      "property": "solve",
+      "args": [
+        {
+          "name": "categories",
+          "value": [
+            {
+              "name": "drinks",
+              "values": [
+                "cocoa",
+                "tea",
+                "kombucha",
+                "lemonade",
+                "cider"
+              ]
+            },
+            {
+              "name": "hobbies",
+              "values": [
+                "pottery",
+                "stargazing",
+                "rowing",
+                "chess",
+                "weaving"
+              ]
+            },
+            {
+              "name": "colors",
+              "values": [
+                "jade",
+                "cobalt",
+                "violet",
+                "ivory",
+                "amber"
+              ]
+            },
+            {
+              "name": "pets",
+              "values": [
+                "heron",
+                "ferret",
+                "turtle",
+                "gecko",
+                "rabbit"
+              ]
+            },
+            {
+              "name": "people",
+              "values": [
+                "Cora",
+                "Elin",
+                "Dax",
+                "Aria",
+                "Bram"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "constraints",
+          "value": [
+            {
+              "kind": "adjacent",
+              "a": "rabbit",
+              "b": "stargazing"
+            },
+            {
+              "kind": "rightOf",
+              "right": "ferret",
+              "left": "pottery"
+            },
+            {
+              "kind": "rightOf",
+              "right": "Dax",
+              "left": "heron"
+            },
+            {
+              "kind": "sameHouse",
+              "a": "chess",
+              "b": "Dax"
+            },
+            {
+              "kind": "adjacent",
+              "a": "pottery",
+              "b": "Bram"
+            },
+            {
+              "kind": "adjacent",
+              "a": "Cora",
+              "b": "jade"
+            },
+            {
+              "kind": "rightOf",
+              "right": "amber",
+              "left": "pottery"
+            },
+            {
+              "kind": "atPosition",
+              "value": "lemonade",
+              "position": 5
+            },
+            {
+              "kind": "rightOf",
+              "right": "rowing",
+              "left": "violet"
+            },
+            {
+              "kind": "adjacent",
+              "a": "violet",
+              "b": "heron"
+            },
+            {
+              "kind": "atPosition",
+              "value": "cocoa",
+              "position": 1
+            },
+            {
+              "kind": "sameHouse",
+              "a": "kombucha",
+              "b": "Aria"
+            },
+            {
+              "kind": "rightOf",
+              "right": "jade",
+              "left": "gecko"
+            },
+            {
+              "kind": "rightOf",
+              "right": "pottery",
+              "left": "cider"
+            },
+            {
+              "kind": "rightOf",
+              "right": "cobalt",
+              "left": "cider"
+            },
+            {
+              "kind": "sameHouse",
+              "a": "kombucha",
+              "b": "jade"
+            }
+          ]
+        },
+        {
+          "name": "queries",
+          "value": [
+            {
+              "subject": "amber",
+              "category": "hobbies"
+            },
+            {
+              "subject": "Elin",
+              "category": "drinks"
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "stargazing",
+          "tea"
+        ]
+      }
+    },
+    {
+      "uuid": "8a76129f-f4ed-40f3-8d68-1132d3735b8a",
+      "name": "generated puzzle 09",
+      "group": [],
+      "description": "generated puzzle 09",
+      "property": "solve",
+      "args": [
+        {
+          "name": "categories",
+          "value": [
+            {
+              "name": "pets",
+              "values": [
+                "gecko",
+                "ferret",
+                "turtle",
+                "rabbit",
+                "heron"
+              ]
+            },
+            {
+              "name": "hobbies",
+              "values": [
+                "weaving",
+                "pottery",
+                "chess",
+                "stargazing",
+                "rowing"
+              ]
+            },
+            {
+              "name": "colors",
+              "values": [
+                "ivory",
+                "violet",
+                "jade",
+                "cobalt",
+                "amber"
+              ]
+            },
+            {
+              "name": "drinks",
+              "values": [
+                "tea",
+                "cocoa",
+                "cider",
+                "kombucha",
+                "lemonade"
+              ]
+            },
+            {
+              "name": "people",
+              "values": [
+                "Aria",
+                "Dax",
+                "Cora",
+                "Bram",
+                "Elin"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "constraints",
+          "value": [
+            {
+              "kind": "sameHouse",
+              "a": "turtle",
+              "b": "Cora"
+            },
+            {
+              "kind": "sameHouse",
+              "a": "stargazing",
+              "b": "kombucha"
+            },
+            {
+              "kind": "sameHouse",
+              "a": "pottery",
+              "b": "cocoa"
+            },
+            {
+              "kind": "rightOf",
+              "right": "gecko",
+              "left": "rowing"
+            },
+            {
+              "kind": "rightOf",
+              "right": "amber",
+              "left": "jade"
+            },
+            {
+              "kind": "adjacent",
+              "a": "ferret",
+              "b": "Elin"
+            },
+            {
+              "kind": "adjacent",
+              "a": "gecko",
+              "b": "turtle"
+            },
+            {
+              "kind": "sameHouse",
+              "a": "chess",
+              "b": "Cora"
+            },
+            {
+              "kind": "adjacent",
+              "a": "Aria",
+              "b": "lemonade"
+            },
+            {
+              "kind": "rightOf",
+              "right": "weaving",
+              "left": "rabbit"
+            },
+            {
+              "kind": "rightOf",
+              "right": "lemonade",
+              "left": "stargazing"
+            },
+            {
+              "kind": "adjacent",
+              "a": "ivory",
+              "b": "Bram"
+            },
+            {
+              "kind": "adjacent",
+              "a": "Elin",
+              "b": "cocoa"
+            },
+            {
+              "kind": "atPosition",
+              "value": "violet",
+              "position": 5
+            },
+            {
+              "kind": "adjacent",
+              "a": "Bram",
+              "b": "Cora"
+            },
+            {
+              "kind": "sameHouse",
+              "a": "violet",
+              "b": "cider"
+            }
+          ]
+        },
+        {
+          "name": "queries",
+          "value": [
+            {
+              "subject": "Bram",
+              "category": "pets"
+            },
+            {
+              "subject": "cobalt",
+              "category": "people"
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "gecko",
+          "Bram"
+        ]
+      }
+    },
+    {
+      "uuid": "4b0f8c4a-09fc-45e6-9104-a8a66277c958",
+      "name": "generated puzzle 10",
+      "group": [],
+      "description": "generated puzzle 10",
+      "property": "solve",
+      "args": [
+        {
+          "name": "categories",
+          "value": [
+            {
+              "name": "pets",
+              "values": [
+                "ferret",
+                "heron",
+                "turtle",
+                "gecko",
+                "rabbit"
+              ]
+            },
+            {
+              "name": "drinks",
+              "values": [
+                "tea",
+                "cocoa",
+                "kombucha",
+                "cider",
+                "lemonade"
+              ]
+            },
+            {
+              "name": "hobbies",
+              "values": [
+                "weaving",
+                "pottery",
+                "rowing",
+                "stargazing",
+                "chess"
+              ]
+            },
+            {
+              "name": "colors",
+              "values": [
+                "cobalt",
+                "amber",
+                "ivory",
+                "violet",
+                "jade"
+              ]
+            },
+            {
+              "name": "people",
+              "values": [
+                "Cora",
+                "Dax",
+                "Bram",
+                "Elin",
+                "Aria"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "constraints",
+          "value": [
+            {
+              "kind": "rightOf",
+              "right": "weaving",
+              "left": "violet"
+            },
+            {
+              "kind": "rightOf",
+              "right": "cocoa",
+              "left": "cobalt"
+            },
+            {
+              "kind": "rightOf",
+              "right": "heron",
+              "left": "rabbit"
+            },
+            {
+              "kind": "adjacent",
+              "a": "lemonade",
+              "b": "amber"
+            },
+            {
+              "kind": "atPosition",
+              "value": "tea",
+              "position": 1
+            },
+            {
+              "kind": "rightOf",
+              "right": "Bram",
+              "left": "jade"
+            },
+            {
+              "kind": "rightOf",
+              "right": "amber",
+              "left": "Bram"
+            },
+            {
+              "kind": "sameHouse",
+              "a": "turtle",
+              "b": "rowing"
+            },
+            {
+              "kind": "sameHouse",
+              "a": "jade",
+              "b": "Aria"
+            },
+            {
+              "kind": "rightOf",
+              "right": "rabbit",
+              "left": "amber"
+            },
+            {
+              "kind": "adjacent",
+              "a": "rowing",
+              "b": "rabbit"
+            },
+            {
+              "kind": "rightOf",
+              "right": "chess",
+              "left": "ferret"
+            },
+            {
+              "kind": "rightOf",
+              "right": "ivory",
+              "left": "pottery"
+            },
+            {
+              "kind": "sameHouse",
+              "a": "amber",
+              "b": "Cora"
+            },
+            {
+              "kind": "rightOf",
+              "right": "Dax",
+              "left": "kombucha"
+            }
+          ]
+        },
+        {
+          "name": "queries",
+          "value": [
+            {
+              "subject": "weaving",
+              "category": "people"
+            },
+            {
+              "subject": "violet",
+              "category": "hobbies"
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "kind": "value",
+        "value": [
+          "Dax",
+          "pottery"
+        ]
+      }
+    }
+  ],
+  "stats": {
+    "caseCount": 10,
+    "errorCaseCount": 0,
+    "droppedCaseCount": 0,
+    "valueKinds": [
+      "array",
+      "array-of-record",
+      "int",
+      "record",
+      "string"
+    ]
+  }
+}

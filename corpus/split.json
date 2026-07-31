@@ -72,7 +72,8 @@
     "triangle",
     "trinary",
     "twelve-days",
-    "word-count"
+    "word-count",
+    "zebra-puzzle-generated"
   ],
   "holdout": [
     "acronym",

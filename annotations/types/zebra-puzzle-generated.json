@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "task": "zebra-puzzle-generated",
+  "positions": [
+    {
+      "at": "solve.arg.constraints[]",
+      "type": "@SameHouse(Object) | @RightOf(Object) | @Adjacent(Object) | @AtPosition(Object)",
+      "encoding": {
+        "kind": "tagField",
+        "field": "kind",
+        "tags": {
+          "sameHouse": { "ctor": "SameHouse", "payload": { "from": "rest" } },
+          "rightOf": { "ctor": "RightOf", "payload": { "from": "rest" } },
+          "adjacent": { "ctor": "Adjacent", "payload": { "from": "rest" } },
+          "atPosition": { "ctor": "AtPosition", "payload": { "from": "rest" } }
+        }
+      }
+    }
+  ]
+}

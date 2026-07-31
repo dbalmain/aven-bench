@@ -54,6 +54,12 @@ export type Task = {
   blurb: string;
   source: string;
   sourceCommit: string;
+  /** Reproducibility metadata for tasks synthesized in this repository. */
+  generator?: {
+    name: string;
+    version: number;
+    seed: number;
+  };
   /** Which upstream markdown files the prompt was built from. */
   promptFiles: string[];
   /** Upstream `comments`, kept because they sometimes carry the real contract. */

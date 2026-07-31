@@ -4,8 +4,8 @@
   "sourceCommit": "22e2aa465858fc497ef3b6b9dbb82e706ac8569c",
   "sourceLicense": "MIT",
   "generatedBy": "ingest/ingest.ts",
-  "taskCount": 142,
-  "caseCount": 2246,
+  "taskCount": 143,
+  "caseCount": 2256,
   "errorCaseCount": 169,
   "tasks": [
     {
@@ -2077,6 +2077,22 @@
         "ownsZebra"
       ],
       "valueKinds": [
+        "string"
+      ]
+    },
+    {
+      "id": "zebra-puzzle-generated",
+      "title": "Generated Zebra Puzzle",
+      "caseCount": 10,
+      "errorCaseCount": 0,
+      "properties": [
+        "solve"
+      ],
+      "valueKinds": [
+        "array",
+        "array-of-record",
+        "int",
+        "record",
         "string"
       ]
     },
