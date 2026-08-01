@@ -143,6 +143,7 @@ const KNOWN_FLAGS = new Set([
   "allow-repo-workdir",
   "temperature",
   "seed",
+  "note",
 ]);
 
 /** Unknown flags, so the CLI can refuse rather than ignore them. */
@@ -217,6 +218,7 @@ execution
   --breaker-window N           sliding window for --breaker-rate (default 10; ignored when rate is 0)
   --out PATH                   run log (default data/runs/<run-id>.jsonl)
   --run-id ID                  default: timestamp
+  --note TEXT                  free-text description for this run (stored on every row)
   --work-root DIR              default ~/.cache/aven-bench/work (must be outside any git repo)
   --keep-work                  keep per-attempt work dirs (default: prune once archived)
   --allow-repo-workdir         permit a work root inside a repo (unsafe with --no-sandbox)
@@ -607,6 +609,9 @@ async function main(): Promise<number> {
   const workRoot = resolve(args.flags.get("work-root") ?? DEFAULT_WORK_ROOT);
   const temperature = args.flags.get("temperature") !== undefined ? num(args, "temperature", 0) : null;
   const seed = args.flags.get("seed") !== undefined ? num(args, "seed", 0) : null;
+  // Empty --note is treated as absent: no point storing a blank string on every row.
+  const noteRaw = args.flags.get("note");
+  const runNote = noteRaw != null && noteRaw.trim() !== "" ? noteRaw.trim() : null;
 
   const docPath = args.flags.get("doc");
   const doc = docPath ? await Bun.file(docPath).text() : null;
@@ -888,6 +893,7 @@ async function main(): Promise<number> {
       resumeSessions,
       survey,
       keepWork,
+      runNote,
     };
     if (doc) putArtifact(doc, "md");
     contexts.set(modelId, ctx);
@@ -966,6 +972,7 @@ function harnessErrorRecord(ctx: RunContext, spec: AttemptSpec, err: unknown): A
     runnerVersion: RUNNER_VERSION,
     startedAt: now,
     finishedAt: now,
+    runNote: ctx.runNote,
     taskId: spec.taskId,
     taskSource: "exercism",
     taskSet: spec.taskSet,

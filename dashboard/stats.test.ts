@@ -35,6 +35,7 @@ function row(over: Partial<AttemptSlice> & Pick<AttemptSlice, "taskId">): Attemp
     costUsd: null,
     avenCommit: "abc12345deadbeef",
     docId: "skill-v2",
+    runNote: null,
     ...over,
   };
 }
@@ -225,8 +226,12 @@ describe("expected total and liveness", () => {
     expect(deriveStatus(10, null, now - 120_000, now, stall)).toBe("finished");
   });
 
-  test("sort puts live before stalled before finished", () => {
-    const mk = (runId: string, status: RunSummary["status"], t: string): RunSummary =>
+  test("sort is by start time newest first; status does not reorder", () => {
+    const mk = (
+      runId: string,
+      status: RunSummary["status"],
+      startedAt: string,
+    ): RunSummary =>
       ({
         runId,
         models: [],
@@ -237,9 +242,10 @@ describe("expected total and liveness", () => {
         done: 0,
         total: null,
         status,
+        startedAt,
         elapsedMs: 0,
-        lastActivityAt: t,
-        mtimeAt: t,
+        lastActivityAt: startedAt,
+        mtimeAt: startedAt,
         passRate: null,
         firstShotRate: null,
         scored: 0,
@@ -251,12 +257,32 @@ describe("expected total and liveness", () => {
         nonPassing: [],
         costUsd: null,
         rawRows: 0,
+        description: null,
+        runNote: null,
       });
+    // Live but older must not float above a finished newer run.
     const sorted = sortSummaries([
-      mk("f", "finished", "2026-01-03T00:00:00.000Z"),
-      mk("l", "live", "2026-01-01T00:00:00.000Z"),
-      mk("s", "stalled", "2026-01-02T00:00:00.000Z"),
+      mk("old-live", "live", "2026-01-01T00:00:00.000Z"),
+      mk("new-finished", "finished", "2026-01-03T00:00:00.000Z"),
+      mk("mid-stalled", "stalled", "2026-01-02T00:00:00.000Z"),
     ]);
-    expect(sorted.map((r) => r.runId)).toEqual(["l", "s", "f"]);
+    expect(sorted.map((r) => r.runId)).toEqual([
+      "new-finished",
+      "mid-stalled",
+      "old-live",
+    ]);
+  });
+
+  test("summarizeRun exposes startedAt as earliest attempt start", () => {
+    const rows = [
+      row({ taskId: "a", startedAt: "2026-01-02T12:00:00.000Z" }),
+      row({ taskId: "b", startedAt: "2026-01-01T08:00:00.000Z" }),
+    ];
+    const s = summarizeRun(rows, {
+      split: { tune: 72, holdout: 71 },
+      mtimeMs: Date.parse("2026-01-02T13:00:00.000Z"),
+      nowMs: Date.parse("2026-01-02T13:00:00.000Z"),
+    });
+    expect(s.startedAt).toBe("2026-01-01T08:00:00.000Z");
   });
 });

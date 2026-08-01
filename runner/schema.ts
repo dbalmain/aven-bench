@@ -116,9 +116,15 @@ import type { ContaminationHit, ContaminationTier } from "./contamination.ts";
  *   re-ask and its cost. `contractGeneration` stays `shapes-v2`: the round-0
  *   prompt is untouched, so what the model is asked for has not changed — only
  *   what happens when it answers in the wrong channel.
+ * - **9** — run-level free-text note (`runNote`), from the runner's `--note`.
+ *   Intent is not recoverable from models/commits/task-sets alone; the note is
+ *   copied onto every attempt so a new run is self-describing from the first
+ *   row. Does **not** join the natural key: it is description, not experiment
+ *   identity. The dashboard's tracked `run-notes.json` overrides this field
+ *   when present (see `dashboard/notes.ts`).
  */
 
-export const SCHEMA_VERSION = 8 as const;
+export const SCHEMA_VERSION = 9 as const;
 
 /**
  * Generated task-contract policy embedded in every round-0 prompt.
@@ -373,6 +379,16 @@ export type AttemptRecord = {
   runnerVersion: string;
   startedAt: string;
   finishedAt: string;
+
+  /**
+   * Free-text note for the whole run (`--note` on the CLI). Same value on every
+   * row of a run. Null when the operator did not pass one.
+   *
+   * Human intent only — never machine-read for resume, scoring, or identity.
+   * Dashboard display prefers the committed `run-notes.json` entry when that
+   * description is non-empty (post-hoc edits beat the launch-time flag).
+   */
+  runNote: string | null;
 
   taskId: string;
   taskSource: TaskSource;

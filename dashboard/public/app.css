@@ -47,7 +47,18 @@
   line-height: var(--leading-tight);
 }
 
+/* Free-text intent. Absent description: no placeholder chrome — unremarkable. */
+.run-desc {
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-size-1);
+  line-height: var(--leading-snug, 1.4);
+  color: var(--color-text);
+  max-width: 48rem;
+  white-space: pre-wrap;
+}
+
 .run-meta {
+  margin-top: var(--space-2);
   font-size: var(--font-size--1);
   color: var(--color-text-muted);
   font-variant-numeric: tabular-nums;

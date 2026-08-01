@@ -87,6 +87,7 @@ function record(over: Partial<AttemptRecord> = {}): AttemptRecord {
     runnerVersion: "test",
     startedAt: "now",
     finishedAt: "now",
+    runNote: null,
     taskId: "two-fer",
     taskSource: "exercism",
     taskSet: "tune",
@@ -212,6 +213,7 @@ function context(
     resumeSessions: false,
     survey: true,
     keepWork: true,
+    runNote: null,
   };
 }
 

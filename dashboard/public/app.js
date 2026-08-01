@@ -68,6 +68,19 @@ function shortCommit(c) {
   return c.length > 8 ? c.slice(0, 8) : c;
 }
 
+function fmtDate(iso) {
+  if (!iso) return "—";
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return "—";
+  return new Date(t).toLocaleString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function relTime(iso, now = Date.now()) {
   if (!iso) return "—";
   const t = Date.parse(iso);
@@ -157,13 +170,17 @@ function renderRun(run) {
   const sets = (run.taskSets || []).map(esc).join(", ") || "—";
   const docs = (run.docIds || []).map(esc).join(", ") || "—";
   const commits = (run.avenCommits || []).map(shortCommit).map(esc).join(", ") || "—";
+  const desc = run.description && String(run.description).trim();
+  const descHtml = desc ? `<p class="run-desc">${esc(desc)}</p>` : "";
 
   return `<article class="card run" data-status="${esc(run.status)}" data-run="${esc(run.runId)}">
     <div class="run-head">
       <div>
         <div class="run-id">${esc(run.runId)}</div>
+        ${descHtml}
         <div class="run-meta">
-          <code>${models}</code>
+          <span title="run start">${esc(fmtDate(run.startedAt))}</span>
+          · <code>${models}</code>
           · ${langs}
           · ${sets}
           · doc <code>${docs}</code>

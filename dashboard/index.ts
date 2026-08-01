@@ -10,11 +10,14 @@ import { join, resolve } from "node:path";
 import { homedir } from "node:os";
 
 import { REPO_ROOT, CORPUS_DIR, DATA_DIR } from "../ingest/paths.ts";
+import { loadRunNotesSync } from "./notes.ts";
 import { createWatchState, loadSplitSizesSync, pollWatch, summariesFromWatch } from "./watch.ts";
 import type { RunSummary } from "./stats.ts";
 
 const RUNS_DIR = join(DATA_DIR, "runs");
 const SPLIT_PATH = join(CORPUS_DIR, "split.json");
+/** Tracked descriptions — outside gitignored data/, safe to commit and hand-edit. */
+const NOTES_PATH = join(REPO_ROOT, "run-notes.json");
 const POLL_MS = 3_000;
 const DEFAULT_PORT = 8787;
 
@@ -46,12 +49,17 @@ const watch = createWatchState(RUNS_DIR, split);
 // Prime state before serving so the first paint has data.
 await pollWatch(watch);
 
-let snapshot: RunSummary[] = summariesFromWatch(watch);
+function buildSnapshot(): RunSummary[] {
+  // Re-read notes each snapshot so hand-edits show up without restarting.
+  return summariesFromWatch(watch, Date.now(), loadRunNotesSync(NOTES_PATH));
+}
+
+let snapshot: RunSummary[] = buildSnapshot();
 const clients = new Set<ReadableStreamDefaultController<Uint8Array>>();
 const enc = new TextEncoder();
 
 function pushSnapshot(): void {
-  snapshot = summariesFromWatch(watch);
+  snapshot = buildSnapshot();
   const payload = enc.encode(`data: ${JSON.stringify({ runs: snapshot, at: new Date().toISOString() })}\n\n`);
   for (const c of clients) {
     try {
@@ -177,4 +185,5 @@ const server = Bun.serve({
 
 console.log(`aven-bench dashboard  http://localhost:${server.port}/`);
 console.log(`watching ${RUNS_DIR}  (poll ${POLL_MS}ms, read-only)`);
+console.log(`notes ${NOTES_PATH}`);
 console.log(`split tune=${split.tune} holdout=${split.holdout}  style=${styles}`);

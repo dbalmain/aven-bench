@@ -169,12 +169,19 @@ instruction.
 data/runs/<run-id>.jsonl        append-only attempt records, one line each
 data/artifacts/<ab>/<sha256>.*  solutions, prompts, harness logs, session logs
 ~/.cache/aven-bench/work/…      per-attempt work directory, pruned when it ends
+run-notes.json                  tracked free-text descriptions (outside data/)
 ```
 
-Nothing is ever rewritten. Analysis is DuckDB over `data/runs/*.jsonl` — see
-`analysis/`. Work directories carry nothing durable: the solution, every round's
-prompt, the harness log, the session log and the suite are all in the artifact
-store before the directory is removed. `--keep-work` keeps them.
+Nothing under `data/` is ever rewritten. Analysis is DuckDB over
+`data/runs/*.jsonl` — see `analysis/`. Work directories carry nothing durable:
+the solution, every round's prompt, the harness log, the session log and the
+suite are all in the artifact store before the directory is removed.
+`--keep-work` keeps them.
+
+`--note "…"` records a run-level free-text description on every attempt row
+(`runNote`, schema 9). Because `data/` is gitignored, the committed
+`run-notes.json` (keyed by run id) is the durable, editable source — the live
+dashboard prefers a non-empty entry there over the launch-time flag.
 
 ## Contamination
 

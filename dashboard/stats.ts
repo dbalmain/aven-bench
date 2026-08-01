@@ -29,6 +29,8 @@ export type AttemptSlice = {
   costUsd: number | null;
   avenCommit: string | null;
   docId: string | null;
+  /** Launch-time `--note`, when the row carried one (schema ≥ 9). */
+  runNote: string | null;
   probes?: Array<{ diagnosticCodes?: string[] }>;
 };
 
@@ -61,6 +63,8 @@ export type RunSummary = {
   /** Known total, or null when unknowable — never invented. */
   total: number | null;
   status: RunStatus;
+  /** Earliest attempt startedAt — the run's start time, used for list order. */
+  startedAt: string | null;
   /** Wall clock from earliest startedAt to last activity. */
   elapsedMs: number;
   lastActivityAt: string | null;
@@ -84,6 +88,13 @@ export type RunSummary = {
   nonPassing: NonPassTask[];
   costUsd: number | null;
   rawRows: number;
+  /**
+   * Resolved free-text description (notes file ≻ runNote). Null when neither
+   * source has text — blank is normal, not an error state.
+   */
+  description: string | null;
+  /** Launch-time note from rows, before notes-file override (for tests/debug). */
+  runNote: string | null;
 };
 
 /** How long without file growth before a short-of-total run is "stalled". */
@@ -200,6 +211,8 @@ export function summarizeRun(
     mtimeMs: number;
     nowMs: number;
     stallMs?: number;
+    /** Resolved description; null when neither notes file nor runNote has text. */
+    description?: string | null;
   },
 ): RunSummary {
   const deduped = dedupeAttempts(rows);
@@ -250,6 +263,14 @@ export function summarizeRun(
     .sort((a, b) => a.taskId.localeCompare(b.taskId) || a.language.localeCompare(b.language));
 
   const runId = rows[0]?.runId ?? "unknown";
+  // Prefer a non-empty note from any row (all rows of a run share the same note).
+  let runNote: string | null = null;
+  for (const r of rows) {
+    if (r.runNote != null && r.runNote.trim() !== "") {
+      runNote = r.runNote.trim();
+      break;
+    }
+  }
 
   return {
     runId,
@@ -261,6 +282,7 @@ export function summarizeRun(
     done,
     total,
     status,
+    startedAt: earliest,
     elapsedMs,
     lastActivityAt,
     mtimeAt: opts.mtimeMs > 0 ? new Date(opts.mtimeMs).toISOString() : null,
@@ -275,17 +297,22 @@ export function summarizeRun(
     nonPassing,
     costUsd: costAny ? costSum : null,
     rawRows: rows.length,
+    description: opts.description !== undefined ? opts.description : runNote,
+    runNote,
   };
 }
 
+/**
+ * Newest run first, by start time. Status is a badge only — finishing a live
+ * run must not reshuffle the list.
+ */
 export function sortSummaries(runs: RunSummary[]): RunSummary[] {
-  const rank: Record<RunStatus, number> = { live: 0, stalled: 1, finished: 2 };
   return [...runs].sort((a, b) => {
-    const dr = rank[a.status] - rank[b.status];
-    if (dr !== 0) return dr;
-    const ta = a.lastActivityAt ? Date.parse(a.lastActivityAt) : 0;
-    const tb = b.lastActivityAt ? Date.parse(b.lastActivityAt) : 0;
-    return tb - ta;
+    const ta = a.startedAt ? Date.parse(a.startedAt) : 0;
+    const tb = b.startedAt ? Date.parse(b.startedAt) : 0;
+    if (tb !== ta) return tb - ta;
+    // Stable tie-break for same-start / missing timestamps.
+    return a.runId.localeCompare(b.runId);
   });
 }
 
@@ -296,6 +323,8 @@ export function sliceFromUnknown(raw: unknown): AttemptSlice | null {
   if (typeof o["taskId"] !== "string" || typeof o["language"] !== "string") return null;
   if (typeof o["modelId"] !== "string" || typeof o["finishedAt"] !== "string") return null;
   const sampleIndex = typeof o["sampleIndex"] === "number" ? o["sampleIndex"] : 0;
+  const runNote =
+    typeof o["runNote"] === "string" && o["runNote"].trim() !== "" ? o["runNote"].trim() : null;
   return {
     runId: typeof o["runId"] === "string" ? o["runId"] : "unknown",
     taskId: o["taskId"],
@@ -317,6 +346,7 @@ export function sliceFromUnknown(raw: unknown): AttemptSlice | null {
     costUsd: typeof o["costUsd"] === "number" ? o["costUsd"] : null,
     avenCommit: typeof o["avenCommit"] === "string" ? o["avenCommit"] : null,
     docId: typeof o["docId"] === "string" ? o["docId"] : null,
+    runNote,
     probes: Array.isArray(o["probes"])
       ? (o["probes"] as Array<{ diagnosticCodes?: string[] }>)
       : undefined,

@@ -8,6 +8,7 @@
 import { readdirSync, statSync } from "node:fs";
 import { basename, join } from "node:path";
 
+import { resolveDescription, type RunNotes } from "./notes.ts";
 import {
   sliceFromUnknown,
   summarizeRun,
@@ -165,18 +166,31 @@ export async function pollWatch(state: WatchState): Promise<void> {
 export function summariesFromWatch(
   state: WatchState,
   nowMs: number = Date.now(),
+  notes: RunNotes = {},
 ): RunSummary[] {
   const runs: RunSummary[] = [];
   for (const cursor of state.files.values()) {
     if (cursor.rows.length === 0 && cursor.size === 0) continue;
-    runs.push(
-      summarizeRun(cursor.rows, {
-        split: state.split,
-        mtimeMs: cursor.mtimeMs,
-        nowMs,
-        stallMs: state.stallMs,
-      }),
-    );
+    // Prefer a non-empty note from any row for the notes-file fallback.
+    let runNote: string | null = null;
+    for (const r of cursor.rows) {
+      if (r.runNote != null && r.runNote.trim() !== "") {
+        runNote = r.runNote.trim();
+        break;
+      }
+    }
+    const description = resolveDescription(cursor.runId, notes, runNote);
+    const summary = summarizeRun(cursor.rows, {
+      split: state.split,
+      mtimeMs: cursor.mtimeMs,
+      nowMs,
+      stallMs: state.stallMs,
+      description,
+    });
+    // Filename is the operator-facing id (files are sometimes renamed after a
+    // timestamp --run-id). Notes are keyed the same way.
+    summary.runId = cursor.runId;
+    runs.push(summary);
   }
   return sortSummaries(runs);
 }

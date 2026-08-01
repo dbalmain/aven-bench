@@ -119,6 +119,8 @@ export type RunContext = {
    * concurrent attempt to glob up.
    */
   keepWork: boolean;
+  /** Run-level free-text note (`--note`); written onto every attempt record. */
+  runNote: string | null;
 };
 
 /**
@@ -759,6 +761,7 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
     runnerVersion: RUNNER_VERSION,
     startedAt,
     finishedAt: new Date().toISOString(),
+    runNote: ctx.runNote,
 
     taskId: spec.taskId,
     taskSource: taskSourceOf(task),
