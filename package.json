@@ -12,6 +12,7 @@
     "generate": "bun run ingest/generate.ts",
     "verify": "bun run ingest/verify.ts",
     "bench": "bun run runner/run.ts",
+    "dashboard": "bun run dashboard/index.ts",
     "check-types": "bun run scripts/check-types.ts",
     "quarantine": "bun run scripts/quarantine-zero-token.ts",
     "typecheck": "bunx tsc --noEmit"

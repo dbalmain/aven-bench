@@ -1,0 +1,276 @@
+/* Dashboard layout on top of house tokens + components. */
+
+.wrap {
+  max-width: 72rem;
+  margin-inline: auto;
+  padding: 0 var(--space-6) var(--space-24);
+}
+
+.page-sub {
+  font-size: var(--font-size--1);
+  color: var(--color-text-subtle);
+  margin-top: var(--space-1);
+}
+
+.header-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-shrink: 0;
+}
+
+.runs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin-top: var(--space-8);
+}
+
+.run {
+  /* card is on the element */
+  display: grid;
+  gap: var(--space-5);
+}
+
+.run-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-6);
+}
+
+.run-id {
+  font-family: var(--font-serif);
+  font-size: var(--font-size-2);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+.run-meta {
+  font-size: var(--font-size--1);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.run-meta code {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+}
+
+.status {
+  font: var(--weight-medium) var(--font-size--1) / 1 var(--font-sans);
+  border-radius: var(--radius-full);
+  padding: var(--space-1) var(--space-3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.status-live {
+  background: oklch(0.92 0.06 145);
+  color: oklch(0.35 0.08 145);
+}
+
+:root[data-theme="dark"] .status-live {
+  background: oklch(0.28 0.05 145);
+  color: oklch(0.88 0.08 145);
+}
+
+.status-stalled {
+  background: oklch(0.92 0.06 75);
+  color: oklch(0.4 0.1 55);
+}
+
+:root[data-theme="dark"] .status-stalled {
+  background: oklch(0.3 0.05 70);
+  color: oklch(0.88 0.08 75);
+}
+
+.status-finished {
+  background: var(--color-surface-sunk);
+  color: var(--color-text-muted);
+}
+
+.progress-block {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-size--1);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.bar {
+  height: 0.5rem;
+  background: var(--color-surface-sunk);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.bar > i {
+  display: block;
+  height: 100%;
+  width: var(--pct, 0%);
+  background: var(--color-action);
+  border-radius: var(--radius-full);
+  /* width changes without layout thrash; no transition that draws the eye every tick */
+}
+
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: var(--space-4);
+}
+
+.kpi {
+  background: var(--color-surface-sunk);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  min-height: 5.5rem;
+}
+
+.kpi .kpi-value {
+  font-size: var(--font-size-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi .kpi-note {
+  font-size: var(--font-size--1);
+  color: var(--color-text-subtle);
+  margin-top: var(--space-1);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Rounds-to-green: the A/B metric — largest panel in the card */
+.rounds-panel {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  background: var(--color-surface);
+}
+
+.rounds-panel .card-title {
+  margin-bottom: var(--space-4);
+}
+
+.rounds-hist {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.rounds-row {
+  display: grid;
+  grid-template-columns: 4.5rem 1fr 3rem;
+  align-items: center;
+  gap: var(--space-3);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--font-size--1);
+}
+
+.rounds-row .rk {
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+}
+
+.rounds-row .rv {
+  text-align: right;
+  font-weight: var(--weight-medium);
+}
+
+.rounds-bar {
+  height: 1rem;
+  background: var(--color-surface-sunk);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.rounds-bar > i {
+  display: block;
+  height: 100%;
+  width: var(--pct, 0%);
+  background: var(--color-action);
+  border-radius: var(--radius-sm);
+}
+
+.rounds-empty {
+  color: var(--color-text-subtle);
+  font-size: var(--font-size--1);
+}
+
+.fail-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: 16rem;
+  overflow: auto;
+}
+
+.fail-item {
+  display: grid;
+  grid-template-columns: minmax(8rem, 14rem) minmax(6rem, 10rem) 1fr;
+  gap: var(--space-3);
+  font-size: var(--font-size--1);
+  font-variant-numeric: tabular-nums;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.fail-item:last-child {
+  border-bottom: 0;
+}
+
+.fail-task {
+  font-family: var(--font-mono);
+  color: var(--color-text);
+}
+
+.fail-outcome {
+  color: var(--color-text-muted);
+}
+
+.fail-codes {
+  color: var(--color-text-subtle);
+  font-family: var(--font-mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.section-label {
+  font-size: var(--font-size--1);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-2);
+}
+
+.empty {
+  margin-top: var(--space-10);
+  text-align: center;
+}
+
+/* Live emphasis: left edge only — stable, no pulse */
+.run[data-status="live"] {
+  border-left: 3px solid oklch(0.55 0.12 145);
+  padding-left: calc(var(--space-6) - 3px);
+}
+
+.run[data-status="stalled"] {
+  border-left: 3px solid oklch(0.7 0.12 70);
+  padding-left: calc(var(--space-6) - 3px);
+}
+
+@media (max-width: 40rem) {
+  .fail-item {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
+}
