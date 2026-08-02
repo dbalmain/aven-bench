@@ -228,10 +228,11 @@ remains a contamination warning.
 ## Resume
 
 An attempt is identified by `attemptKey()`: task, language, model, harness,
-`docId`, aven commit, sample index, tool policy, suite visibility and sandbox
-mode, plus the generated-contract version. Resume reads **every** log under
-`data/runs/`, so re-running the same experiment adds nothing while a policy or
-contract change schedules a distinct attempt:
+`docId`, aven commit, sample index, tool policy, suite visibility, sandbox
+mode, the generated-contract version, the nudge budget (when nonzero), and
+`diagnosticFormat` (when not the legacy `text` default). Resume reads **every**
+log under `data/runs/`, so re-running the same experiment adds nothing while a
+policy or contract change schedules a distinct attempt:
 
 ```sh
 bun run bench … --run-id calib-03     # 8 attempts
@@ -275,6 +276,17 @@ task or the language, so a rescued solution is still the model's first shot and
 still scores `firstShotPass`; filter on `nudges` if you disagree. `--max-nudges 0`
 restores the old behaviour and resumes against the pre-schema-8 rows, because the
 nudge budget joins the natural key.
+
+**`--diagnostic-format text|agent` (default `text`) is an independent variable,
+not a convenience flag.** It chooses how Aven compiler diagnostics are rendered
+into the repair prompt: `text` is ariadne (box-drawing gutter, carets, `Note:`
+lines); `agent` is `aven check --format agent` (one line per diagnostic plus
+indented `in:` / `at:` / `help:`). The JSON gate probe is unchanged — only the
+text the model reads on a failed check differs. The field joins the natural
+key, so the arms never pool. It is Aven-only in effect: Python and Ruby rows
+always record `diagnosticFormat: "text"` (they never saw an Aven diagnostic),
+which keeps control rows shared across format arms instead of re-buying them.
+Pre-schema-10 rows lack the field and resume as `text`.
 
 **A turn that billed nothing measured nothing.** Zero tokens in every category
 _and_ no solution file is the provider, not the model, so it outranks both

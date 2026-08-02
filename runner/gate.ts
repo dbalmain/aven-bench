@@ -20,12 +20,14 @@
  * ## Why the diagnostics come back twice
  *
  * The gate reads `--format json` because codes and severities are the data. The
- * *repair prompt* gets the plain-text rendering instead, produced on demand by
- * `avenCheckText` — carets, notes and all — because the whole point of the
- * rounds-to-green metric is to measure the diagnostic a human would read. Making
- * the model read a JSON blob would measure a different artefact. Export-surface
- * failures skip the re-render path and put the precise message in `gate.detail`,
- * which the attempt path already feeds to the repair prompt as tool output.
+ * *repair prompt* gets a separate rendering, produced on demand by
+ * `avenCheckText`, because the whole point of the rounds-to-green metric is to
+ * measure the diagnostic the model was shown — not a JSON blob. That rendering
+ * is an independent variable (`diagnosticFormat` / `--diagnostic-format`):
+ * `text` is ariadne (carets, notes); `agent` is `aven check --format agent`.
+ * Export-surface failures skip the re-render path and put the precise message
+ * in `gate.detail`, which the attempt path already feeds to the repair prompt
+ * as tool output.
  */
 
 import { checkAvenExports } from "../adapters/lang/aven.ts";
@@ -33,7 +35,14 @@ import type { LangAdapter } from "../adapters/lang/index.ts";
 import { AVEN_LANG_DIR } from "../ingest/paths.ts";
 import { runProcess, type ProcResult } from "./proc.ts";
 import { gateTag } from "./session.ts";
-import type { CaseResult, GateDiagnostic, GateProbe, GateResult, Outcome } from "./schema.ts";
+import type {
+  CaseResult,
+  DiagnosticFormat,
+  GateDiagnostic,
+  GateProbe,
+  GateResult,
+  Outcome,
+} from "./schema.ts";
 
 /** Bound on what a single probe stores, so one pathological task can't bloat the log. */
 const MAX_DIAGNOSTICS = 40;
@@ -58,6 +67,13 @@ export type GateContext = {
    * Absent or empty skips the check (Python, or a call site that has no task).
    */
   requiredExports?: readonly string[];
+  /**
+   * Rendering for the repair-prompt re-run of `aven check` (`avenCheckText`).
+   * The JSON probe always uses `--format json`; this only affects what the
+   * model reads. Defaults to `"text"` when omitted (call sites that never
+   * re-render).
+   */
+  diagnosticFormat?: DiagnosticFormat;
 };
 
 // --- the test envelope, identical for both arms ----------------------------
@@ -235,10 +251,27 @@ async function avenCheckProbe(ctx: GateContext): Promise<GateProbe> {
   };
 }
 
-/** The human rendering, for the repair prompt only. */
+/**
+ * Args after the binary for the repair-prompt re-render of `aven check`.
+ *
+ * `text` keeps today's argv (`check <suite>`) so the default path is unchanged.
+ * `agent` adds `--format agent`. The agent renderer writes to stderr (see
+ * `print_agent_diagnostics` in aven-cli); callers must read both streams.
+ */
+export function avenCheckTextArgs(suite: string, format: DiagnosticFormat = "text"): string[] {
+  return format === "agent" ? ["check", "--format", "agent", suite] : ["check", suite];
+}
+
+/**
+ * The human (or agent) rendering, for the repair prompt only.
+ *
+ * Both ariadne `text` and `--format agent` land on stderr; stdout is usually
+ * empty. Concatenating both streams is deliberate, not defensive noise.
+ */
 export async function avenCheckText(ctx: GateContext): Promise<string> {
   const suite = `${ctx.dir}/${ctx.adapter.testFile}`;
-  const { argv, cwd } = avenArgv(["check", suite], ctx.dir);
+  const format = ctx.diagnosticFormat ?? "text";
+  const { argv, cwd } = avenArgv(avenCheckTextArgs(suite, format), ctx.dir);
   const proc = await runProcess(argv, {
     cwd,
     timeoutMs: ctx.timeoutMs,

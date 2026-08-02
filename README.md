@@ -95,14 +95,17 @@ bun run bench --lang aven,python --intersect --rounds 2 --jobs 4 \
 
 bun run bench … --dry-run          # print the plan, write nothing
 bun run bench … --no-sandbox       # explicit debugging opt-out; recorded as sandbox: "none"
+# Aven-only IV: which diagnostic rendering the model repairs from (joins the key)
+bun run bench … --lang aven --diagnostic-format agent --run-id diag-agent-01
 ```
 
 One JSONL row per attempt lands in `data/runs/<run-id>.jsonl`, append-only, with
 solutions, prompts, harness logs and `AVEN_SESSION_LOG` transcripts
 content-addressed under `data/artifacts/`. Re-running a command skips what is
-already recorded, by natural key. Flags, gates, cost policy, failure taxonomy
-and the acceptance recipe are all in **`runner/README.md`** — read that before
-starting a sweep. Model-driven harness processes run in a bubblewrap filesystem
+already recorded, by natural key (including `--diagnostic-format`: `text` vs
+`agent` are distinct experiments; control-language rows always record `text`).
+Flags, gates, cost policy, failure taxonomy and the acceptance recipe are all in
+**`runner/README.md`** — read that before starting a sweep. Model-driven harness processes run in a bubblewrap filesystem
 sandbox by default; trusted gates run outside it. The sandbox keeps the network
 because the harness calls a cloud API, so it is not an exfiltration boundary.
 

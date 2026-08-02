@@ -50,6 +50,7 @@ import {
   SCHEMA_VERSION,
   attemptKey,
   type AttemptRecord,
+  type DiagnosticFormat,
   type SandboxMode,
   type TaskSet,
   type ToolPolicy,
@@ -60,6 +61,7 @@ import {
   DEFAULT_WORK_ROOT,
   RUNNER_VERSION,
   attemptIdFor,
+  effectiveDiagnosticFormat,
   runAttempt,
   type AttemptSpec,
   type RunContext,
@@ -118,6 +120,7 @@ const KNOWN_FLAGS = new Set([
   "samples",
   "rounds",
   "max-nudges",
+  "diagnostic-format",
   "jobs",
   "agent-jobs",
   "lang-jobs",
@@ -173,6 +176,16 @@ function num(args: Args, key: string, dflt: number): number {
   return n;
 }
 
+/**
+ * `--diagnostic-format text|agent`. Unknown values are a hard error: a silent
+ * fallback would pool arms under the default and burn the experiment.
+ */
+export function parseDiagnosticFormat(raw: string | undefined): DiagnosticFormat {
+  if (raw === undefined) return "text";
+  if (raw === "text" || raw === "agent") return raw;
+  throw new Error(`--diagnostic-format expects text|agent, got '${raw}'`);
+}
+
 function bool(args: Args, key: string, dflt: boolean): boolean {
   if (args.bools.has(key)) return true;
   if (args.bools.has(`no-${key}`)) return false;
@@ -195,6 +208,7 @@ selection
 experiment
   --rounds N                   max repair rounds after round 0 (default 2)
   --max-nudges N               re-asks per round when the model wrote no file (default 2; 0 = off)
+  --diagnostic-format text|agent  Aven repair-diagnostic rendering (default text; joins the key)
   --doc PATH                   skill doc to inline into the prompt (Aven arm)
   --doc-id ID                  label for that doc (default: its file name)
   --self-verify                let the model run the compiler/suite itself
@@ -569,6 +583,13 @@ async function main(): Promise<number> {
   const samples = num(args, "samples", 1);
   const maxRounds = num(args, "rounds", 2);
   const maxNudges = num(args, "max-nudges", 2);
+  let diagnosticFormat: DiagnosticFormat;
+  try {
+    diagnosticFormat = parseDiagnosticFormat(args.flags.get("diagnostic-format"));
+  } catch (err) {
+    console.error(String(err instanceof Error ? err.message : err));
+    return 2;
+  }
   const agentJobs = num(args, "agent-jobs", 3);
   const langJobs = num(args, "lang-jobs", 8);
   const jobs = num(args, "jobs", agentJobs);
@@ -796,6 +817,9 @@ async function main(): Promise<number> {
             // `nudges<N>` segment. Omitting it here made every planned key miss
             // its own recorded row and re-buy the whole sweep.
             maxNudges,
+            // Same as maxNudges: the planned key must use the value the row
+            // will record. Control languages always store `"text"`.
+            diagnosticFormat: effectiveDiagnosticFormat(language, diagnosticFormat),
           });
           const { done, outcomes } = isDone(resume, key, retryHarnessErrors);
           planned.push({ spec, modelId, key, done, outcomes });
@@ -824,7 +848,7 @@ async function main(): Promise<number> {
   }
   console.log(
     `policy        toolPolicy=${toolPolicy} suite=${suiteVisibility} sandbox=${sandbox}` +
-      ` intersect=${intersect} mypy=${mypy}`,
+      ` diagnosticFormat=${diagnosticFormat} intersect=${intersect} mypy=${mypy}`,
   );
   console.log(
     `health        preflight=${preflight ? `${preflightTimeoutMs / 1000}s` : "off"}` +
@@ -883,6 +907,7 @@ async function main(): Promise<number> {
       avenBin,
       maxRounds,
       maxNudges,
+      diagnosticFormat,
       agentTimeoutMs,
       toolTimeoutMs,
       mypy,
@@ -1003,6 +1028,7 @@ function harnessErrorRecord(ctx: RunContext, spec: AttemptSpec, err: unknown): A
     repairRounds: [],
     maxNudges: ctx.maxNudges,
     nudges: 0,
+    diagnosticFormat: effectiveDiagnosticFormat(spec.language, ctx.diagnosticFormat),
     outcome: "harness_error",
     outcomeDetail: String(err).slice(0, 500),
     harnessError: String(err).slice(0, 500),

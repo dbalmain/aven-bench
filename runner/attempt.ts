@@ -44,6 +44,7 @@ import {
   TOKEN_ESTIMATOR,
   attemptKey,
   type AttemptRecord,
+  type DiagnosticFormat,
   type GateResult,
   type HarnessErrorKind,
   type HarnessSessionTokens,
@@ -96,6 +97,11 @@ export type RunContext = {
    * recorded as models declining to answer.
    */
   maxNudges: number;
+  /**
+   * Configured Aven diagnostic rendering (`--diagnostic-format`). Applied only
+   * on the Aven arm; control languages always record `"text"`.
+   */
+  diagnosticFormat: DiagnosticFormat;
   mypy: boolean;
   temperature: number | null;
   seed: number | null;
@@ -168,6 +174,18 @@ export type AttemptSpec = {
   only?: ReadonlySet<string>;
 };
 
+/**
+ * What the model was actually shown for this language. Control arms never see
+ * an Aven diagnostic, so they always record `"text"` regardless of the flag —
+ * that keeps Python/Ruby rows shared across Aven format arms.
+ */
+export function effectiveDiagnosticFormat(
+  language: string,
+  configured: DiagnosticFormat,
+): DiagnosticFormat {
+  return language === "aven" ? configured : "text";
+}
+
 export function attemptIdFor(ctx: RunContext, spec: AttemptSpec): string {
   const key = attemptKey({
     taskId: spec.taskId,
@@ -182,6 +200,7 @@ export function attemptIdFor(ctx: RunContext, spec: AttemptSpec): string {
     sandbox: ctx.sandbox,
     contractGeneration: CONTRACT_GENERATION,
     maxNudges: ctx.maxNudges,
+    diagnosticFormat: effectiveDiagnosticFormat(spec.language, ctx.diagnosticFormat),
   });
   return `${ctx.runId}-${sha256(key).slice(0, 12)}`;
 }
@@ -595,6 +614,7 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
       // Aven only: the export-surface check needs the names the suite will call.
       requiredExports:
         adapter.id === "aven" ? task.properties.map((p) => p.name) : undefined,
+      diagnosticFormat: effectiveDiagnosticFormat(spec.language, ctx.diagnosticFormat),
     };
     if (ctx.suiteVisibility === "hidden") await writeSuite();
     const gate = await ctx.langSem.with(() => runGate(gateCtx));
@@ -803,6 +823,7 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
     repairRounds: rounds,
     maxNudges: ctx.maxNudges,
     nudges: rounds.reduce((n, r) => n + r.nudges, 0),
+    diagnosticFormat: effectiveDiagnosticFormat(spec.language, ctx.diagnosticFormat),
 
     outcome,
     outcomeDetail,

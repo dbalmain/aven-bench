@@ -125,9 +125,17 @@ import type { ContaminationHit, ContaminationTier } from "./contamination.ts";
  *   row. Does **not** join the natural key: it is description, not experiment
  *   identity. The dashboard's tracked `run-notes.json` overrides this field
  *   when present (see `dashboard/notes.ts`).
+ * - **10** — `diagnosticFormat`: which rendering of Aven compiler diagnostics
+ *   the model was shown on repair turns (`text` = ariadne default;
+ *   `agent` = `aven check --format agent`). The claim under test is that the
+ *   compact agent form is easier for a model to repair from. Joins the natural
+ *   key so the arms never pool. Round-0 prompts are byte-identical across arms,
+ *   so `contractGeneration` stays `shapes-v2`. Control-language rows always
+ *   record `"text"` (they never saw an Aven diagnostic), which keeps them
+ *   shared across Aven format arms instead of re-buying them.
  */
 
-export const SCHEMA_VERSION = 9 as const;
+export const SCHEMA_VERSION = 10 as const;
 
 /**
  * Generated task-contract policy embedded in every round-0 prompt.
@@ -210,6 +218,17 @@ export type SuiteVisibility = "visible" | "hidden";
 
 /** Filesystem containment applied to the model-driven agent harness. */
 export type SandboxMode = "bubblewrap" | "none";
+
+/**
+ * Rendering of Aven compiler diagnostics fed back on repair turns.
+ *
+ * `text` is `aven check`'s default ariadne output (box-drawing gutter, carets,
+ * `Note:` lines). `agent` is `aven check --format agent` — one line per
+ * diagnostic plus indented `in:` / `at:` / `help:` lines. Only the Aven arm can
+ * produce either; control arms always record `"text"` because the field is
+ * "what the model was shown", not "what the CLI flag said".
+ */
+export type DiagnosticFormat = "text" | "agent";
 
 /** One diagnostic, flattened out of `aven check --format json`. */
 export type GateDiagnostic = {
@@ -449,6 +468,15 @@ export type AttemptRecord = {
   maxNudges: number;
   nudges: number;
 
+  /**
+   * Rendering of Aven diagnostics shown on repair turns (`--diagnostic-format`).
+   *
+   * Aven-only in effect: Python/Ruby rows always store `"text"` so control
+   * attempts are shared across format arms. Joins the natural key — without it
+   * the two arms would silently pool and the experiment would be worthless.
+   */
+  diagnosticFormat: DiagnosticFormat;
+
   outcome: Outcome;
   outcomeDetail: string | null;
   harnessError: string | null;
@@ -601,6 +629,10 @@ export function attemptKey(
     // predate the field still read as `undefined` at runtime, which is what the
     // `nudges<N>` segment below is written to tolerate.
     | "maxNudges"
+    // Same discipline as `maxNudges`: the planner must pass the value the row
+    // will record, or resume re-buys the sweep. Legacy rows lack the field;
+    // runtime `undefined` is treated as `"text"` and omits the segment.
+    | "diagnosticFormat"
   > & { contractGeneration: string },
 ): string {
   return [
@@ -621,5 +653,11 @@ export function attemptKey(
     // Appended only when nonzero so those keys stay byte-identical: a `0`
     // ablation then resumes against the existing rows instead of re-buying them.
     ...(r.maxNudges ? [`nudges${r.maxNudges}`] : []),
+    // Rows written before schema 10 used ariadne text only. `"text"` and a
+    // missing field omit the segment so those keys stay byte-identical; only
+    // `"agent"` appends, so a request for text never matches an agent row.
+    ...(r.diagnosticFormat && r.diagnosticFormat !== "text"
+      ? [`diag${r.diagnosticFormat}`]
+      : []),
   ].join(" ");
 }

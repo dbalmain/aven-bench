@@ -16,6 +16,7 @@ import { parseEvents } from "../adapters/agent/opencode.ts";
 import { AGENTS, agentFor, emptyResult, type AgentAdapter, type AgentResult } from "../adapters/agent/index.ts";
 import { adapterFor } from "../adapters/lang/index.ts";
 import {
+  avenCheckTextArgs,
   classifyOutcome,
   extractCodes,
   firstMeaningfulLine,
@@ -34,11 +35,19 @@ import {
   hasFencedCode,
   summarizeCaseMessage,
 } from "./prompt.ts";
-import { enclosingRepo, ModelBreaker, parseArgv, preflightModels, unknownFlags } from "./run.ts";
+import {
+  enclosingRepo,
+  ModelBreaker,
+  parseArgv,
+  parseDiagnosticFormat,
+  preflightModels,
+  unknownFlags,
+} from "./run.ts";
 import { bubblewrapCommand, sandboxAvailability } from "./sandbox.ts";
 import {
   agentMeasuredNothing,
   DEFAULT_WORK_ROOT,
+  effectiveDiagnosticFormat,
   isInside,
   NO_TOKENS_DETAIL,
   runAttempt,
@@ -115,6 +124,7 @@ function record(over: Partial<AttemptRecord> = {}): AttemptRecord {
     maxRounds: 2,
     maxNudges: 0,
     nudges: 0,
+    diagnosticFormat: "text",
     roundsUsed: 1,
     repairRounds: [],
     outcome: "pass",
@@ -202,6 +212,7 @@ function context(
     avenBin: null,
     maxRounds,
     maxNudges,
+    diagnosticFormat: "text",
     agentTimeoutMs: 60_000,
     toolTimeoutMs: 60_000,
     mypy: false,
@@ -495,6 +506,13 @@ describe("aven check --format json", () => {
       "parse.expected-expression",
       "type.mismatch",
     ]);
+  });
+
+  test("avenCheckText argv gains --format agent only under the agent arm", () => {
+    const suite = "/tmp/work/solution_test.av";
+    expect(avenCheckTextArgs(suite, "text")).toEqual(["check", suite]);
+    expect(avenCheckTextArgs(suite)).toEqual(["check", suite]);
+    expect(avenCheckTextArgs(suite, "agent")).toEqual(["check", "--format", "agent", suite]);
   });
 
   test("firstMeaningfulLine skips JSON punctuation", () => {
@@ -1453,8 +1471,33 @@ describe("store", () => {
       sandbox: stored.sandbox,
       contractGeneration: stored.contractGeneration,
       maxNudges: stored.maxNudges,
+      diagnosticFormat: stored.diagnosticFormat,
     });
     expect(planned).toBe(attemptKey(stored));
+  });
+
+  test("diagnosticFormat joins the key; legacy and text stay byte-identical", () => {
+    // Pin the exact key string so a segment re-order or accidental `diagtext`
+    // suffix fails the suite instead of silently re-buying a recorded sweep.
+    const expected =
+      "two-fer python opencode/deepseek-v4-flash-free opencode - - 0 no-verify hidden bubblewrap shapes-v2";
+    const legacy = { ...record({ maxNudges: 0 }) } as Partial<AttemptRecord>;
+    delete legacy.diagnosticFormat;
+    // Runtime undefined is what loadResumeIndex sees for pre-schema-10 rows.
+    expect(attemptKey(legacy as AttemptRecord)).toBe(expected);
+    expect(attemptKey(record({ maxNudges: 0, diagnosticFormat: "text" }))).toBe(expected);
+    expect(attemptKey(record({ maxNudges: 0, diagnosticFormat: "agent" }))).toBe(
+      `${expected} diagagent`,
+    );
+    expect(attemptKey(record({ diagnosticFormat: "agent" }))).not.toBe(
+      attemptKey(record({ diagnosticFormat: "text" })),
+    );
+  });
+
+  test("control languages record text even when the CLI asks for agent", () => {
+    expect(effectiveDiagnosticFormat("aven", "agent")).toBe("agent");
+    expect(effectiveDiagnosticFormat("python", "agent")).toBe("text");
+    expect(effectiveDiagnosticFormat("ruby", "agent")).toBe("text");
   });
 });
 
@@ -1618,6 +1661,15 @@ describe("argv", () => {
   test("rejects an unknown flag, and accepts the no- spelling of a boolean", () => {
     expect(unknownFlags(parseArgv(["--only", "two-fer"]))).toEqual(["only"]);
     expect(unknownFlags(parseArgv(["--no-survey", "--no-preflight", "--mypy"]))).toEqual([]);
+  });
+
+  test("unknown --diagnostic-format value is a hard error; known values parse", () => {
+    expect(parseDiagnosticFormat(undefined)).toBe("text");
+    expect(parseDiagnosticFormat("text")).toBe("text");
+    expect(parseDiagnosticFormat("agent")).toBe("agent");
+    expect(() => parseDiagnosticFormat("json")).toThrow(/--diagnostic-format expects text\|agent/);
+    expect(() => parseDiagnosticFormat("ariadne")).toThrow(/got 'ariadne'/);
+    expect(unknownFlags(parseArgv(["--diagnostic-format", "agent"]))).toEqual([]);
   });
 
   /**
