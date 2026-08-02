@@ -35,10 +35,11 @@ import type { ContaminationHit, ContaminationTier } from "./contamination.ts";
  *     compiler itself, and whether it could read the generated suite.
  *     `firstShotPass` means nothing without both.
  *   - `modelToolInvocations` — `aven` invocations the *model* made in a round,
- *     counted from the session log. Structurally 0 under the default
- *     `sandbox: "bubblewrap"`, which exposes no `aven` binary; only meaningful
- *     under `self-verify` or `--no-sandbox`. `shellCommands` is what measures
- *     `no-verify` compliance.
+ *     counted from the session log. Under the default `no-verify` + bubblewrap
+ *     policy the binary is not mounted into the model namespace, so this stays 0;
+ *     it goes nonzero only under `self-verify` (with `AVEN_BIN`) or
+ *     `--no-sandbox`. A nonzero value under `no-verify` is actual self-verification
+ *     and is what the end-of-sweep summary flags loudly.
  *   - `harnessError`, `outcomeDetail`, `timedOut`, `roundsUsed`, `maxRounds`.
  *   - `avenBinarySha256`, `runnerVersion`, `startedAt`, `finishedAt`,
  *     `agentWallMs`, `gateWallMs`, `sessionLogHash`, `promptHash`, `suiteHash`,
@@ -47,7 +48,9 @@ import type { ContaminationHit, ContaminationTier } from "./contamination.ts";
  * - **3** — containment and the experiment-policy fields needed to audit it:
  *   - `shellCommands`, per round and summed on the attempt. Structured file-tool
  *     paths missed the model's filesystem searches through `bash`; this counts
- *     those invocations even when their effect cannot be reconstructed.
+ *     those invocations even when their effect cannot be reconstructed. Nonzero
+ *     under sandboxed `no-verify` is exploration (often `ls`/`cat`), not a
+ *     contamination flag — see `modelToolInvocations` for real toolchain use.
  *   - `sandbox` records `bubblewrap` or the explicit debugging opt-out `none`.
  *     Silent fallback is forbidden, so the field says what actually ran.
  *   - `toolPolicy`, `suiteVisibility` and `sandbox` join the natural key. A row
@@ -335,11 +338,11 @@ export type RepairRound = {
   /**
    * `aven` invocations the model made itself this round; null off the Aven arm.
    *
-   * Expect 0 on any sandboxed row: bubblewrap exposes neither the aven-lang
-   * checkout nor a built binary, so the model has nothing to invoke. A nonzero
-   * value is only reachable under `self-verify` (with `AVEN_BIN`) or
-   * `--no-sandbox`. Do not read 0 here as evidence the model ran no tools —
-   * that is `shellCommands`.
+   * Under default `no-verify` + bubblewrap the binary is not mounted into the
+   * model namespace, so this stays 0. It can go nonzero under `self-verify`
+   * (with `AVEN_BIN`) or `--no-sandbox`. Do not read 0 here as "no tools" —
+   * that is `shellCommands`. A nonzero value under `no-verify` is the loud
+   * self-verification signal in the end-of-sweep summary.
    */
   modelToolInvocations: number | null;
   /**
@@ -355,9 +358,12 @@ export type RepairRound = {
   outsideWorkdirTouches: number;
   escapedPaths: string[];
   /**
-   * Shell commands the harness ran this round. Should be 0 under
-   * `toolPolicy: "no-verify"`; on the Aven arm it is routinely not, and a shell
-   * can read anything, so this is the second half of `outsideWorkdirTouches`.
+   * Shell tool invocations the harness logged this round.
+   *
+   * Under sandboxed `no-verify` these are typically exploration (`ls`, `cat`)
+   * rather than a policy breach: the model cannot reach `aven`, and a hidden
+   * suite is not on disk. The contamination-grade signal is
+   * `modelToolInvocations` (or shell under `sandbox: "none"`).
    */
   shellCommands: number;
   /**
@@ -541,9 +547,16 @@ export type AttemptRecord = {
   sessionLogHash: string | null;
   /** Work directory. Relative to the repo root when inside it, else absolute. */
   workDir: string;
-  /** Sum of `repairRounds[].outsideWorkdirTouches`; nonzero means suspect. */
+  /**
+   * Sum of `repairRounds[].outsideWorkdirTouches`. On bubblewrap rows the
+   * accesses were denied; on `sandbox: "none"` rows a nonzero count is suspect.
+   */
   outsideWorkdirTouches: number;
-  /** Sum of `repairRounds[].shellCommands`; nonzero under `no-verify` is a violation. */
+  /**
+   * Sum of `repairRounds[].shellCommands`. Under sandboxed `no-verify` this is
+   * activity, not a contamination flag; see `modelToolInvocations` and the
+   * end-of-sweep summary in `anomalies.ts`.
+   */
   shellCommands: number;
 
   /**

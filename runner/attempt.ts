@@ -414,7 +414,11 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
           timeoutMs: ctx.agentTimeoutMs,
           env: agentEnv,
           sandbox: ctx.sandbox,
-          avenBin: spec.language === "aven" ? ctx.avenBin : null,
+          // Mount `aven` into the model sandbox only under self-verify. The gate
+          // runs outside the namespace and uses host AVEN_BIN either way; under
+          // no-verify the model must not find a compiler to loop on.
+          avenBin:
+            spec.language === "aven" && ctx.toolPolicy === "self-verify" ? ctx.avenBin : null,
           temperature: ctx.temperature,
           seed: ctx.seed,
         }),
@@ -693,7 +697,8 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
         sessionRef,
         env: agentEnv,
         sandbox: ctx.sandbox,
-        avenBin: spec.language === "aven" ? ctx.avenBin : null,
+        // Survey is not a solve turn; never hand it the compiler either.
+        avenBin: null,
         temperature: ctx.temperature,
         seed: ctx.seed,
       }),

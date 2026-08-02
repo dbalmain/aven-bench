@@ -43,6 +43,7 @@ import { loadIndex, loadTask, type Split } from "../ingest/task.ts";
 import { pool, runProcess, Semaphore } from "./proc.ts";
 import { priceTable } from "./prices.ts";
 import type { SuiteVisibility } from "./prompt.ts";
+import { policyAnomalyLines } from "./anomalies.ts";
 import { sandboxAvailability, sandboxLabel } from "./sandbox.ts";
 import {
   CONTRACT_GENERATION,
@@ -1144,27 +1145,9 @@ function summarize(records: AttemptRecord[], health: HealthSummary): void {
   }
   const tokens = records.reduce((n, r) => n + r.promptTokens + r.completionTokens, 0);
   console.log(`  tokens         ${tokens}`);
-  const escaped = records.filter((r) => r.outsideWorkdirTouches > 0);
-  if (escaped.length > 0) {
-    const unsandboxed = escaped.filter((r) => r.sandbox === "none").length;
-    console.log(
-      `  !! ${escaped.length} row(s) named paths OUTSIDE their work directory` +
-        (unsandboxed > 0 ? `; ${unsandboxed} unsandboxed row(s) are suspect` : " (sandbox denied access)") +
-        ":\n" +
-        escaped
-          .map((r) => `       ${r.language} ${r.taskId} s${r.sampleIndex}: ${r.outsideWorkdirTouches} path(s)`)
-          .join("\n"),
-    );
-  }
-  const shellViolations = records.filter((r) => r.toolPolicy === "no-verify" && r.shellCommands > 0);
-  if (shellViolations.length > 0) {
-    console.log(
-      `  !! ${shellViolations.length} row(s) ran shell commands despite toolPolicy=no-verify:\n` +
-        shellViolations
-          .map((r) => `       ${r.language} ${r.taskId} s${r.sampleIndex}: ${r.shellCommands} command(s)`)
-          .join("\n"),
-    );
-  }
+  // Shell / escape notes: loud only when a row actually self-verified or ran
+  // unsandboxed. Sandboxed exploration is reported without a contamination voice.
+  for (const line of policyAnomalyLines(records)) console.log(line);
   summarizeHealth(health);
 }
 

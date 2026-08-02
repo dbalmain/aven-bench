@@ -200,6 +200,9 @@ export function bubblewrapCommand(command: string[], options: SandboxCommandOpti
   if (options.language === "python") pathDirs.add(dirname(executable("python3")));
   if (options.language === "ruby") pathDirs.add(dirname(executable("ruby")));
 
+  // Caller passes avenBin only under toolPolicy self-verify. Under no-verify the
+  // model must not find a compiler; the trusted gate uses host AVEN_BIN outside
+  // this namespace.
   if (options.language === "aven" && options.avenBin) {
     const avenBin = realpathSync(options.avenBin);
     roBind(avenBin, AVEN_SANDBOX_BIN);

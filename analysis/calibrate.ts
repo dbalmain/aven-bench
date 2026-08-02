@@ -234,7 +234,8 @@ type Profile = {
   meanRounds: number;
   tokens: number;
   costUsd: number;
-  shellViolations: number;
+  /** Rows with shellCommands > 0 — activity count, not a contamination flag. */
+  shellActivity: number;
   escapes: number;
   caseRate: number;
   /** Attempts where the provider returned nothing — an incomplete arm, not a weak model. */
@@ -272,7 +273,7 @@ for (const [modelId, rs] of byModel) {
     meanRounds: greenRows.length ? greenRows.reduce((n, r) => n + (r.roundsToGreen ?? 0), 0) / greenRows.length : NaN,
     tokens: rs.reduce((n, r) => n + r.promptTokens + r.completionTokens, 0),
     costUsd: rs.reduce((n, r) => n + (r.costUsd ?? 0), 0),
-    shellViolations: rs.filter((r) => r.shellCommands > 0).length,
+    shellActivity: rs.filter((r) => r.shellCommands > 0).length,
     escapes: rs.filter((r) => r.outsideWorkdirTouches > 0).length,
     caseRate: casesTotal ? casesPassed / casesTotal : 0,
     // Counts both spellings: schema 5 labels these, older logs only reveal them
@@ -317,7 +318,7 @@ for (const p of profiles) {
       String(p.noTokens).padStart(11) +
       String(p.timeouts).padStart(9) +
       String(p.refusals).padStart(9) +
-      String(p.shellViolations).padStart(9) +
+      String(p.shellActivity).padStart(9) +
       String(p.escapes).padStart(9),
   );
 }
@@ -325,7 +326,9 @@ console.log(
   "\n  no-tokens counts attempts where the provider returned nothing. A nonzero value\n" +
     "  means that arm is short of attempts rather than that the model failed them, and\n" +
     "  a model whose coverage is below its peers needs re-running before its rate means\n" +
-    "  anything. Both are recoverable — but only if noticed.",
+    "  anything. Both are recoverable — but only if noticed.\n" +
+    "  shell>0 is sandboxed exploration activity under no-verify more often than not;\n" +
+    "  the self-verification signal is modelToolInvocations (see runner/anomalies.ts).",
 );
 
 // --- the band --------------------------------------------------------------

@@ -16,11 +16,11 @@
  * an `aven` invocation the *model* made from one the harness made. That is how
  * `modelToolInvocations` is counted.
  *
- * It counts 0 on every sandboxed row, because bubblewrap exposes no `aven`
- * binary for the model to run; it can only go nonzero under `self-verify` or
- * `--no-sandbox`. Compliance with `toolPolicy: "no-verify"` is measured by
- * `shellCommands`, which counts tool calls the harness log reports regardless
- * of what they ran.
+ * Under default `no-verify` + bubblewrap the model sandbox does not mount
+ * `aven`, so this stays 0. It can go nonzero under `self-verify` (binary
+ * mounted via `AVEN_BIN`) or `--no-sandbox`. `shellCommands` counts shell tool
+ * calls the harness log reports regardless of what they ran — useful activity
+ * data, but not the self-verification signal; that is this counter.
  */
 
 import { existsSync, readFileSync } from "node:fs";

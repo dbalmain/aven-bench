@@ -259,8 +259,8 @@ WHERE language = 'aven' AND toolPolicy = 'no-verify'
 GROUP BY 1 ORDER BY 2 DESC;
 
 -- 8. Shell tools are broader than compiler invocations and work on both arms.
---    Under no-verify these are policy violations even when no absolute path was
---    recoverable from the command text.
+--    Under sandboxed no-verify this is usually exploration, not contamination;
+--    pair with query 7 (modelToolInvocations) for real self-verification.
 .print "--- model shell commands under no-verify, by containment mode ---"
 SELECT sandbox, language, modelId, sum(shellCommands) AS shell_commands
 FROM attempts

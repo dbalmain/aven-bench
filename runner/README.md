@@ -45,7 +45,11 @@ alone.
   compiler or the suite. An agent that loops on the compiler measures the
   compiler, not the docs. Compliance is measured, not assumed: on the Aven arm
   every `aven` the model runs itself lands in the session log and is counted as
-  `repairRounds[].modelToolInvocations`. `--self-verify` flips the policy.
+  `repairRounds[].modelToolInvocations` — that is the end-of-sweep
+  self-verification signal. `shellCommands` still records shell tool use
+  (often exploration under the sandbox) but is not treated as contamination by
+  itself. `--self-verify` flips the policy and mounts `aven` into the model
+  namespace when `AVEN_BIN` is set.
 - **`suiteVisibility`** (default `hidden`) — in round 0 the generated suite is
   absent while the model works, then is written only for the trusted gate and
   removed again (including Python bytecode) before another model turn.
@@ -213,10 +217,12 @@ The default defence is now an OS filesystem sandbox:
 - every round records `shellCommands`, `outsideWorkdirTouches` and a bounded
   sample of `escapedPaths`. `shellCommands` counts shell tool invocations even
   when their filesystem effects cannot be reconstructed from the event stream.
+  Under sandboxed `no-verify` the summary reports that as activity, not as a
+  contamination flag; `modelToolInvocations > 0` is what gets a loud warning.
 
 Every attempt records `sandbox: "bubblewrap" | "none"`, so containment is
 auditable per row. A nonzero escape count on a sandboxed row says the model
-named an outside path, not that the read succeeded; on an unsandboxed row it
+named an outside path and the namespace denied it; on an unsandboxed row it
 remains a contamination warning.
 
 ## Resume

@@ -9,10 +9,10 @@
  *    compiler or the suite. `firstShotPass` is supposed to measure the
  *    *documentation*; an agent that loops on the compiler measures the compiler.
  *    Compliance is not assumed: `shellCommands` counts what the model actually
- *    ran, and the summary flags every row that ran anything. Under the default
- *    sandbox the instruction is also enforced rather than merely asked for —
- *    there is no `aven` binary inside it to invoke, which is why
- *    `modelToolInvocations` is 0 on every sandboxed row.
+ *    ran (often exploration), while `modelToolInvocations` counts aven runs the
+ *    model made. The end-of-sweep summary flags only the latter as a real
+ *    no-verify breach. Under default bubblewrap the instruction is also
+ *    enforced for aven — the binary is not mounted into the model namespace.
  *  - **`suiteVisibility`** (default `hidden`). The generated suite is written into
  *    the work directory only for the gate and removed again, so the model never
  *    sees the expected values and has to implement the algorithm rather than
