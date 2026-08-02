@@ -3,28 +3,28 @@
     "description": ""
   },
   "nudge-smoke-01": {
-    "description": ""
+    "description": "Smoke test of the nudge loop only (rounds=0, nudges<=2, doc v1, minimax-m2.7). Aborted after 4 tasks once the loop was seen to fire — it was never meant to finish, so its 4/71 is not a result."
   },
   "phase2-calibration-02": {
     "description": ""
   },
   "phase3-holdout-02": {
-    "description": ""
+    "description": "First full 3-arm holdout sweep (Aven vs Python vs Ruby, 71 tasks each) on minimax-m2.7 with skill doc v1. Establishes the cross-language delta the campaign exists to measure."
   },
   "phase3-holdout-03": {
-    "description": ""
+    "description": "Same 3-arm holdout as -02 but on deepseek-v4-flash, with the nudge loop enabled (nudges<=2). Changes the model and adds nudging at once, so it is not a clean single-variable comparison against -02."
   },
   "phase3-holdout-04": {
-    "description": ""
+    "description": "Aven arm only, on skill doc v2 and a compiler carrying the first round of benchmark-driven fixes (aven-lang e8a71f9). Drops the control arms to iterate faster on the Aven side."
   },
   "phase3-holdout-05": {
-    "description": ""
+    "description": "Aven arm on aven-lang 430af37 with regenerated suites. Scored 95.5% pass / 53.7% first-shot after a retry pass corrected a selection bias (the excluded harness errors were disproportionately the previously-failing tasks). Remaining failures: complex-numbers, react, rest-api, alphametics. NOTE: measured the original memorisable zebra-puzzle, which was retired from holdout on 2026-08-01."
   },
   "phase3-holdout-06": {
-    "description": ""
+    "description": "Re-baseline of holdout-05's configuration on aven-lang 86ee877, seven fixes newer (match-arm block bodies, undefined-default inference, array equality coercion, native Array.length, checker equality parity, S6 empty-element traversal, compact). Also raises the agent timeout 900s -> 1800s (fixes timeouts misfiled as dead-provider errors) and swaps in zebra-puzzle-generated. Purpose: know where failures sit on the current compiler before the diagnostic-format A/B. Scored 90.1% pass / 59.2% first-shot over 71 tasks after retrying ledger (harness error -> pass) and drawing a second sample for prism (agent timeout -> pass 14/14). Against holdout-05 only three tasks moved: react fixed (parse_error -> pass), prism lost to an agent stall, pov exposed a pre-existing checker hole where ambient methods do not satisfy open-row receiver constraints."
   },
   "phase3-pilot-01": {
-    "description": ""
+    "description": "Phase 3 pilot: 10 tune tasks, 3 arms, 1 model, skill doc v0. Shakedown of the 3-arm pipeline end to end before committing to a full holdout sweep."
   },
   "ruby-smoke-01": {
     "description": ""
