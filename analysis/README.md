@@ -7,6 +7,21 @@ re-derivable, greppable when a number looks wrong.
 duckdb -c ".read analysis/queries.sql"
 ```
 
+## Diagnostic format A/B (`diagfmt-01`)
+
+Pre-registration: [`prereg-diagfmt-01.md`](prereg-diagfmt-01.md). Analysis
+(written before the sweep finished):
+
+```sh
+bun run analysis/diagfmt-ab.ts
+bun run analysis/diagfmt-ab.ts --json
+```
+
+Reads `data/runs/phase4-diagfmt-text-01.jsonl` and
+`phase4-diagfmt-agent-01.jsonl`. Tolerates a truncated final JSONL line (live
+append). Does **not** offer a filter on post-exposure failure — that collider
+is forbidden by the pre-registration.
+
 `data/runs/*.jsonl` is written by the runner (`bun run bench`; see
 `runner/README.md`). The queries follow §6 of `PLAN-aven-bench.md`: the language
 worklist, the ergonomics worklist and the diagnostics worklist, plus four checks
