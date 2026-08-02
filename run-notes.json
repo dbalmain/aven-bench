@@ -31,5 +31,11 @@
   },
   "sandbox-live-01": {
     "description": ""
+  },
+  "phase4-diagfmt-text-01": {
+    "description": "Diagnostic-format A/B, arm A (control). IV = how aven check diagnostics are rendered into the REPAIR prompt: default ariadne text, the rendering every previous sweep used. Everything else held fixed (deepseek-v4-flash, skill doc v2 dfa665f6, aven-lang 8ca8620, holdout 71, rounds 3, nudges 2, no-verify, hidden, 3 samples). Both arms ran concurrently so provider drift falls on both. Pre-registration — DV, bar, forbidden filters, stopping rule — is analysis/prereg-diagfmt-01.md, committed before the first attempt. Absolute numbers are NOT comparable to holdout-06: the skill doc is one commit newer."
+  },
+  "phase4-diagfmt-agent-01": {
+    "description": "Diagnostic-format A/B, arm B (treatment). IV = how aven check diagnostics are rendered into the REPAIR prompt: --format agent, one line per diagnostic plus indented in:/at:/help:. Everything else held fixed (deepseek-v4-flash, skill doc v2 dfa665f6, aven-lang 8ca8620, holdout 71, rounds 3, nudges 2, no-verify, hidden, 3 samples). Both arms ran concurrently so provider drift falls on both. Pre-registration — DV, bar, forbidden filters, stopping rule — is analysis/prereg-diagfmt-01.md, committed before the first attempt. Absolute numbers are NOT comparable to holdout-06: the skill doc is one commit newer."
   }
 }
