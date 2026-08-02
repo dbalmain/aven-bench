@@ -129,3 +129,31 @@ descriptive rather than inferential.
 `analysis/diagfmt-ab.ts`, written before any rows exist. Its output is the
 report. If it needs fixing after rows land, the fix is a commit whose message
 says what was wrong, so the diff is inspectable against the results.
+
+---
+
+## Amendment 1 — 2026-08-02, at 26/213 rows per arm, before any analysis was run
+
+**Harness errors will be retried once, per arm, after the main sweep completes.**
+
+Committing to this now, while the outcome is still unseeable, because deciding
+it afterwards would be a free parameter. At the time of writing the arms show
+one `harness_error` (text) and none (agent); no per-arm outcome breakdown beyond
+those counts has been looked at, and the analysis script has not been run on
+this data.
+
+**Why this is not outcome selection.** A `harness_error` is a *missing
+observation* — the attempt did not happen, no solution was produced, nothing was
+measured. Re-buying it restores a datum rather than selecting on the value of
+one. This is the opposite of the forbidden filter above, which conditions on a
+post-exposure *result*.
+
+There is also positive evidence that not retrying biases things: holdout-05's
+run note records that its excluded harness errors were disproportionately the
+previously-failing tasks, so dropping them flattered the pass rate. The same
+mechanism would bias the DV here.
+
+**Procedure, fixed now:** one pass per arm with `--retry-harness-errors`, same
+flags and same pinned commit as the main sweep. Attempts that come back
+`harness_error` a second time stay excluded and are counted. The retry count is
+reported per arm alongside the exclusion counts. No second retry.
