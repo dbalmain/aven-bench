@@ -200,3 +200,38 @@ the drop rule were both fixed before any row existed.
 the effect bars, α, the exclusion rules, the retry procedure, and the stopping
 rule (which now reads n = 2 for arm B; extending afterwards would still be
 optional stopping and would still require a dated amendment saying so).
+
+---
+
+## Amendment 2 — 2026-08-05, round 2 (`hy3`), before any hy3 holdout row exists
+
+**Round 2 runs `opencode-go/hy3` as a second arm B at n = 2**, against the same
+unchanged arm A, using `analysis/model-ab.ts --arm-b phase5-model-hy3-01`. Run
+id `phase5-model-hy3-01`.
+
+n = 2 rather than n = 3 for consistency with round 1, not for budget: comparing
+MiMo and Hy3 to arm A at different sample sizes would give the two rounds
+different precision for no reason. Every consequence recorded in Amendment 1 —
+the {0, ½, 1} DV resolution, the unrelaxed 10-point bar, and a single
+`harness_error` dropping a task below `MIN_SAMPLES` — carries over unchanged,
+including the retry pass that neutralised it in round 1.
+
+**Budget gate, measured.** `hy3-price-probe-01` (3 tune tasks, n = 1) came in at
+**$0.00794 per attempt**, 3/3 green — under half MiMo's $0.0296. The projection
+is deliberately _not_ taken from that mean, because the probe contains no
+failure and round 1 established that failures dominate cost (MiMo's failing
+probe task cost 4.5× its passing ones). Pricing a realistic failure mix gives
+**$1.13** if holdout resembles the probe, **~$1.92** at arm A's 80%
+attempt-level pass rate, and**~$2.60** at MiMo's 63%. Round 1 spent $2.58 and
+the hy3 probe $0.02, so the top of that range would take cumulative spend just
+past $5.
+
+**Stop rule for this round, fixed now:** the arm is halted if its own spend
+reaches **$2.40** (cumulative $5.00). A halted arm is reported as halted, with
+the completed attempt count, and is **not** analysed as though it were a
+complete arm — a partial arm compared against a complete one would silently
+change which tasks are paired.
+
+**Not conditioned on any round-1 or round-2 outcome.** Round 1's result is
+already known and published (`results-model-01.md`); it plays no part in these
+choices, all of which follow the procedure written before round 1 ran.
