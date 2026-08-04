@@ -235,3 +235,43 @@ change which tasks are paired.
 **Not conditioned on any round-1 or round-2 outcome.** Round 1's result is
 already known and published (`results-model-01.md`); it plays no part in these
 choices, all of which follow the procedure written before round 1 ran.
+
+---
+
+## Amendment 3 — 2026-08-05, at 26/142 arm-B rows, on spend only
+
+**The round-2 stop rule rises from $2.40 to $2.90.** Dave's decision, taken on
+the measured burn rate at 26 attempts and before the arm completed.
+
+**Why.** Amendment 2 priced hy3 at $1.13–$2.60 and set the cap at $2.40. The
+measured rate is **$0.01925 per attempt**— 2.4× the probe's $0.00794, which is
+exactly the failure-cost effect Amendment 2 refused to project away, just larger
+than its pessimistic end. The arm projects to **$2.73**, so the old cap would
+have halted it at roughly **125 of 142 attempts**.
+
+**Why a truncation there is worse than it looks.** It is not a random 12% of the
+data. Failing attempts consume budget faster than passing ones (round 1: ~4.5×),
+so the point at which a spend cap bites is **correlated with failure**, and the
+attempts bought last are not a fair sample of the ones not bought. On top of
+that, at n = 2 the missing attempts leave their tasks with a single usable
+sample, which `MIN_SAMPLES` then drops from the paired analysis entirely —
+silently changing _which tasks_ arm B is compared to arm A on. Amendment 2
+already forbade analysing a halted arm as a complete one for this reason. So the
+choice was $0.33 against effectively the whole arm.
+
+**This is not optional stopping, and the distinction is the point.** Optional
+stopping is extending or curtailing data collection _because of what the results
+look like_. Nothing here touches n: it was fixed at 2 samples × 71 tasks = 142
+before round 2 began and is unchanged. The decision was made on **spend alone**,
+which is the quantity Amendment 2's stop rule is written in terms of, and no
+arm-B outcome breakdown was inspected in reaching it. Raising a budget so that a
+pre-registered sample completes is the _opposite_ of stopping early on a result.
+
+Recorded rather than quietly actioned because raising a cap after learning you
+would breach it is discretionary, and discretion that leaves no trace is how
+pre-registration decays.
+
+**Unchanged:** n = 2, both DVs, both effect bars, α, the exclusion rules, the
+dedup key, the harness-error retry procedure, and the rule that a halted arm is
+reported as halted rather than analysed. If spend reaches $2.90 the arm still
+halts and is still not analysed as complete.
