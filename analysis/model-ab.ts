@@ -188,7 +188,14 @@ export type ModelAbReport = {
   };
 };
 
+/**
+ * `wilcoxonSignedRank` reports `pValue: NaN` when every pair ties, i.e. when
+ * there is no evidence at all. `NaN >= ALPHA` is false, so that case must be
+ * caught before the significance test or identical arms get read as a
+ * below-the-bar *difference* rather than as no difference.
+ */
 function verdictFor(diff: number, p: number, bar: number, higherIsBetter: boolean): Verdict {
+  if (Number.isNaN(p)) return "no-difference";
   if (p >= ALPHA) return "no-difference";
   if (Math.abs(diff) < bar) return "below-effect-bar";
   const bWins = higherIsBetter ? diff > 0 : diff < 0;
@@ -269,6 +276,9 @@ export function analyzeModelAb(
 
 const pct = (x: number): string => `${(100 * x).toFixed(1)}%`;
 
+/** NaN means "not computable" (all pairs tied), not a number worth printing. */
+const num = (x: number, digits: number): string => (Number.isNaN(x) ? "n/a" : x.toFixed(digits));
+
 export function formatModelReport(r: ModelAbReport): string {
   const lines: string[] = [];
   lines.push(`# Model A/B — ${r.armBModel} vs ${r.armAModel}`);
@@ -283,16 +293,16 @@ export function formatModelReport(r: ModelAbReport): string {
   lines.push("## Primary — green rate");
   lines.push(`  arm A ${pct(r.greenRate.a)}   arm B ${pct(r.greenRate.b)}   diff ${pct(r.greenRate.diff)}`);
   lines.push(`  ${r.greenRate.test.method}`);
-  lines.push(`  n=${r.greenRate.test.n} (ties dropped ${r.greenRate.test.nDroppedZero})  z=${r.greenRate.test.z.toFixed(3)}  p=${r.greenRate.test.pValue.toFixed(4)}`);
+  lines.push(`  n=${r.greenRate.test.n} (ties dropped ${r.greenRate.test.nDroppedZero})  z=${num(r.greenRate.test.z, 3)}  p=${num(r.greenRate.test.pValue, 4)}`);
   lines.push(`  effect bar ${pct(GREEN_EFFECT_BAR)} -> ${r.greenRate.verdict}`);
   lines.push("");
   lines.push("## Secondary — censored repair rounds (lower is better)");
   lines.push(`  arm A ${r.censoredRounds.a.toFixed(3)}   arm B ${r.censoredRounds.b.toFixed(3)}   diff ${r.censoredRounds.diff.toFixed(3)}`);
-  lines.push(`  n=${r.censoredRounds.test.n} (ties dropped ${r.censoredRounds.test.nDroppedZero})  z=${r.censoredRounds.test.z.toFixed(3)}  p=${r.censoredRounds.test.pValue.toFixed(4)}`);
+  lines.push(`  n=${r.censoredRounds.test.n} (ties dropped ${r.censoredRounds.test.nDroppedZero})  z=${num(r.censoredRounds.test.z, 3)}  p=${num(r.censoredRounds.test.pValue, 4)}`);
   lines.push(`  effect bar ${ROUNDS_EFFECT_BAR} rounds -> ${r.censoredRounds.verdict}`);
   lines.push("");
   lines.push("## first-shot pass (descriptive — NOT a negative control in this design)");
-  lines.push(`  arm A ${pct(r.firstShot.a)}   arm B ${pct(r.firstShot.b)}   p=${r.firstShot.test.pValue.toFixed(4)}`);
+  lines.push(`  arm A ${pct(r.firstShot.a)}   arm B ${pct(r.firstShot.b)}   p=${num(r.firstShot.test.pValue, 4)}`);
   lines.push("  The model differs from round 0, so a difference here is a real effect, not a leak.");
   lines.push("");
   lines.push("## Exclusions");
