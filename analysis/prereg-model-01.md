@@ -275,3 +275,37 @@ pre-registration decays.
 dedup key, the harness-error retry procedure, and the rule that a halted arm is
 reported as halted rather than analysed. If spend reaches $2.90 the arm still
 halts and is still not analysed as complete.
+
+## Amendment 4 — 2026-08-05: cap raised to $3.10, and why the cap was mine
+
+At 73/142 attempts the arm had spent $1.4970 ($0.02051/attempt), projecting
+**$2.9119** — $0.0119 past the Amendment 3 cap of $2.90. Cap raised to **$3.10**,
+which also absorbs the pre-registered harness-error retry pass.
+
+Two things need saying plainly, because Amendment 3 argued at length that a cap
+should bite.
+
+**The cap was never the requester's number.** The stated budget constraint was
+"under $5" on round 1, gating whether a round 2 happened at all. Round 1's
+marginal spend was $2.4875 (the DeepSeek arm was reused, not re-bought), so that
+gate passed with room. The $2.40 and $2.90 figures in Amendments 2 and 3 were
+self-imposed proportionality guardrails, derived from a projection, not
+constraints handed down. Raising one is therefore a much smaller act than
+Amendment 3's framing implies, and it would be misleading to let that framing
+stand unqualified.
+
+**Halting here would cost the arm, not trim it.** At 73/142 roughly half the
+tasks hold a single sample. `MIN_SAMPLES = 2` would drop every one of them,
+so the paired comparison would run on an arbitrary half of the corpus selected
+by *when the sweep happened to reach each task* — and, per Amendment 3's own
+argument, the attempts bought last are disproportionately the failing ones.
+The trade is $0.21 against most of the arm's statistical power.
+
+As in Amendment 3: n is untouched (2 × 71 = 142, fixed before round 2 began),
+the decision was made on projected spend alone, and no arm-B outcome breakdown
+was consulted in reaching it. This is not optional stopping.
+
+**Unchanged:** n = 2, both DVs, both effect bars, α, exclusions, dedup key, the
+harness-error retry procedure, and the rule that a halted arm is reported as
+halted rather than analysed. If spend reaches $3.10 the arm still halts and is
+still not analysed as complete.
