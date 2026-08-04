@@ -151,3 +151,52 @@ compared against the same arm A.
 
 `analysis/model-ab.ts`, written before any arm-B rows are analysed. Its output
 is the report.
+
+---
+
+## Amendment 1 — 2026-08-04, after the price probe, before any arm-B row exists
+
+**Arm B runs at n = 2 samples per task, not n = 3.** Dave's decision, taken on
+the probe result and before any holdout attempt was run.
+
+**Why.** The budget gate above failed. `mimo-price-probe-01` (3 tune tasks, n
+= 1) measured a mean of **$0.0296 per attempt**, 1.84× arm A's realised $0.0161,
+projecting**$6.31** for 213 attempts against a $5 cap. The gate said the
+decision goes back to Dave rather than being resolved by trimming tasks; it was,
+and the answer was to cut samples instead of tasks. All 71 tasks stay in, so
+every pair arm A offers is still available and comparability with arm A is
+preserved — which is what the "no trimming" clause was protecting.
+
+142 attempts project to **$3.07–$4.20**.
+
+The probe also showed _why_ MiMo is dearer: the one failing task cost $0.068
+against $0.006 and $0.015 for the two that passed, and ran 1483s against 125s
+and 328s. Cost is driven by failure, so the arm's true price depends on MiMo's
+holdout pass rate, which is unknown at the time of writing and deliberately not
+peeked at. The $4.60 end of the range assumes arm A's 80% pass rate; the $6.31
+end assumes the probe's 67%.
+
+**Arm A is not subsampled to match.** It keeps all 3 of its samples. Per-task
+green rate stays an unbiased estimate of each arm's green probability under both
+n; discarding a third of arm A's data to equalise precision would trade a real
+reduction in noise for cosmetic symmetry. The arms therefore differ in per-task
+precision, and the paired Wilcoxon is on the per-task _means_, which is the same
+estimand either way.
+
+**What this costs, stated plainly.** Arm B's per-task DV can only take {0, ½, 1}
+instead of {0, ⅓, ⅔, 1}, so the primary test loses resolution and power. The
+10-percentage-point effect bar is **not** relaxed to compensate.
+
+**Second-order consequence, named now.** At n = 2 a single `harness_error`
+leaves a task with one usable sample, and the `MIN_SAMPLES = 2` rule then drops
+that task from the paired analysis entirely. At n = 3 it would have survived.
+Arm A ran ~7.5% harness errors (17/226), so this could remove a non-trivial
+share of tasks. The already-preregistered retry pass therefore matters more than
+it did, and the dropped-task list must be read as part of the result rather than
+as bookkeeping. No new discretion is created by this: the retry procedure and
+the drop rule were both fixed before any row existed.
+
+**Unchanged:** every other held-fixed setting, the primary and secondary DVs,
+the effect bars, α, the exclusion rules, the retry procedure, and the stopping
+rule (which now reads n = 2 for arm B; extending afterwards would still be
+optional stopping and would still require a dated amendment saying so).
