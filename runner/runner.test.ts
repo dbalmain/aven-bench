@@ -8,12 +8,29 @@
  */
 
 import { describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, realpathSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { parseEvents } from "../adapters/agent/opencode.ts";
-import { AGENTS, agentFor, emptyResult, type AgentAdapter, type AgentResult } from "../adapters/agent/index.ts";
+import { codexAdapter, parseCodexEvents } from "../adapters/agent/codex.ts";
+import { opencodeCommand, parseEvents } from "../adapters/agent/opencode.ts";
+import {
+  AGENTS,
+  agentFor,
+  emptyResult,
+  type AgentAdapter,
+  type AgentInvocation,
+  type AgentResult,
+} from "../adapters/agent/index.ts";
 import { adapterFor } from "../adapters/lang/index.ts";
 import {
   avenCheckTextArgs,
@@ -216,6 +233,7 @@ function context(
     agentTimeoutMs: 60_000,
     toolTimeoutMs: 60_000,
     mypy: false,
+    variant: null,
     temperature: null,
     seed: null,
     agentSem: new Semaphore(1),
@@ -332,6 +350,26 @@ describe("shadow cost", () => {
 // --- opencode event parsing ------------------------------------------------
 
 describe("opencode --format json", () => {
+  test("passes --variant only when the runner pins one", () => {
+    const invocation = agentInvocation("/work", { prompt: "prompt", model: "provider/model" });
+    expect(opencodeCommand("opencode", invocation)).not.toContain("--variant");
+    expect(opencodeCommand("opencode", { ...invocation, variant: "max" })).toEqual([
+      "opencode",
+      "run",
+      "--model",
+      "provider/model",
+      "--log-level",
+      "ERROR",
+      "--format",
+      "json",
+      "--dir",
+      "/work",
+      "--variant",
+      "max",
+      "prompt",
+    ]);
+  });
+
   // Trimmed from a real run: two step_finish events, one text part, one tool use.
   const stream = [
     JSON.stringify({ type: "step_start", sessionID: "ses_1", part: { type: "step-start" } }),
@@ -454,6 +492,128 @@ describe("opencode --format json", () => {
     );
     expect(usage.errors).toEqual(["Unexpected server error."]);
     expect(usage.reportedCostUsd).toBeNull();
+  });
+});
+
+// --- codex event parsing and process failures -----------------------------
+
+function agentInvocation(dir: string, over: Partial<AgentInvocation> = {}): AgentInvocation {
+  return {
+    dir,
+    language: "python",
+    prompt: "write it",
+    model: "gpt-test",
+    variant: null,
+    timeoutMs: 5_000,
+    sessionRef: null,
+    env: {},
+    sandbox: "none",
+    avenBin: null,
+    temperature: null,
+    seed: null,
+    ...over,
+  };
+}
+
+async function withFakeCodex(script: string, testBody: (dir: string) => Promise<void>): Promise<void> {
+  const dir = mkdtempSync(join(tmpdir(), "aven-bench-codex-test-"));
+  const bin = join(dir, "codex");
+  writeFileSync(bin, script);
+  chmodSync(bin, 0o755);
+  const previous = process.env["CODEX_BIN"];
+  process.env["CODEX_BIN"] = bin;
+  try {
+    await testBody(dir);
+  } finally {
+    if (previous === undefined) delete process.env["CODEX_BIN"];
+    else process.env["CODEX_BIN"] = previous;
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+describe("codex --json", () => {
+  test("sums every completed turn and ignores a truncated JSONL tail", () => {
+    const usage = parseCodexEvents(
+      [
+        JSON.stringify({ type: "thread.started", thread_id: "thread_1" }),
+        JSON.stringify({
+          type: "turn.completed",
+          usage: {
+            input_tokens: 13_147,
+            cached_input_tokens: 9_984,
+            cache_write_input_tokens: 20,
+            output_tokens: 5,
+            reasoning_output_tokens: 2,
+          },
+        }),
+        JSON.stringify({ type: "item.completed", item: { id: "item_0", type: "agent_message", text: "ok" } }),
+        JSON.stringify({
+          type: "turn.completed",
+          usage: {
+            input_tokens: 211,
+            cached_input_tokens: 128,
+            cache_write_input_tokens: 4,
+            output_tokens: 17,
+            reasoning_output_tokens: 9,
+          },
+        }),
+        '{"type":"turn.completed"',
+      ].join("\n"),
+    );
+    expect(usage.promptTokens).toBe(13_358);
+    expect(usage.completionTokens).toBe(22);
+    expect(usage.cachedPromptTokens).toBe(10_112);
+    expect(usage.cachedWriteTokens).toBe(24);
+    expect(usage.reasoningTokens).toBe(11);
+    expect(usage.reportedCostUsd).toBeNull();
+    expect(usage.sessionRef).toBe("thread_1");
+    expect(usage.assistantText).toBe("ok\n");
+  });
+
+  test("passes the prompt on stdin, pins the variant and reports unknown cost", async () => {
+    await withFakeCodex(
+      [
+        "#!/usr/bin/env bash",
+        'printf \'%s\\n\' "$*" > argv.txt',
+        "cat > stdin.txt",
+        `printf '%s\\n' '${JSON.stringify({ type: "thread.started", thread_id: "thread_ok" })}'`,
+        `printf '%s\\n' '${JSON.stringify({ type: "item.completed", item: { id: "item_0", type: "agent_message", text: "done" } })}'`,
+        `printf '%s\\n' '${JSON.stringify({ type: "turn.completed", usage: { input_tokens: 10, output_tokens: 2 } })}'`,
+      ].join("\n"),
+      async (dir) => {
+        const result = await codexAdapter.run(agentInvocation(dir, { variant: "high" }));
+        expect(result.ok).toBe(true);
+        expect(result.reportedCostUsd).toBeNull();
+        expect(result.assistantText).toBe("done");
+        expect(await Bun.file(join(dir, "stdin.txt")).text()).toBe("write it");
+        expect(await Bun.file(join(dir, "argv.txt")).text()).toContain('model_reasoning_effort="high"');
+      },
+    );
+  });
+
+  test("a non-zero exit is a harness error, not an exception", async () => {
+    await withFakeCodex(
+      "#!/usr/bin/env bash\necho 'provider exploded' >&2\nexit 7\n",
+      async (dir) => {
+        const result = await codexAdapter.run(agentInvocation(dir));
+        expect(result.ok).toBe(false);
+        expect(result.harnessError).toContain("codex exited 7");
+        expect(result.harnessError).toContain("provider exploded");
+      },
+    );
+  });
+
+  test("a spawn failure is a harness error, not an exception", async () => {
+    const previous = process.env["CODEX_BIN"];
+    process.env["CODEX_BIN"] = "/definitely/missing/aven-bench-codex";
+    try {
+      const result = await codexAdapter.run(agentInvocation(tmpdir()));
+      expect(result.ok).toBe(false);
+      expect(result.harnessError).toContain("codex could not be started");
+    } finally {
+      if (previous === undefined) delete process.env["CODEX_BIN"];
+      else process.env["CODEX_BIN"] = previous;
+    }
   });
 });
 
@@ -1606,6 +1766,24 @@ describe("bubblewrap filesystem boundary", () => {
     expect(availability.detail).toContain("cannot run");
   });
 
+  test("the codex profile uses attempt-local state", () => {
+    const work = mkdtempSync(join(tmpdir(), "aven-bench-codex-sandbox-"));
+    try {
+      const command = bubblewrapCommand([realpathSync(Bun.which("bash")!), "-c", "true"], {
+        dir: work,
+        language: "python",
+        avenBin: null,
+        harness: "codex",
+      });
+      expect(existsSync(join(work, ".agent-state/codex"))).toBe(true);
+      expect(command.join("\n")).toContain(`${work}/.agent-state/codex\n/home/agent/.codex`);
+      expect(command.join("\n")).toContain("--setenv\nCODEX_HOME\n/home/agent/.codex");
+      expect(command.join("\n")).not.toContain(`${work}/.agent-state/data`);
+    } finally {
+      rmSync(work, { recursive: true, force: true });
+    }
+  });
+
   test.skipIf(Bun.which("bwrap") === null)("real reads outside the attempt fail", async () => {
     const root = mkdtempSync(join(tmpdir(), "aven-bench-sandbox-"));
     const work = join(root, "attempt-a");
@@ -1710,8 +1888,9 @@ describe("argv", () => {
 // --- agent registry --------------------------------------------------------
 
 describe("agent registry", () => {
-  test("opencode is implemented; the other three are stubs that fail with a reason", async () => {
+  test("opencode and codex are implemented; the other three are stubs that fail with a reason", async () => {
     expect(agentFor("opencode").id).toBe("opencode");
+    expect(agentFor("codex").id).toBe("codex");
     for (const id of ["pi", "little-coder", "ollama"]) {
       const adapter = agentFor(id);
       const availability = await adapter.available();
@@ -1722,6 +1901,7 @@ describe("agent registry", () => {
         language: "python",
         prompt: "x",
         model: "m",
+        variant: null,
         timeoutMs: 1,
         sessionRef: null,
         env: {},
@@ -1733,7 +1913,7 @@ describe("agent registry", () => {
       expect(result.ok).toBe(false);
       expect(result.harnessError).toContain("stub");
     }
-    expect(Object.keys(AGENTS).sort()).toEqual(["little-coder", "ollama", "opencode", "pi"]);
+    expect(Object.keys(AGENTS).sort()).toEqual(["codex", "little-coder", "ollama", "opencode", "pi"]);
   });
 
   test("an unknown harness is rejected by name", () => {

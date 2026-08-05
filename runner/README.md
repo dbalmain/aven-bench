@@ -29,7 +29,7 @@ bun run bench --lang aven,python --intersect \
 | `session.ts`         | `AVEN_SESSION_LOG` reader and the phase tagging scheme                |
 | `proc.ts`            | subprocess with a hard timeout; semaphores                            |
 | `tokens.ts`          | the size-metric estimator (`heuristic-v1`)                            |
-| `../adapters/agent/` | harness adapters: `opencode` real, `pi`/`little-coder`/`ollama` stubs |
+| `../adapters/agent/` | harness adapters: `opencode`/`codex` real; the other entries are stubs |
 
 ## The two metrics
 
@@ -67,10 +67,10 @@ Every tool invocation is recorded as a probe with its own verdict, exit code,
 timing and diagnostics. `gating: false` means recorded-but-not-decisive;
 `ok: null` means the tool could not be run at all.
 
-The agent harness (`opencode run` and every model-requested shell command it
-launches) runs inside bubblewrap by default. The trusted probes in this table
-run outside it: they need the generated suite and are harness verification, not
-model-controlled code.
+The agent harness (`opencode run` or `codex exec`, plus every model-requested
+shell command it launches) runs inside bubblewrap by default. The trusted probes
+in this table run outside it: they need the generated suite and are harness
+verification, not model-controlled code.
 
 | language | gating probes             | recorded only |
 | -------- | ------------------------- | ------------- |
@@ -131,6 +131,10 @@ dominated it. No token table reproduces that — and `computeShadowCost` was not
 even pricing cache writes, so a table cost was ~40× low on the shape opencode
 actually produces. Per-round charges are deltas that sum to the session total
 (verified), so adding them is exact.
+
+Codex bills against a subscription but emits no cost field. Its rows therefore
+record `costUsd: null` and `priceSource: "unknown"`; zero would incorrectly claim
+the harness was free. Token counts and `shadowCostUsd` remain available.
 
 `harnessSessionCostUsd` is the harness's own session total, read straight from
 its SQLite store — the figure its UI shows. It is computed independently of the
@@ -201,7 +205,7 @@ real sweep they succeeded twice:
 
 The default defence is now an OS filesystem sandbox:
 
-- bubblewrap gives `opencode run` a mount namespace containing the current
+- bubblewrap gives the agent harness a mount namespace containing the current
   attempt read-write, `/nix/store` and the exact runtime/config/credential files
   read-only, and private `/tmp`, `/dev` and `/proc` mounts. The repo, aven-lang
   checkout (apart from an explicitly configured Aven binary), home directory and

@@ -115,6 +115,7 @@ const KNOWN_FLAGS = new Set([
   "lang",
   "model",
   "harness",
+  "variant",
   "doc",
   "doc-id",
   "samples",
@@ -200,6 +201,7 @@ selection
   --lang aven,python           language arms (default python)
   --model provider/model[,…]   models to run (required unless --dry-run)
   --harness opencode           agent harness (default opencode)
+  --variant EFFORT             provider-specific reasoning effort (e.g. high, max, minimal)
   --tasks a,b,c                explicit task ids
   --task-set tune|holdout|all  select by the frozen split (default: whatever --tasks says, else tune)
   --limit N                    first N tasks after selection
@@ -364,6 +366,7 @@ export async function preflightModels(
   models: string[],
   timeoutMs: number,
   jobs: number,
+  variant: string | null = null,
 ): Promise<PreflightReport | null> {
   const probeModel = agent.probeModel?.bind(agent);
   if (!probeModel) return null;
@@ -372,7 +375,7 @@ export async function preflightModels(
     // The adapter contract says probes do not throw, but a preflight that crashed
     // the run would be worse than the problem it is here to prevent.
     try {
-      return { modelId, result: await probeModel({ model: modelId, timeoutMs }) };
+      return { modelId, result: await probeModel({ model: modelId, variant, timeoutMs }) };
     } catch (err) {
       return {
         modelId,
@@ -629,6 +632,7 @@ async function main(): Promise<number> {
   const runId = args.flags.get("run-id") ?? new Date().toISOString().replace(/[:.]/g, "-");
   const outPath = args.flags.get("out") ?? `${RUNS_DIR}/${runId}.jsonl`;
   const workRoot = resolve(args.flags.get("work-root") ?? DEFAULT_WORK_ROOT);
+  const variant = args.flags.get("variant") ?? null;
   const temperature = args.flags.get("temperature") !== undefined ? num(args, "temperature", 0) : null;
   const seed = args.flags.get("seed") !== undefined ? num(args, "seed", 0) : null;
   // Empty --note is treated as absent: no point storing a blank string on every row.
@@ -714,7 +718,7 @@ async function main(): Promise<number> {
   let preflightReport: PreflightReport | null = null;
   const dropped: ProbeOutcome[] = [];
   if (!dryRun && preflight && models.length > 0) {
-    preflightReport = await preflightModels(agent, models, preflightTimeoutMs, agentJobs);
+    preflightReport = await preflightModels(agent, models, preflightTimeoutMs, agentJobs, variant);
     if (preflightReport === null) {
       console.log(`preflight     skipped: harness '${harnessId}' does not implement a model probe`);
     } else {
@@ -831,6 +835,7 @@ async function main(): Promise<number> {
 
   console.log(`run-id        ${runId}`);
   console.log(`harness       ${harnessId} ${harnessVersion}`);
+  if (variant) console.log(`variant       ${variant}`);
   console.log(
     `models        ${liveModels.join(", ") || "(none)"}` +
       (dropped.length > 0 ? `   (dropped by preflight: ${dropped.map((d) => d.modelId).join(", ")})` : ""),
@@ -911,6 +916,7 @@ async function main(): Promise<number> {
       agentTimeoutMs,
       toolTimeoutMs,
       mypy,
+      variant,
       temperature,
       seed,
       agentSem,

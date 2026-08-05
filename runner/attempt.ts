@@ -103,6 +103,7 @@ export type RunContext = {
    */
   diagnosticFormat: DiagnosticFormat;
   mypy: boolean;
+  variant: string | null;
   temperature: number | null;
   seed: number | null;
   /** Concurrency caps: one per harness, one for the language toolchain. */
@@ -427,6 +428,7 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
           language: spec.language,
           prompt: text,
           model: ctx.modelId,
+          variant: ctx.variant,
           // Read here rather than closed over: a nudge has to continue the turn
           // it is nudging, or the model has no code left to write to the file.
           sessionRef: ctx.resumeSessions && ctx.agent.supportsResume ? sessionRef : null,
@@ -713,6 +715,7 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
         language: spec.language,
         prompt: surveyPrompt,
         model: ctx.modelId,
+        variant: ctx.variant,
         timeoutMs: ctx.agentTimeoutMs,
         sessionRef,
         env: agentEnv,

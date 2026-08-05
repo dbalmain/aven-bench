@@ -2,7 +2,7 @@
  * The agent-harness interface.
  *
  * A harness is anything that can be handed a prompt and a directory and will
- * write a file into it. opencode is the implemented one; `pi`, `little-coder`
+ * write a file into it. opencode and codex are implemented; `pi`, `little-coder`
  * and `ollama` are stubs with the shape filled in and the invocation left blank,
  * because §8 wants harness-vs-harness on identical tasks and models and that is
  * an adapter addition, not a redesign.
@@ -38,6 +38,8 @@ export type AgentInvocation = {
   prompt: string;
   /** `provider/model`, in the harness's own spelling. */
   model: string;
+  /** Provider-specific reasoning effort, when the harness supports one. */
+  variant: string | null;
   timeoutMs: number;
   /** Continue an earlier turn, when `supportsResume`. Null starts fresh. */
   sessionRef: string | null;
@@ -106,6 +108,8 @@ export type SessionLedgerQuery = {
 export type ModelProbe = {
   /** `provider/model`, in the harness's own spelling. */
   model: string;
+  /** Provider-specific reasoning effort, when the harness supports one. */
+  variant: string | null;
   /** Short by design: this is a liveness question, not a task. */
   timeoutMs: number;
 };

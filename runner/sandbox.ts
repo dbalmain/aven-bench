@@ -2,8 +2,8 @@
  * Filesystem sandbox for the model-driven harness process.
  *
  * The gate never comes through here: it is trusted harness code and runs outside
- * the namespace. `opencode run`, including every shell command it launches for
- * the model, does come through here.
+ * the namespace. The agent harness, including every shell command it launches
+ * for the model, does come through here.
  */
 
 import { existsSync, mkdirSync, realpathSync } from "node:fs";
@@ -20,6 +20,8 @@ export type SandboxCommandOptions = {
   dir: string;
   language: string;
   avenBin: string | null;
+  /** Harness whose minimal state and credentials must exist in the namespace. */
+  harness?: "opencode" | "codex";
 };
 
 export type SandboxAvailability = {
@@ -109,7 +111,10 @@ export function bubblewrapCommand(command: string[], options: SandboxCommandOpti
   const dataDir = join(stateRoot, "data");
   const cacheDir = join(stateRoot, "cache");
   const stateDir = join(stateRoot, "state");
-  for (const path of [dataDir, cacheDir, stateDir]) mkdirSync(path, { recursive: true });
+  const codexDir = join(stateRoot, "codex");
+  const harness = options.harness ?? "opencode";
+  const harnessState = harness === "codex" ? [codexDir] : [dataDir, cacheDir, stateDir];
+  for (const path of harnessState) mkdirSync(path, { recursive: true });
 
   const argv = [
     bwrapBin(),
@@ -126,7 +131,7 @@ export function bubblewrapCommand(command: string[], options: SandboxCommandOpti
     "/proc",
     "--dev",
     "/dev",
-    // opencode needs scratch space, but it must not inherit the host's shared
+    // The harness needs scratch space, but it must not inherit the host's shared
     // /tmp (where models found other checkouts and attempts in real runs).
     "--tmpfs",
     "/tmp",
@@ -160,38 +165,53 @@ export function bubblewrapCommand(command: string[], options: SandboxCommandOpti
   addDir(dirname(options.dir));
   argv.push("--bind", options.dir, options.dir);
 
-  for (const path of [
-    SANDBOX_HOME,
-    `${SANDBOX_HOME}/.config/opencode`,
-    `${SANDBOX_HOME}/.local/share`,
-    `${SANDBOX_HOME}/.cache`,
-    `${SANDBOX_HOME}/.local/state`,
-  ]) {
+  const harnessPaths =
+    harness === "codex"
+      ? [SANDBOX_HOME, `${SANDBOX_HOME}/.codex`]
+      : [
+          SANDBOX_HOME,
+          `${SANDBOX_HOME}/.config/opencode`,
+          `${SANDBOX_HOME}/.local/share`,
+          `${SANDBOX_HOME}/.cache`,
+          `${SANDBOX_HOME}/.local/state`,
+        ];
+  for (const path of harnessPaths) {
     addDir(path);
   }
-  argv.push(
-    "--bind",
-    dataDir,
-    `${SANDBOX_HOME}/.local/share/opencode`,
-    "--bind",
-    cacheDir,
-    `${SANDBOX_HOME}/.cache/opencode`,
-    "--bind",
-    stateDir,
-    `${SANDBOX_HOME}/.local/state/opencode`,
-  );
+  if (harness === "codex") {
+    argv.push("--bind", codexDir, `${SANDBOX_HOME}/.codex`);
+  } else {
+    argv.push(
+      "--bind",
+      dataDir,
+      `${SANDBOX_HOME}/.local/share/opencode`,
+      "--bind",
+      cacheDir,
+      `${SANDBOX_HOME}/.cache/opencode`,
+      "--bind",
+      stateDir,
+      `${SANDBOX_HOME}/.local/state/opencode`,
+    );
+  }
 
-  // This machine's opencode configuration is one policy file; no plugin
-  // directory is needed. Authentication is two small data files. Each is
-  // over-mounted read-only while the database beside it stays attempt-local.
+  // Mount only the chosen harness's configuration and authentication files.
+  // They are over-mounted read-only while mutable state stays attempt-local.
   const hostConfig = process.env["XDG_CONFIG_HOME"] ?? join(homedir(), ".config");
   const hostData = process.env["XDG_DATA_HOME"] ?? join(homedir(), ".local/share");
-  const config = existingRealpath(join(hostConfig, "opencode/opencode.jsonc"));
-  const auth = existingRealpath(join(hostData, "opencode/auth.json"));
-  const account = existingRealpath(join(hostData, "opencode/account.json"));
-  if (config) roBind(config, `${SANDBOX_HOME}/.config/opencode/opencode.jsonc`);
-  if (auth) roBind(auth, `${SANDBOX_HOME}/.local/share/opencode/auth.json`);
-  if (account) roBind(account, `${SANDBOX_HOME}/.local/share/opencode/account.json`);
+  if (harness === "codex") {
+    const hostCodex = process.env["CODEX_HOME"] ?? join(homedir(), ".codex");
+    const config = existingRealpath(join(hostCodex, "config.toml"));
+    const auth = existingRealpath(join(hostCodex, "auth.json"));
+    if (config) roBind(config, `${SANDBOX_HOME}/.codex/config.toml`);
+    if (auth) roBind(auth, `${SANDBOX_HOME}/.codex/auth.json`);
+  } else {
+    const config = existingRealpath(join(hostConfig, "opencode/opencode.jsonc"));
+    const auth = existingRealpath(join(hostData, "opencode/auth.json"));
+    const account = existingRealpath(join(hostData, "opencode/account.json"));
+    if (config) roBind(config, `${SANDBOX_HOME}/.config/opencode/opencode.jsonc`);
+    if (auth) roBind(auth, `${SANDBOX_HOME}/.local/share/opencode/auth.json`);
+    if (account) roBind(account, `${SANDBOX_HOME}/.local/share/opencode/account.json`);
+  }
 
   const pathDirs = new Set<string>([
     dirname(command[0]!),
@@ -257,6 +277,10 @@ export function bubblewrapCommand(command: string[], options: SandboxCommandOpti
     "NIX_SSL_CERT_FILE",
     "/etc/ssl/certs/ca-certificates.crt",
   );
+  if (harness === "codex") {
+    // A host CODEX_HOME would point outside the namespace; pin the mounted copy.
+    argv.push("--setenv", "CODEX_HOME", `${SANDBOX_HOME}/.codex`);
+  }
   if (options.language === "aven" && options.avenBin) {
     argv.push("--setenv", "AVEN_BIN", AVEN_SANDBOX_BIN);
   }

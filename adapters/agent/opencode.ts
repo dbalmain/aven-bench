@@ -176,6 +176,33 @@ export function parseEvents(stdout: string): OpencodeUsage {
 
 const OPENCODE_BIN = process.env["OPENCODE_BIN"] ?? "opencode";
 
+type OpencodeCommandInvocation = Pick<
+  AgentInvocation,
+  "dir" | "model" | "variant" | "sessionRef" | "prompt"
+>;
+
+/** Build the unsandboxed argv. Exported to lock optional-variant behaviour in tests. */
+export function opencodeCommand(bin: string, inv: OpencodeCommandInvocation): string[] {
+  const command = [
+    bin,
+    "run",
+    "--model",
+    inv.model,
+    "--log-level",
+    "ERROR",
+    "--format",
+    "json",
+    "--dir",
+    inv.dir,
+  ];
+  if (inv.variant) command.push("--variant", inv.variant);
+  // Continuing the session is what makes a repair round a *conversation*; a
+  // fresh session would measure "can it fix code it has never seen".
+  if (inv.sessionRef) command.push("--session", inv.sessionRef);
+  command.push(inv.prompt);
+  return command;
+}
+
 /**
  * The liveness question, kept as small as a prompt can be.
  *
@@ -228,28 +255,14 @@ export const opencodeAdapter: AgentAdapter = {
         inv.sandbox === "bubblewrap"
           ? realpathSync(Bun.which(OPENCODE_BIN) ?? OPENCODE_BIN)
           : OPENCODE_BIN;
-      const command = [
-        opencodeBin,
-        "run",
-        "--model",
-        inv.model,
-        "--log-level",
-        "ERROR",
-        "--format",
-        "json",
-        "--dir",
-        inv.dir,
-      ];
-      // Continuing the session is what makes a repair round a *conversation*; a
-      // fresh session would measure "can it fix code it has never seen".
-      if (inv.sessionRef) command.push("--session", inv.sessionRef);
-      command.push(inv.prompt);
+      const command = opencodeCommand(opencodeBin, inv);
       argv =
         inv.sandbox === "bubblewrap"
           ? bubblewrapCommand(command, {
               dir: inv.dir,
               language: inv.language,
               avenBin: inv.avenBin,
+              harness: "opencode",
             })
           : command;
     } catch (err) {
@@ -327,6 +340,7 @@ export const opencodeAdapter: AgentAdapter = {
           "json",
           "--dir",
           dir,
+          ...(probe.variant ? ["--variant", probe.variant] : []),
           PROBE_PROMPT,
         ],
         { cwd: dir, timeoutMs: probe.timeoutMs },

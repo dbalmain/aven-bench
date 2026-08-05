@@ -2,8 +2,9 @@
  * Subprocess execution with a hard timeout.
  *
  * §3c requires hard timeouts and no interactivity. Every child gets stdin closed
- * (an agent harness that decides to ask a question must die, not hang the sweep),
- * a wall-clock kill, and a SIGKILL escalation for children that ignore SIGTERM.
+ * after an optional fixed input (an agent harness that decides to ask another
+ * question must see EOF, not hang the sweep), a wall-clock kill, and a SIGKILL
+ * escalation for children that ignore SIGTERM.
  *
  * Nothing here throws. A missing binary is a `spawnError`, which the caller turns
  * into `harness_error` — never into a model failure.
@@ -27,6 +28,8 @@ export type ProcOptions = {
   cwd: string;
   timeoutMs: number;
   env?: Record<string, string>;
+  /** Fixed stdin contents. Omitted means stdin is closed immediately. */
+  stdin?: string;
   /** Grace period between SIGTERM and SIGKILL. */
   killGraceMs?: number;
   /** Truncate each stream to this many characters, keeping head and tail. */
@@ -56,12 +59,12 @@ export async function runProcess(argv: string[], opts: ProcOptions): Promise<Pro
   };
   const max = opts.maxOutputChars ?? DEFAULT_MAX_OUTPUT;
 
-  let proc: Bun.Subprocess<"ignore", "pipe", "pipe">;
+  let proc: Bun.ReadableSubprocess;
   try {
     proc = Bun.spawn(argv, {
       cwd: opts.cwd,
-      // Closed stdin: a prompt for input becomes an immediate EOF, not a hang.
-      stdin: "ignore",
+      // A supplied prompt is followed by EOF; otherwise stdin is closed at once.
+      stdin: opts.stdin === undefined ? "ignore" : Buffer.from(opts.stdin),
       stdout: "pipe",
       stderr: "pipe",
       env: opts.env ? { ...process.env, ...opts.env } : process.env,

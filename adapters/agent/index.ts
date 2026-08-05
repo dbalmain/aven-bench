@@ -1,10 +1,10 @@
 /**
  * Agent-harness registry.
  *
- * opencode is implemented. The rest are deliberate stubs: they exist so the
- * harness axis (§8 — "opencode vs pi vs little-coder on identical tasks and
- * models") is an adapter addition rather than a redesign, and so a run that names
- * one fails immediately with a reason instead of half-working.
+ * opencode and codex are implemented. The rest are deliberate stubs: they exist
+ * so the harness axis (§8 — "opencode vs pi vs little-coder on identical tasks
+ * and models") is an adapter addition rather than a redesign, and so a run that
+ * names one fails immediately with a reason instead of half-working.
  *
  * To implement one, replace the `stubAdapter` call with an `AgentAdapter` that
  * satisfies `adapters/agent/common.ts`. The contract in one line: never throw,
@@ -12,6 +12,7 @@
  */
 
 import { stubAdapter, type AgentAdapter } from "./common.ts";
+import { codexAdapter } from "./codex.ts";
 import { opencodeAdapter } from "./opencode.ts";
 
 export * from "./common.ts";
@@ -40,6 +41,7 @@ export const ollamaAdapter: AgentAdapter = stubAdapter(
 );
 
 export const AGENTS: Record<string, AgentAdapter> = {
+  [codexAdapter.id]: codexAdapter,
   [opencodeAdapter.id]: opencodeAdapter,
   [piAdapter.id]: piAdapter,
   [littleCoderAdapter.id]: littleCoderAdapter,
