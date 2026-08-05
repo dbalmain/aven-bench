@@ -309,3 +309,28 @@ was consulted in reaching it. This is not optional stopping.
 harness-error retry procedure, and the rule that a halted arm is reported as
 halted rather than analysed. If spend reaches $3.10 the arm still halts and is
 still not analysed as complete.
+
+## Amendment 4, outcome — 2026-08-05
+
+Recorded because Amendment 4 was written on a projection, and the projection
+should be scored against what happened.
+
+**The raise was load-bearing.** The arm completed 142 attempts at **$2.9956**,
+and the harness-error retry took it to **$3.0225**. Both figures are above the
+$2.90 cap Amendment 4 replaced, so the old rule would have halted the sweep at
+roughly 139/142 — inside the last three attempts, which between them cost
+$0.176. Those attempts are exactly the expensive-because-failing kind that
+Amendment 3 argued a cap selects for.
+
+This is worth stating plainly because midway through the sweep the projection
+had fallen to $2.88 and I judged in passing that the cap would not have bitten.
+That judgement was wrong: a projection computed on a corpus whose expensive
+tasks are unevenly distributed through the run order is not a reliable guide to
+the final total, and it drifted by 4% in the last 20 attempts alone. The
+practical lesson for future arms is to set the cap from the corpus mean in
+`cost-drivers.md` rather than from a running projection, and to expect the
+projection to understate while cheap tasks are over-represented in what has
+already run.
+
+Final: 143 rows, $3.0225, cap $3.10 not reached, arm completed and analysed as
+complete. Zero tasks dropped.
