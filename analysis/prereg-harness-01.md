@@ -273,3 +273,57 @@ is not determinable from one round, and will not be asserted either way.
 
 **Unchanged:** n = 2 × 71 per arm, both DVs, both effect bars, α, exclusions,
 the dedup key, the $6.00 stop rule, and the harness-error retry procedure.
+
+## Amendment 3 — 2026-08-06: retry null measurements until a measurement exists
+
+Recorded **before any outcome distribution was inspected**. The fields consulted
+were `outcome === "harness_error"`, `harnessErrorKind`, and per-key attempt
+history — operational health only.
+
+**The rule being changed.** Every prereg in this campaign has carried "retry
+pass, one pass only; second-time failures stay excluded and counted", inherited
+from `model-01`. Applied here it costs three tasks: after one retry,
+`two-bucket|s0`, `phone-number|s1` and `react|s1` had each returned
+`agent-no-tokens` twice, so their tasks fall below `MIN_SAMPLES` and leave the
+comparison. With `leap` (Amendment 1) that is 67 paired tasks, not 71.
+
+**Why one pass was the wrong rule.** It conflated two operations that are not
+alike:
+
+- **Re-running a completed measurement** — a key that produced a real outcome.
+  That is re-rolling a result already seen, selects on the DV, and stays
+  forbidden.
+- **Re-running a null measurement** — `agent-no-tokens` means the gateway
+  returned nothing at all. The model never ran, no solution was attempted, no
+  outcome exists. There is nothing for the retry decision to have selected on.
+  Retrying it does not bias the DV; it fills a hole the provider punched in the
+  design.
+
+The harness already enforces the safe version structurally: `isDone` marks a key
+done as soon as it has **any** non-`harness_error` outcome, so
+`--retry-harness-errors` cannot re-roll a real result no matter how often it is
+run. The stopping condition is "a measurement exists", never "a measurement we
+like" — the first real outcome is kept whether it passes or fails.
+
+**New rule, for this round and stated for future ones.** Retry passes repeat
+while they make progress, up to **4 passes total per arm**, and stop early when
+a pass recovers nothing. Keys still null after that are excluded and counted,
+and their tasks drop as before. The bound exists so a genuinely broken key
+cannot loop forever, not because further retries would bias anything.
+
+**What must still be reported.** Amendment 2's requirement stands and matters
+more now: **pre-retry harness-error rates are reported alongside post-retry
+ones**, together with how many passes each arm needed. Retrying until a
+measurement exists is the right way to get unbiased *outcomes*; it would be the
+wrong way to report *reliability*, which is a real harness property. Both go in
+the results.
+
+**Non-independence, noted not asserted.** Three of 11 retried keys failed a
+second time, against roughly 0.8 expected if re-failure were independent at the
+observed ~7% rate. That hints the failures are not uniform across keys. n = 11
+is far too small to conclude anything, and nothing is concluded; it is recorded
+because it is the reason attempt counts are worth keeping rather than
+collapsing.
+
+**Unchanged:** n = 2 × 71 per arm, both DVs, both effect bars, α, the exclusion
+rules, the dedup key, and the $6.00 stop rule.
