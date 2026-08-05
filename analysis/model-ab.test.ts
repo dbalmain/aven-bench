@@ -252,6 +252,41 @@ describe("analyzeModelAb", () => {
     expect(r.droppedTasks).toEqual(["t"]);
   });
 
+  test("a 1-sample arm pairs under --min-samples 1 and is dropped under the default", () => {
+    // prereg-model-03 runs arm B at 1 sample. The default threshold of 2 would
+    // drop every task, so the report must carry the threshold it used.
+    const aLines = [0, 1, 2].map((s) =>
+      line(row({ taskId: "t", modelId: ARM_A_MODEL, sampleIndex: s }), { costUsd: 0 }),
+    );
+    const bLines = [line(row({ taskId: "t", sampleIndex: 0 }), { costUsd: 0 })];
+
+    const dflt = analyzeModelAb(aLines.join("\n"), bLines.join("\n"), ARM_B_MODEL, "fixture");
+    expect(dflt.nPaired).toBe(0);
+    expect(dflt.droppedTasks).toEqual(["t"]);
+    expect(dflt.minSamples).toBe(2);
+
+    const one = analyzeModelAb(aLines.join("\n"), bLines.join("\n"), ARM_B_MODEL, "fixture", 1);
+    expect(one.nPaired).toBe(1);
+    expect(one.droppedTasks).toEqual([]);
+    expect(one.minSamples).toBe(1);
+  });
+
+  test("--min-samples 1 still drops a task whose only arm-B sample is excluded", () => {
+    // Lowering the threshold must not smuggle in unusable rows: a harness_error
+    // is excluded before pairing, so a 1-sample arm that loses its one sample
+    // has zero usable samples and drops at any threshold.
+    const aLines = [0, 1, 2].map((s) =>
+      line(row({ taskId: "t", modelId: ARM_A_MODEL, sampleIndex: s }), { costUsd: 0 }),
+    );
+    const bLines = [
+      line(row({ taskId: "t", sampleIndex: 0, outcome: "harness_error" }), { costUsd: 0 }),
+    ];
+    const r = analyzeModelAb(aLines.join("\n"), bLines.join("\n"), ARM_B_MODEL, "fixture", 1);
+    expect(r.nPaired).toBe(0);
+    expect(r.droppedTasks).toEqual(["t"]);
+    expect(r.exclusions.b.harnessError).toBe(1);
+  });
+
   test("arm A rows from a different diagnosticFormat are not pooled in", () => {
     const aLines = [
       line(row({ taskId: "t", modelId: ARM_A_MODEL, sampleIndex: 0 }), { costUsd: 0 }),

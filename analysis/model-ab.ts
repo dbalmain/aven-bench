@@ -106,19 +106,26 @@ export type TaskPairing = {
 /**
  * Tasks usable in the paired analysis, plus the ones dropped and why.
  *
- * A task needs `MIN_SAMPLES` usable samples in *both* arms; the
+ * A task needs `minSamples` usable samples in *both* arms; the
  * pre-registration requires the dropped ones be named in the report.
+ *
+ * `minSamples` defaults to `MIN_SAMPLES` (2), which is what every arm run at
+ * 2 or 3 samples uses. It is a parameter only because `prereg-model-03`
+ * deliberately runs a 1-sample arm, where a threshold of 2 would drop every
+ * task. Lowering it is a pre-registered design choice, never a response to
+ * seeing tasks get dropped.
  */
 export function pairTasks(
   a: Map<string, TaskArm>,
   b: Map<string, TaskArm>,
+  minSamples: number = MIN_SAMPLES,
 ): { paired: TaskPairing[]; dropped: string[] } {
   const paired: TaskPairing[] = [];
   const dropped: string[] = [];
   for (const taskId of [...new Set([...a.keys(), ...b.keys()])].sort()) {
     const ta = a.get(taskId);
     const tb = b.get(taskId);
-    if (!ta || !tb || ta.nSamples < MIN_SAMPLES || tb.nSamples < MIN_SAMPLES) {
+    if (!ta || !tb || ta.nSamples < minSamples || tb.nSamples < minSamples) {
       dropped.push(taskId);
       continue;
     }
@@ -163,6 +170,9 @@ export type ModelAbReport = {
   armAModel: string;
   armBModel: string;
   armBFile: string;
+  /** Usable-sample threshold this report was built with. Recorded so a
+   *  1-sample arm's report cannot be mistaken for a 2-sample one. */
+  minSamples: number;
   nPaired: number;
   droppedTasks: string[];
   exclusions: { a: ExclusionCounts; b: ExclusionCounts };
@@ -211,6 +221,7 @@ export function analyzeModelAb(
   armBText: string,
   armBModel: string,
   armBFile: string,
+  minSamples: number = MIN_SAMPLES,
 ): ModelAbReport {
   const aLines = armAText.split("\n");
   const bLines = armBText.split("\n");
@@ -227,7 +238,7 @@ export function analyzeModelAb(
 
   const aByTask = aggregateByTask(a.usable);
   const bByTask = aggregateByTask(b.usable);
-  const { paired, dropped } = pairTasks(aByTask, bByTask);
+  const { paired, dropped } = pairTasks(aByTask, bByTask, minSamples);
 
   const greenDiffs = paired.map((p) => p.b.greenRate - p.a.greenRate);
   const roundsDiffs = paired.map((p) => p.b.meanRounds - p.a.meanRounds);
@@ -248,6 +259,7 @@ export function analyzeModelAb(
     armAModel: ARM_A_MODEL,
     armBModel,
     armBFile,
+    minSamples,
     nPaired: paired.length,
     droppedTasks: dropped,
     exclusions: { a: a.excluded, b: b.excluded },
@@ -287,7 +299,7 @@ export function formatModelReport(r: ModelAbReport): string {
   lines.push(`Arm A: ${ARM_A_FILE} (reused)   Arm B: ${r.armBFile}.jsonl`);
   lines.push(`Paired tasks: ${r.nPaired}`);
   if (r.droppedTasks.length > 0) {
-    lines.push(`Dropped (<${MIN_SAMPLES} usable samples in an arm): ${r.droppedTasks.join(", ")}`);
+    lines.push(`Dropped (<${r.minSamples} usable samples in an arm): ${r.droppedTasks.join(", ")}`);
   }
   lines.push("");
   lines.push("## Primary — green rate");
@@ -322,12 +334,23 @@ function main(): void {
   const argv = process.argv.slice(2);
   const armBIdx = argv.indexOf("--arm-b");
   if (armBIdx === -1 || !argv[armBIdx + 1]) {
-    console.error("usage: bun run analysis/model-ab.ts --arm-b <run-id> [--model <id>] [--json]");
+    console.error(
+      "usage: bun run analysis/model-ab.ts --arm-b <run-id> [--model <id>] [--min-samples <n>] [--json]",
+    );
     process.exit(2);
   }
   const armBFile = argv[armBIdx + 1] as string;
   const modelIdx = argv.indexOf("--model");
   const armBModel = modelIdx === -1 ? "opencode-go/mimo-v2.5" : (argv[modelIdx + 1] as string);
+
+  // Only `prereg-model-03` (the 1-sample Qwen arm) passes this. Every other
+  // round uses the default of 2.
+  const minIdx = argv.indexOf("--min-samples");
+  const minSamples = minIdx === -1 ? MIN_SAMPLES : Number(argv[minIdx + 1]);
+  if (!Number.isInteger(minSamples) || minSamples < 1) {
+    console.error(`--min-samples must be a positive integer, got ${argv[minIdx + 1]}`);
+    process.exit(2);
+  }
 
   const aPath = join(RUNS_DIR, ARM_A_FILE);
   const bPath = join(RUNS_DIR, `${armBFile}.jsonl`);
@@ -343,6 +366,7 @@ function main(): void {
     readFileSync(bPath, "utf8"),
     armBModel,
     armBFile,
+    minSamples,
   );
 
   if (argv.includes("--json")) console.log(JSON.stringify(report, null, 2));
