@@ -133,9 +133,17 @@ import type { ContaminationHit, ContaminationTier } from "./contamination.ts";
  *   so `contractGeneration` stays `shapes-v2`. Control-language rows always
  *   record `"text"` (they never saw an Aven diagnostic), which keeps them
  *   shared across Aven format arms instead of re-buying them.
+ * - **11** — `agentVariant`: the provider-specific reasoning effort the harness
+ *   was pinned to (`--variant high`, `codex -c model_reasoning_effort=...`).
+ *   Added for the harness axis, where the two harnesses have *different*
+ *   defaults — codex reads `model_reasoning_effort` from the user's
+ *   `~/.codex/config.toml` — so a row that does not record the effort cannot
+ *   support the claim that the arms were matched on it. Null means the
+ *   provider default was used, which is not the same as any named level.
+ *   Joins the natural key: effort changes behaviour, so arms must never pool.
  */
 
-export const SCHEMA_VERSION = 10 as const;
+export const SCHEMA_VERSION = 11 as const;
 
 /**
  * Generated task-contract policy embedded in every round-0 prompt.
@@ -438,6 +446,11 @@ export type AttemptRecord = {
   modelId: string;
   provider: string;
   quantization: string | null;
+  /**
+   * Provider-specific reasoning effort the harness was pinned to
+   * (`--variant`), or null when the run left the provider default alone.
+   */
+  agentVariant: string | null;
 
   agentHarness: string;
   harnessVersion: string;

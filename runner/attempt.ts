@@ -74,6 +74,8 @@ export type RunContext = {
   modelId: string;
   provider: string;
   quantization: string | null;
+  /** Reasoning effort the harness was pinned to; null = provider default. */
+  agentVariant: string | null;
   /** aven-lang commit at run start; null when no Aven arm is in the run. */
   avenCommit: string | null;
   avenBinarySha256: string | null;
@@ -809,6 +811,7 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
     modelId: ctx.modelId,
     provider: ctx.provider,
     quantization: ctx.quantization,
+    agentVariant: ctx.agentVariant,
 
     agentHarness: ctx.agent.id,
     harnessVersion: ctx.harnessVersion,
