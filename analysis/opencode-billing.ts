@@ -68,6 +68,7 @@ type Row = {
   agentSessionRef: string | null;
   costUsd: number | null;
   outcome: string;
+  finishedAt: string | null;
 };
 
 export function readFeed(path: string): FeedRecord[] {
@@ -112,10 +113,18 @@ export function reconcile(rows: readonly Row[], feed: readonly FeedRecord[], run
     });
   }
 
+  // Orphans are only meaningful inside this run's own wall-clock window. The feed
+  // spans every round the account ever billed, so counting all unclaimed sessions
+  // would attribute other sweeps' spend to this one — which the first draft did,
+  // reporting 316 "survey + preflight" sessions for a run that had four.
+  const stamps = rows.map((r) => r.finishedAt).filter((t): t is string => Boolean(t));
+  const from = stamps.reduce((a, b) => (a < b ? a : b), stamps[0] ?? "");
+  const to = stamps.reduce((a, b) => (a > b ? a : b), stamps[0] ?? "");
   let orphanSessions = 0;
   let orphanUsd = 0;
   for (const [id, list] of bySession) {
     if (claimed.has(id)) continue;
+    if (!list.some((r) => r.t >= from && r.t <= to)) continue;
     orphanSessions += 1;
     orphanUsd += list.reduce((a, r) => a + r.costUnits, 0) * COST_UNIT_USD;
   }

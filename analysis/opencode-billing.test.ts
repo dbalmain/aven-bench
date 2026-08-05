@@ -29,6 +29,7 @@ const row = (taskId: string, sampleIndex: number, ref: string | null, costUsd: n
   agentSessionRef: ref,
   costUsd,
   outcome,
+  finishedAt: "2026-08-05T10:00:00.000Z",
 });
 
 describe("session join", () => {
@@ -68,6 +69,19 @@ describe("session join", () => {
     expect(r.orphanSessions).toBe(1);
     expect(r.orphanUsd).toBeCloseTo(7_000 * COST_UNIT_USD, 10);
     expect(r.invoicedUsd).toBeCloseTo(100_000 * COST_UNIT_USD, 10);
+  });
+
+  test("another round's sessions are not charged to this run", () => {
+    // The feed spans every round the account billed. Without a window guard the
+    // first draft reported 316 orphan sessions for a run that had four, silently
+    // attributing other sweeps' spend to this one.
+    const feed = [
+      feedRow({ sessionId: "ses_a", costUnits: 100_000, t: "2026-08-05T10:00:00.000Z" }),
+      feedRow({ sessionId: "ses_other_round", costUnits: 999_000, t: "2026-08-04T02:00:00.000Z" }),
+    ];
+    const r = reconcile([row("t", 0, "ses_a", 0.001)], feed, "run");
+    expect(r.orphanSessions).toBe(0);
+    expect(r.orphanUsd).toBe(0);
   });
 });
 
