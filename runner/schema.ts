@@ -140,7 +140,13 @@ import type { ContaminationHit, ContaminationTier } from "./contamination.ts";
  *   `~/.codex/config.toml` — so a row that does not record the effort cannot
  *   support the claim that the arms were matched on it. Null means the
  *   provider default was used, which is not the same as any named level.
- *   Joins the natural key: effort changes behaviour, so arms must never pool.
+ *
+ *   **Not part of `attemptKey` yet.** It should be — effort changes behaviour,
+ *   so a run at one effort must not satisfy another's resume — but adding a
+ *   key segment while a sweep is in flight risks the re-buy hazard documented
+ *   on `maxNudges` below, which costs real money. Until it is added: give runs
+ *   at different efforts different run-ids, and check `agentVariant` when
+ *   reading rows back rather than trusting resume to have separated them.
  */
 
 export const SCHEMA_VERSION = 11 as const;

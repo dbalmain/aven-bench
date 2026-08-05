@@ -176,3 +176,46 @@ arms after the sweep and before any analysis.
 
 n is fixed at 2 × 71 = 142 per arm before the first attempt and will not move on
 the basis of any result.
+
+## Amendment 1 — 2026-08-05: `leap` will be dropped from both arms
+
+Recorded **before any arm-B outcome was inspected**, minutes after launch, from
+the runner's startup line rather than from any result.
+
+Both arms reported `resume … 1 skipped, 141 to run`. The skipped attempt is
+`leap` sample 0, satisfied by the two adapter smoke tests
+(`harness-codex-smoke2`, `harness-opencode-smoke`) run shortly before launch to
+verify the new codex adapter end to end.
+
+**Why it happens.** Resume is keyed on the *natural key* (`attemptKey`), which
+deliberately excludes `runId` so that an interrupted sweep does not re-buy work.
+It also excludes `maxRounds`. The smoke attempts therefore satisfy the arms'
+plans, but they carry a different run-id and `--rounds 2` rather than 3, so the
+analysis — which filters by run-id — will never see them.
+
+**Consequence.** `leap` will hold 1 usable sample in each arm and be dropped by
+`MIN_SAMPLES = 2`. The paired analysis runs on **70 tasks, not 71**.
+
+**Why it is not corrected.** Backfilling is not possible: a targeted re-run
+under the arm's run-id hits the same resume match and skips again. The only
+remaining route is moving the smoke rows aside, and `data/runs/` is permanently
+append-only in this project — rows are never deleted, moved or truncated, which
+is a rule worth more than one task.
+
+**Why it is tolerable.** The loss is **symmetric**: both smoke tests used
+`leap`, so both arms lose the same task. A symmetric loss costs one pair of
+observations; it does not bias the comparison, which is what a *differential*
+loss would do. The prior rounds' concern — that dropped tasks silently change
+*which* tasks the arms are compared on, in a way correlated with difficulty —
+does not apply, because the drop is identical on both sides and was caused by
+tooling order, not by task difficulty or outcome.
+
+**Process lesson, for the next round.** Smoke-test a new adapter on a task
+outside the task set being swept (a `tune` task, not a `holdout` one), or under
+settings that differ in a natural-key field. The first smoke test did use a
+`tune` task (`accumulate`); the second used `leap` only because resume had
+already skipped `accumulate`, and `leap` is in `holdout`. That is the mistake.
+
+**Unchanged:** n = 2 per arm, both DVs, both effect bars, α, exclusions, the
+dedup key, the stop rule, and the harness-error retry procedure. The paired
+task count in the results must be reported as 70 with this amendment cited.
