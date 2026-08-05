@@ -780,6 +780,7 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
     completionTokens,
     cachedPromptTokens,
     cachedWriteTokens,
+    reasoningTokens,
   });
   const mirrors = probeMirrors(lastGate?.probes ?? [], adapter.solutionFile);
 

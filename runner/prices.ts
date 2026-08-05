@@ -83,6 +83,28 @@ export const BUILTIN_PRICES: PriceTable = {
     "opencode/mimo-v2.5-free": { in: 0, out: 0, note: "opencode free tier" },
     "opencode/nemotron-3-ultra-free": { in: 0, out: 0, note: "opencode free tier" },
     "opencode/north-mini-code-free": { in: 0, out: 0, note: "opencode free tier" },
+    // Recovered 2026-08-06 from the opencode.ai usage feed for the
+    // phase6-harness-opencode-01 window: 978 billed requests regressed against
+    // their token columns fit R^2 = 1.000000 with exactly round coefficients, so
+    // these are the real invoice rates rather than a guess. Three things about
+    // them are not obvious:
+    //
+    //  - They are EFFECTIVE rates, already including Luna's "2x usage"
+    //    multiplier. opencode's own `part.cost` uses the un-multiplied base and
+    //    therefore reports exactly half the true charge, in all 141 sessions.
+    //  - `cacheWriteIn` is 0.45, not 0.25, because the provider lists fresh input
+    //    under BOTH `inputTokens` and `cacheWrite5mTokens` (aggregate ratio
+    //    0.9988) and bills it once at each rate. opencode reports those same
+    //    tokens only as `cache.write`, so the two rates are folded together here.
+    //  - `in` is charged too, but opencode reports ~0 input tokens for this model
+    //    (2,079 across 141 attempts), so the term is nearly inert.
+    "opencode-go/gpt-5.6-luna": {
+      in: 0.2,
+      out: 1.2,
+      cacheReadIn: 0.02,
+      cacheWriteIn: 0.45,
+      note: "effective rates incl. 2x usage multiplier; opencode.ai usage feed, 2026-08-06",
+    },
   },
 };
 
@@ -136,6 +158,8 @@ export type TokenCounts = {
   completionTokens: number;
   cachedPromptTokens: number;
   cachedWriteTokens: number;
+  /** Billed at the `out` rate — providers meter reasoning as output. */
+  reasoningTokens: number;
 };
 
 /**
@@ -144,6 +168,11 @@ export type TokenCounts = {
  * Each token category is charged at its own rate: opencode reports them
  * separately and `tokens.input` already excludes both cache figures, so summing
  * them here does not double-count.
+ *
+ * Reasoning tokens are charged at the output rate. Leaving them out silently
+ * dropped most of the output charge on reasoning models — on the Luna arm,
+ * 489k of 683k output tokens were reasoning, so the omission was not a rounding
+ * detail but the majority of the term.
  */
 export function computeShadowCost(modelId: string, t: TokenCounts, table = priceTable()): ShadowCost {
   const entry = table.models[modelId] ?? (isLocalModel(modelId) ? LOCAL_FREE : undefined);
@@ -156,7 +185,7 @@ export function computeShadowCost(modelId: string, t: TokenCounts, table = price
     (t.promptTokens * entry.in +
       t.cachedPromptTokens * readRate +
       t.cachedWriteTokens * writeRate +
-      t.completionTokens * entry.out) /
+      (t.completionTokens + t.reasoningTokens) * entry.out) /
     1_000_000;
   const free = entry.in === 0 && entry.out === 0 && readRate === 0 && writeRate === 0;
   return {

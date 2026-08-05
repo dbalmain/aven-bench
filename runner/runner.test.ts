@@ -291,7 +291,13 @@ describe("shadow cost", () => {
       "paid/model": { in: 1, out: 10, cacheReadIn: 0.1, cacheWriteIn: 1.25 },
     },
   };
-  const zero = { promptTokens: 0, completionTokens: 0, cachedPromptTokens: 0, cachedWriteTokens: 0 };
+  const zero = {
+    promptTokens: 0,
+    completionTokens: 0,
+    cachedPromptTokens: 0,
+    cachedWriteTokens: 0,
+    reasoningTokens: 0,
+  };
 
   test.each([
     ["free/model", { ...zero, promptTokens: 1_000_000, completionTokens: 1_000_000 }, 0, "free"],
@@ -310,7 +316,7 @@ describe("shadow cost", () => {
    * writes were priced, the dominant term was silently dropped.
    */
   test("cache writes dominate a real paid turn and must not be dropped", () => {
-    const measured = { promptTokens: 6, completionTokens: 20, cachedPromptTokens: 0, cachedWriteTokens: 8_870 };
+    const measured = { ...zero, promptTokens: 6, completionTokens: 20, cachedWriteTokens: 8_870 };
     const withWrites = computeShadowCost("paid/model", measured, table).shadowCostUsd ?? 0;
     const withoutWrites = computeShadowCost(
       "paid/model",
@@ -318,6 +324,44 @@ describe("shadow cost", () => {
       table,
     ).shadowCostUsd ?? 0;
     expect(withWrites).toBeGreaterThan(withoutWrites * 20);
+  });
+
+  /**
+   * Reasoning tokens are billed as output. Omitting them dropped the majority of
+   * the output charge on a reasoning model: the Luna arm metered 489k reasoning
+   * against 194k completion, so the old formula saw 28% of the output it paid for.
+   */
+  test("reasoning tokens are charged at the output rate", () => {
+    const t = { ...zero, completionTokens: 100_000, reasoningTokens: 900_000 };
+    expect(computeShadowCost("paid/model", t, table).shadowCostUsd).toBeCloseTo(10, 9);
+  });
+
+  /**
+   * Recovered from the opencode.ai usage feed, 2026-08-06. These are the rates the
+   * account was actually invoiced, and two corrections are baked into them that a
+   * naive reading of opencode's own numbers misses: Luna's 2x usage multiplier,
+   * and fresh input being billed under both `inputTokens` and `cacheWrite5m`.
+   */
+  test("the Luna entry reproduces a real invoiced request", () => {
+    resetPriceTableCache();
+    // usg_01KZ9QJ8YZD9Y7198F5YAPA1Y2: provider billed 125446 units = $0.00125446
+    // on in 489, out 333, reasoning 258, cacheRead 31778, cacheWrite5m 486.
+    // In opencode's reporting those 486 fresh tokens arrive as cache-write only.
+    const cost = computeShadowCost("opencode-go/gpt-5.6-luna", {
+      ...zero,
+      completionTokens: 333 - 258,
+      reasoningTokens: 258,
+      cachedPromptTokens: 31_778,
+      cachedWriteTokens: 486,
+    });
+    // Within 0.1%, not exact, and the residue is structural rather than sloppy:
+    // the provider metered 489 input against 486 cache-write, and opencode only
+    // ever reports the cache-write figure, so those 3 tokens are unreachable from
+    // the harness side. Aggregate ratio across the window is 0.9988.
+    const invoiced = 0.00125446;
+    expect(cost.shadowCostUsd).toBeGreaterThan(invoiced * 0.999);
+    expect(cost.shadowCostUsd).toBeLessThanOrEqual(invoiced);
+    expect(cost.shadowPriceSource).toBe("table");
   });
 
   test("a model with no entry records null, never a fabricated zero", () => {
@@ -338,6 +382,7 @@ describe("shadow cost", () => {
       "opencode/big-pickle",
     ]) {
       const cost = computeShadowCost(model, {
+        ...zero,
         promptTokens: 5_000,
         completionTokens: 500,
         cachedPromptTokens: 100,
