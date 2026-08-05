@@ -204,7 +204,12 @@ export type ModelAbReport = {
  * caught before the significance test or identical arms get read as a
  * below-the-bar *difference* rather than as no difference.
  */
-function verdictFor(diff: number, p: number, bar: number, higherIsBetter: boolean): Verdict {
+export function verdictFor(
+  diff: number,
+  p: number,
+  bar: number,
+  higherIsBetter: boolean,
+): Verdict {
   if (Number.isNaN(p)) return "no-difference";
   if (p >= ALPHA) return "no-difference";
   if (Math.abs(diff) < bar) return "below-effect-bar";
