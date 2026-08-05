@@ -120,3 +120,38 @@ failing ones.
 
 n is fixed at 2 × 71 = 142 before the first attempt and will not move on the
 basis of any result.
+
+## Probe outcome — 2026-08-05: gate REFUSED, arm not launched
+
+Probe run `phase5-model-qwen37p-probe`, 3 tune tasks, 1 sample, same pinned
+compiler and doc as the planned arm.
+
+| task            | outcome         |   cost | rounds | completion tokens |
+| --------------- | --------------- | -----: | -----: | ----------------: |
+| `accumulate`    | `parse_error`   | $0.1702 |      4 |            63,152 |
+| `affine-cipher` | `runtime_error` | $0.1202 |      4 |            48,567 |
+| `all-your-base` | `pass`          | $0.0212 |      2 |             4,644 |
+
+Mean **$0.10387/attempt** — 4.9× Hy3, 6.0× DeepSeek. Costs carry
+`priceSource: harness` and `reportedCostUsd` equal to `costUsd` to the cent, so
+these are the provider's own billing figures, not a local price-table estimate.
+The mechanism is visible in the token counts: on tasks it cannot solve, Qwen 3.7
+Plus emits 50–60k completion tokens and burns the full round budget.
+
+**Gate applied as written:** $0.10387 × 142 × 2.4 = **$35.40**, against the
+$4.50 refusal threshold. The arm is **not launched**.
+
+The 2.4 multiplier's stated premise does not hold on this probe — it exists
+because probes systematically miss failures, and this probe drew 2 failures in
+3, so $35.40 is very likely an overstatement. That observation changes nothing
+and is recorded only for honesty: the **unadjusted** projection is
+$0.10387 × 142 = **$14.75**, still 3.3× the threshold and ~4.9× the Hy3 arm.
+The gate refuses under either reading, so there is no need to relitigate the
+multiplier after seeing data, and it is not relitigated here.
+
+Escalated to the requester, per step 3. The pre-registration above remains valid
+and unamended: if a spend of this size is authorised, the arm runs exactly as
+specified, with the stop rule raised to whatever figure is authorised. Any
+change to n (e.g. dropping to 1 sample to halve cost) would need a **new**
+pre-registration, because n = 2 is fixed above and `MIN_SAMPLES = 2` would drop
+every task at n = 1.
