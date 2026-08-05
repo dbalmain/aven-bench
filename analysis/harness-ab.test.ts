@@ -67,7 +67,7 @@ describe("cost on a subscription harness", () => {
   test("an arm reporting no cost stays null, never 0", () => {
     const e = armEffort(arm(A.model, ["t"], {}, { costUsd: null, promptTokens: 10, completionTokens: 5 }).split("\n"), A.model);
     expect(e.costUsd).toBeNull();
-    expect(e.totalTokens).toBe(30);
+    expect(e.outputTokens).toBe(10); // (completion 5 + reasoning 0) x 2 rows
   });
 
   test("an arm reporting real charges sums them", () => {
@@ -86,6 +86,46 @@ describe("cost on a subscription harness", () => {
     );
     expect(text).toContain("n/a (subscription)");
     expect(text).not.toContain("cost $0.00");
+  });
+});
+
+describe("token accounting across disagreeing adapters", () => {
+  test("per-green efficiency uses output tokens only, so cache convention cannot skew it", () => {
+    // The live defect: codex reports cache reads INSIDE promptTokens, opencode
+    // reports them OUTSIDE it. Two arms doing identical output work but logging
+    // input under the two conventions must still compare equal.
+    const codexLike = armEffort(
+      arm(A.model, ["t"], {}, { promptTokens: 40357, cachedPromptTokens: 29184, completionTokens: 300, reasoningTokens: 600 }).split("\n"),
+      A.model,
+    );
+    const opencodeLike = armEffort(
+      arm(B.model, ["t"], {}, { promptTokens: 6, cachedPromptTokens: 12614, completionTokens: 300, reasoningTokens: 600 }).split("\n"),
+      B.model,
+    );
+    expect(codexLike.outputTokens).toBe(opencodeLike.outputTokens);
+    expect(codexLike.promptTokens).not.toBe(opencodeLike.promptTokens);
+  });
+
+  test("the report refuses to difference the input side", () => {
+    const text = formatHarnessReport(
+      analyzeHarnessAb(
+        arm(A.model, ["t"], {}, { promptTokens: 40357, cachedPromptTokens: 29184, completionTokens: 300 }),
+        arm(B.model, ["t"], {}, { promptTokens: 6, cachedPromptTokens: 12614, completionTokens: 300 }),
+        A,
+        B,
+      ),
+    );
+    expect(text).toContain("NOT comparable across arms");
+    expect(text).toContain("output tokens/green");
+  });
+
+  test("the concurrency footer states the Amendment 2 split, not full concurrency", () => {
+    // The first draft asserted both arms ran concurrently, which Amendment 2
+    // had already contradicted. A false design claim in generated output is
+    // worse than none, because it reads as a checked fact.
+    const text = formatHarnessReport(analyzeHarnessAb(arm(A.model, ["t"]), arm(B.model, ["t"]), A, B));
+    expect(text).toContain("PARTLY controlled");
+    expect(text).not.toContain("without that confound");
   });
 });
 

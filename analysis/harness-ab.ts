@@ -51,9 +51,14 @@ export const DEFAULT_ARM_B = { run: "phase6-harness-opencode-01", model: "openco
 export type ArmEffort = {
   rows: number;
   promptTokens: number;
+  cachedPromptTokens: number;
   completionTokens: number;
   reasoningTokens: number;
-  totalTokens: number;
+  /**
+   * completion + reasoning. The ONLY token figure comparable across harnesses —
+   * see `armEffort` for why the input side is not.
+   */
+  outputTokens: number;
   wallHours: number;
   /** Null on a subscription-billed harness that reports no cost. Never 0. */
   costUsd: number | null;
@@ -65,14 +70,28 @@ export type ArmEffort = {
  * `costUsd` stays null unless at least one row reported a real charge. A
  * subscription harness reports nothing, and summing that to `0` would claim the
  * arm was free — the bug that made the free tier's rows useless.
+ *
+ * INPUT TOKENS ARE NOT COMPARABLE ACROSS HARNESSES. The two adapters inherit
+ * their provider's accounting convention and the conventions disagree about
+ * whether cache reads are already inside `promptTokens`. On one `clock` attempt:
+ *
+ *   codex     promptTokens 40,357  cachedPromptTokens 29,184  (cache INSIDE)
+ *   opencode  promptTokens      6  cachedPromptTokens 12,614  (cache OUTSIDE)
+ *
+ * Summing `prompt + completion` across arms therefore compared codex's full
+ * input against opencode's cache-miss remainder and produced a spurious 44x
+ * gap. Only `outputTokens` (completion + reasoning) is on a shared basis, so
+ * that is what per-green efficiency is computed from; the input figures are
+ * reported per-arm and explicitly not differenced.
  */
 export function armEffort(rawLines: readonly string[], modelId: string): ArmEffort {
   const out: ArmEffort = {
     rows: 0,
     promptTokens: 0,
+    cachedPromptTokens: 0,
     completionTokens: 0,
     reasoningTokens: 0,
-    totalTokens: 0,
+    outputTokens: 0,
     wallHours: 0,
     costUsd: null,
   };
@@ -83,12 +102,14 @@ export function armEffort(rawLines: readonly string[], modelId: string): ArmEffo
     if (r["modelId"] !== modelId) continue;
     out.rows += 1;
     const p = typeof r["promptTokens"] === "number" ? r["promptTokens"] : 0;
+    const cached = typeof r["cachedPromptTokens"] === "number" ? r["cachedPromptTokens"] : 0;
     const c = typeof r["completionTokens"] === "number" ? r["completionTokens"] : 0;
     const re = typeof r["reasoningTokens"] === "number" ? r["reasoningTokens"] : 0;
     out.promptTokens += p;
+    out.cachedPromptTokens += cached;
     out.completionTokens += c;
     out.reasoningTokens += re;
-    out.totalTokens += p + c + re;
+    out.outputTokens += c + re;
     if (typeof r["wallMs"] === "number") wallMs += r["wallMs"];
     if (typeof r["costUsd"] === "number") out.costUsd = (out.costUsd ?? 0) + r["costUsd"];
   }
@@ -254,15 +275,21 @@ export function formatHarnessReport(r: HarnessAbReport): string {
     ["arm A", r.effort.a, r.greens.a],
     ["arm B", r.effort.b, r.greens.b],
   ] as const) {
-    const perGreen = greens === 0 ? "n/a" : Math.round(e.totalTokens / greens).toLocaleString();
+    const perGreen = greens === 0 ? "n/a" : Math.round(e.outputTokens / greens).toLocaleString();
     lines.push(
-      `  ${label}: ${e.rows} rows, ${e.totalTokens.toLocaleString()} tokens, ${perGreen} tokens/green, ${e.wallHours.toFixed(1)}h, cost ${money(e.costUsd)}`,
+      `  ${label}: ${e.rows} rows, ${e.outputTokens.toLocaleString()} output tokens, ${perGreen} output tokens/green, ${e.wallHours.toFixed(1)}h, cost ${money(e.costUsd)}`,
+    );
+    lines.push(
+      `          input (NOT comparable across arms): prompt ${e.promptTokens.toLocaleString()}, cached ${e.cachedPromptTokens.toLocaleString()}`,
     );
   }
+  lines.push("  Input tokens are deliberately not differenced: the adapters disagree about");
+  lines.push("  whether cache reads sit inside promptTokens. See armEffort's comment.");
 
   lines.push("");
-  lines.push("Both arms were run CONCURRENTLY: provider load and time-of-day fall on");
-  lines.push("both alike. This is the campaign's first comparison without that confound.");
+  lines.push("Concurrency (prereg Amendment 2): arm B attempts 1-52 ran concurrently with");
+  lines.push("arm A; attempts 53-142 ran after the circuit breaker tripped and the arm was");
+  lines.push("resumed. Time-of-day and provider load are therefore only PARTLY controlled.");
   return lines.join("\n");
 }
 
