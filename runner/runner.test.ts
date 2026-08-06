@@ -1741,6 +1741,7 @@ describe("store", () => {
       contractGeneration: stored.contractGeneration,
       maxNudges: stored.maxNudges,
       diagnosticFormat: stored.diagnosticFormat,
+      agentVariant: stored.agentVariant,
     });
     expect(planned).toBe(attemptKey(stored));
   });
@@ -1760,6 +1761,28 @@ describe("store", () => {
     );
     expect(attemptKey(record({ diagnosticFormat: "agent" }))).not.toBe(
       attemptKey(record({ diagnosticFormat: "text" })),
+    );
+  });
+
+  test("agentVariant joins the key; legacy and null stay byte-identical", () => {
+    // Money hazard: appending `agent-` unconditionally would change every
+    // historical key and the next resume would re-buy the sweep. Null and a
+    // missing field must produce the same key as before this field joined.
+    const expected =
+      "two-fer python opencode/deepseek-v4-flash-free opencode - - 0 no-verify hidden bubblewrap shapes-v2";
+    const legacy = { ...record({ maxNudges: 0 }) } as Partial<AttemptRecord>;
+    delete legacy.agentVariant;
+    // Runtime undefined is what loadResumeIndex sees for pre-schema-11 rows.
+    expect(attemptKey(legacy as AttemptRecord)).toBe(expected);
+    expect(attemptKey(record({ maxNudges: 0, agentVariant: null }))).toBe(expected);
+    expect(attemptKey(record({ maxNudges: 0, agentVariant: "high" }))).toBe(
+      `${expected} agent-high`,
+    );
+    expect(attemptKey(record({ agentVariant: "high" }))).not.toBe(
+      attemptKey(record({ agentVariant: "minimal" })),
+    );
+    expect(attemptKey(record({ agentVariant: "high" }))).not.toBe(
+      attemptKey(record({ agentVariant: null })),
     );
   });
 

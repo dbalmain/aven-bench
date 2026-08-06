@@ -824,6 +824,9 @@ async function main(): Promise<number> {
             // Same as maxNudges: the planned key must use the value the row
             // will record. Control languages always store `"text"`.
             diagnosticFormat: effectiveDiagnosticFormat(language, diagnosticFormat),
+            // Same as maxNudges: effort arms must not share resume. Null omits
+            // the segment so provider-default rows keep pre-schema-11 keys.
+            agentVariant: variant,
           });
           const { done, outcomes } = isDone(resume, key, retryHarnessErrors);
           planned.push({ spec, modelId, key, done, outcomes });

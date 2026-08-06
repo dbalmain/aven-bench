@@ -204,6 +204,8 @@ export function attemptIdFor(ctx: RunContext, spec: AttemptSpec): string {
     contractGeneration: CONTRACT_GENERATION,
     maxNudges: ctx.maxNudges,
     diagnosticFormat: effectiveDiagnosticFormat(spec.language, ctx.diagnosticFormat),
+    // Same as maxNudges: the planned key must use the value the row will record.
+    agentVariant: ctx.agentVariant,
   });
   return `${ctx.runId}-${sha256(key).slice(0, 12)}`;
 }

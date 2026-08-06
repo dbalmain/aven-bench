@@ -141,12 +141,10 @@ import type { ContaminationHit, ContaminationTier } from "./contamination.ts";
  *   support the claim that the arms were matched on it. Null means the
  *   provider default was used, which is not the same as any named level.
  *
- *   **Not part of `attemptKey` yet.** It should be — effort changes behaviour,
- *   so a run at one effort must not satisfy another's resume — but adding a
- *   key segment while a sweep is in flight risks the re-buy hazard documented
- *   on `maxNudges` below, which costs real money. Until it is added: give runs
- *   at different efforts different run-ids, and check `agentVariant` when
- *   reading rows back rather than trusting resume to have separated them.
+ *   Joins the natural key (same omit-when-null discipline as `maxNudges`): a
+ *   run at one effort must not satisfy another's resume. Deferred briefly while
+ *   two harness arms were mid-flight; now live. Pre-schema-11 rows and rows
+ *   with `agentVariant: null` omit the segment so their keys stay byte-identical.
  * - **12** — `GateProbe.signal`. `proc.ts` already captured the kill signal, but
  *   the probe type had no field for it, so every signal death was discarded at
  *   write time. The gate then folded `exitCode === null` into the same
@@ -670,6 +668,13 @@ export function attemptKey(
     // will record, or resume re-buys the sweep. Legacy rows lack the field;
     // runtime `undefined` is treated as `"text"` and omits the segment.
     | "diagnosticFormat"
+    // Same discipline as `maxNudges`: effort changes behaviour, so a run at
+    // `high` must not satisfy resume for `minimal`. Required in the Pick so a
+    // caller cannot omit it and build a key that never matches the recorded
+    // row. Legacy rows lack the field; null and runtime `undefined` both omit
+    // the segment so pre-schema-11 keys stay byte-identical (appending
+    // unconditionally would re-buy the entire historical sweep).
+    | "agentVariant"
   > & { contractGeneration: string },
 ): string {
   return [
@@ -696,5 +701,9 @@ export function attemptKey(
     ...(r.diagnosticFormat && r.diagnosticFormat !== "text"
       ? [`diag${r.diagnosticFormat}`]
       : []),
+    // Rows written before schema 11 have no field; null means provider default.
+    // Both omit the segment so those keys stay byte-identical; only a named
+    // effort appends, so arms at different efforts never share resume.
+    ...(r.agentVariant ? [`agent-${r.agentVariant}`] : []),
   ].join(" ");
 }

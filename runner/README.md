@@ -233,10 +233,11 @@ remains a contamination warning.
 
 An attempt is identified by `attemptKey()`: task, language, model, harness,
 `docId`, aven commit, sample index, tool policy, suite visibility, sandbox
-mode, the generated-contract version, the nudge budget (when nonzero), and
-`diagnosticFormat` (when not the legacy `text` default). Resume reads **every**
-log under `data/runs/`, so re-running the same experiment adds nothing while a
-policy or contract change schedules a distinct attempt:
+mode, the generated-contract version, the nudge budget (when nonzero),
+`diagnosticFormat` (when not the legacy `text` default), and `agentVariant`
+(when not null — provider default). Resume reads **every** log under
+`data/runs/`, so re-running the same experiment adds nothing while a policy or
+contract change schedules a distinct attempt:
 
 ```sh
 bun run bench … --run-id calib-03     # 8 attempts
