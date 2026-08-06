@@ -147,9 +147,16 @@ import type { ContaminationHit, ContaminationTier } from "./contamination.ts";
  *   on `maxNudges` below, which costs real money. Until it is added: give runs
  *   at different efforts different run-ids, and check `agentVariant` when
  *   reading rows back rather than trusting resume to have separated them.
+ * - **12** — `GateProbe.signal`. `proc.ts` already captured the kill signal, but
+ *   the probe type had no field for it, so every signal death was discarded at
+ *   write time. The gate then folded `exitCode === null` into the same
+ *   `load-error` verdict as exit code 2, and the outcome mapper blamed the
+ *   model (`runtime_error`). A non-null signal means the process was killed
+ *   rather than exited: not a model fault, and not recoverable from the row
+ *   without this field. Distinct verdict `"signal"`; outcome `harness_error`.
  */
 
-export const SCHEMA_VERSION = 11 as const;
+export const SCHEMA_VERSION = 12 as const;
 
 /**
  * Generated task-contract policy embedded in every round-0 prompt.
@@ -267,6 +274,17 @@ export type GateProbe = {
   gating: boolean;
   ok: boolean | null;
   exitCode: number | null;
+  /**
+   * Kernel signal that killed the process (`SIGTERM`, `SIGKILL`, …), or null
+   * when the process exited on its own.
+   *
+   * Non-null means `exitCode` is null: the process did not choose an exit
+   * code, something external killed it. That is **not** a model fault — do not
+   * fold it into `load-error` or `runtime_error`. Harness timeouts also leave
+   * a signal here; those are classified as `timeout` via `timedOut`, not via
+   * this field alone.
+   */
+  signal: string | null;
   wallMs: number;
   timedOut: boolean;
   diagnosticCodes: string[];

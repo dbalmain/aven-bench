@@ -253,6 +253,7 @@ deliberately; it appends a new row and leaves the old one alone.
 | ------------------------------------------ | ------------------------------------ |
 | bad model id, provider error, opencode ≠ 0 | `harness_error`                      |
 | harness or tool exceeded its timeout       | `timeout`                            |
+| gate process killed by a signal (not timeout) | `harness_error` (probe `signal` set) |
 | agent turn returned **no tokens at all**   | `harness_error` (`agent-no-tokens`)  |
 | model wrote no solution file, after nudges  | `refusal`                            |
 | gate tool could not be run at all          | `harness_error` (`gate-unavailable`) |

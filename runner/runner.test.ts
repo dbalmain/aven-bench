@@ -41,6 +41,7 @@ import {
   offsetToLineCol,
   parseAvenCheck,
   probeMirrors,
+  suiteExitVerdict,
 } from "./gate.ts";
 import { computeShadowCost, resetPriceTableCache, type PriceTable } from "./prices.ts";
 import { runProcess, Semaphore } from "./proc.ts";
@@ -93,6 +94,7 @@ function probe(over: Partial<GateProbe> = {}): GateProbe {
     gating: true,
     ok: true,
     exitCode: 0,
+    signal: null,
     wallMs: 1,
     timedOut: false,
     diagnosticCodes: [],
@@ -764,6 +766,13 @@ describe("outcome classification", () => {
     ["a case asserted", [probe({ ok: false, exitCode: 1 })], { failed: 2 }, "wrong_output"],
     ["a tool timed out", [probe({ ok: false, timedOut: true })], null, "timeout"],
     ["a tool was missing", [probe({ ok: null, unavailableReason: "no binary" })], null, "harness_error"],
+    // Signal death used to fall through to runtime_error. Not a model fault.
+    [
+      "a process killed by a signal",
+      [probe({ ok: false, exitCode: null, signal: "SIGKILL" })],
+      null,
+      "harness_error",
+    ],
   ];
 
   test.each(cases)("%s -> %s", (_name, probes, envelope, expected) => {
@@ -772,6 +781,59 @@ describe("outcome classification", () => {
 
   test("runtime errors beat wrong output when both are present", () => {
     expect(classifyOutcome([probe({ ok: false, exitCode: 1 })], { failed: 1, errored: 1 }, [])).toBe("runtime_error");
+  });
+
+  test("a harness timeout with a kill signal is still timeout, not harness_error", () => {
+    // timedOut takes precedence: the harness asked for the kill.
+    expect(
+      classifyOutcome(
+        [probe({ ok: false, exitCode: null, signal: "SIGTERM", timedOut: true })],
+        null,
+        [],
+      ),
+    ).toBe("timeout");
+  });
+});
+
+// --- suite exit verdict (signal vs load-error) -----------------------------
+
+describe("suite exit verdict", () => {
+  // Mirrors every language adapter: 0 pass, 1 fail, ≥2 load-error.
+  const classify = (code: number): "pass" | "fail" | "load-error" =>
+    code === 0 ? "pass" : code === 1 ? "fail" : "load-error";
+
+  test("a null exit code is signal, not load-error", () => {
+    // The pre-schema-12 bug: exitCode null was folded into load-error, so a
+    // SIGKILL looked like a suite that never loaded and became runtime_error.
+    expect(suiteExitVerdict(null, classify)).toBe("signal");
+    expect(suiteExitVerdict(null, classify)).not.toBe("load-error");
+  });
+
+  test("exit code 2 is still load-error and still extracts diagnostic codes", () => {
+    expect(suiteExitVerdict(2, classify)).toBe("load-error");
+    // Pin the extraction policy the test probe uses: only load-error scrapes
+    // codes. A signal death must not invent codes from whatever was on the
+    // streams when the process died.
+    const blob = "[parse.unsupported-syntax] Error: nope\n";
+    expect(suiteExitVerdict(2, classify) === "load-error" ? extractCodes(blob) : []).toEqual([
+      "parse.unsupported-syntax",
+    ]);
+    expect(suiteExitVerdict(null, classify) === "load-error" ? extractCodes(blob) : []).toEqual([]);
+  });
+
+  test("a signal death probe records the signal and is not a model runtime_error", () => {
+    const killed = probe({
+      ok: false,
+      exitCode: null,
+      signal: "SIGKILL",
+      detail: "process killed by SIGKILL",
+      // No codes: signal is not load-error.
+      diagnosticCodes: [],
+    });
+    expect(killed.signal).toBe("SIGKILL");
+    expect(killed.exitCode).toBeNull();
+    expect(classifyOutcome([killed], null, [])).toBe("harness_error");
+    expect(classifyOutcome([killed], null, [])).not.toBe("runtime_error");
   });
 });
 

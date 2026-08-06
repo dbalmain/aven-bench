@@ -196,6 +196,8 @@ function probeFromSpawnFailure(name: string, gating: boolean, proc: ProcResult):
     gating,
     ok: null,
     exitCode: null,
+    // Spawn never started a process, so there is no kill signal to record.
+    signal: null,
     wallMs: proc.wallMs,
     timedOut: proc.timedOut,
     diagnosticCodes: [],
@@ -230,6 +232,7 @@ async function avenCheckProbe(ctx: GateContext): Promise<GateProbe> {
     gating: true,
     ok: proc.timedOut ? false : parsed ? parsed.ok && errors.length === 0 : proc.exitCode === 0,
     exitCode: proc.exitCode,
+    signal: proc.signal,
     wallMs: proc.wallMs,
     timedOut: proc.timedOut,
     diagnosticCodes: parsed ? [...new Set(errors.map((d) => d.code))] : codesFromText,
@@ -237,14 +240,18 @@ async function avenCheckProbe(ctx: GateContext): Promise<GateProbe> {
     // Summarize the parsed diagnostics rather than scraping stdout: the JSON is
     // pretty-printed, so the "first meaningful line" of it is punctuation. Prefer
     // an error in the *solution* — the suite's cascade diagnostics are noise.
-    detail: parsed
-      ? errors.length === 0
-        ? null
-        : describeDiagnostic(
-            errors.find((d) => d.path === ctx.adapter.solutionFile) ?? errors[0]!,
-            errors.length,
-          )
-      : firstMeaningfulLine(`${proc.stdout}\n${proc.stderr}`),
+    // A kill signal is more informative than an empty scrape.
+    detail:
+      proc.signal && proc.exitCode === null && !proc.timedOut
+        ? `process killed by ${proc.signal}`
+        : parsed
+          ? errors.length === 0
+            ? null
+            : describeDiagnostic(
+                errors.find((d) => d.path === ctx.adapter.solutionFile) ?? errors[0]!,
+                errors.length,
+              )
+          : firstMeaningfulLine(`${proc.stdout}\n${proc.stderr}`),
     unavailableReason: null,
     // The aven build is pinned by `avenCommit` + `avenBinarySha256` already.
     toolVersion: null,
@@ -282,6 +289,21 @@ export async function avenCheckText(ctx: GateContext): Promise<string> {
 
 // --- the suite -------------------------------------------------------------
 
+/**
+ * Classify a suite process exit for the test probe.
+ *
+ * `signal` is deliberately separate from `load-error`: exit code 2 means the
+ * suite never loaded (model fault); exitCode null means the process was killed
+ * (not a model fault). Folding them together was the pre-schema-12 defect.
+ */
+export function suiteExitVerdict(
+  exitCode: number | null,
+  classify: (code: number) => "pass" | "fail" | "load-error",
+): "pass" | "fail" | "load-error" | "signal" {
+  if (exitCode === null) return "signal";
+  return classify(exitCode);
+}
+
 async function testProbe(ctx: GateContext): Promise<{ probe: GateProbe; envelope: Envelope | null }> {
   const { argv, cwd } = ctx.adapter.testCommand(ctx.dir);
   const proc = await runProcess(argv, {
@@ -299,27 +321,30 @@ async function testProbe(ctx: GateContext): Promise<{ probe: GateProbe; envelope
     envelope = null;
   }
   const blob = `${proc.stdout}\n${proc.stderr}`;
-  const verdict = proc.exitCode === null ? "load-error" : ctx.adapter.classifyExit(proc.exitCode);
+  const verdict = suiteExitVerdict(proc.exitCode, (code) => ctx.adapter.classifyExit(code));
   return {
     probe: {
       name: "test",
       gating: true,
       ok: !proc.timedOut && verdict === "pass",
       exitCode: proc.exitCode,
+      signal: proc.signal,
       wallMs: proc.wallMs,
       timedOut: proc.timedOut,
-      // Only a load error carries diagnostic codes; a failing case carries a
-      // message. Extracting codes from case messages would invent codes.
+      // Only a real load error carries diagnostic codes. Extracting codes from a
+      // signal death (or a case-failure message) would invent codes.
       diagnosticCodes: verdict === "load-error" ? extractCodes(blob) : [],
       diagnostics: [],
       // When the envelope parsed, summarize it. Scraping the raw output would
       // pick a line of JSON punctuation, which is what it did the first time.
       detail:
-        verdict === "load-error"
-          ? firstMeaningfulLine(envelope?.load_error ?? blob)
-          : envelope
-            ? `${envelope.passed ?? 0}/${envelope.total ?? 0} cases passed`
-            : firstMeaningfulLine(blob),
+        verdict === "signal"
+          ? `process killed by ${proc.signal ?? "unknown signal"}`
+          : verdict === "load-error"
+            ? firstMeaningfulLine(envelope?.load_error ?? blob)
+            : envelope
+              ? `${envelope.passed ?? 0}/${envelope.total ?? 0} cases passed`
+              : firstMeaningfulLine(blob),
       unavailableReason: null,
       // Pinned by `languageVersion` (and `avenCommit`) on the record.
       toolVersion: null,
@@ -395,6 +420,7 @@ async function mypyProbe(ctx: GateContext): Promise<GateProbe> {
       gating: false,
       ok: proc.exitCode === 0,
       exitCode: proc.exitCode,
+      signal: proc.signal,
       wallMs: proc.wallMs,
       timedOut: proc.timedOut,
       diagnosticCodes: [...new Set(lines.map((l) => mypyCode(l)))],
@@ -418,6 +444,7 @@ async function mypyProbe(ctx: GateContext): Promise<GateProbe> {
     // are different rows.
     ok: null,
     exitCode: null,
+    signal: null,
     wallMs: last?.wallMs ?? 0,
     timedOut: false,
     diagnosticCodes: [],
@@ -448,6 +475,13 @@ export function classifyOutcome(probes: GateProbe[], envelope: Envelope | null, 
   const gating = probes.filter((p) => p.gating);
   if (gating.some((p) => p.timedOut)) return "timeout";
   if (gating.some((p) => p.ok === null)) return "harness_error";
+  // Process killed by a signal outside the harness timeout. Cause unknown and
+  // almost certainly not the model's; `runtime_error` was the old wrong bucket.
+  // Conservative: harness_error (not in the capability denominator; retryable
+  // with --retry-harness-errors). Alternative considered: a new Outcome value —
+  // rejected because the existing set already separates "not a model measurement"
+  // and a new label would re-bucket every historical query.
+  if (gating.some((p) => p.signal !== null)) return "harness_error";
   if (gating.every((p) => p.ok === true)) return "pass";
 
   const check = probes.find((p) => p.name === "check");
@@ -456,6 +490,7 @@ export function classifyOutcome(probes: GateProbe[], envelope: Envelope | null, 
   const hasParse = codes.some((c) => c.startsWith("parse.") || c.startsWith("lex."));
 
   // A suite that never loaded: the solution is not runnable at all.
+  // exitCode null is a signal death (handled above), not a load error.
   const loadError = test && test.exitCode !== null && test.exitCode >= 2;
   if (loadError) {
     if (hasParse) return "parse_error";
@@ -505,6 +540,8 @@ async function avenExportProbe(ctx: GateContext): Promise<GateProbe | null> {
     gating: true,
     ok: false,
     exitCode: null,
+    // No process ran; this is a pure source scan.
+    signal: null,
     wallMs: 0,
     timedOut: false,
     diagnosticCodes: [`bench.${check.kind}`],
