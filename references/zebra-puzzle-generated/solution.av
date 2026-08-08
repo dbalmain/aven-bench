@@ -8,7 +8,7 @@ Query = { subject: Text, category: Text }
 Domains = Map(Text, Array(Int))
 Choice = { value: Text, houses: Array(Int) }
 
-houses: Array(Int) = array.range(0, 5)
+houses: Array(Int) = Array.range(0, 5)
 
 domain: (Domains, Text) -> Array(Int)
 domain = (domains, value) => domains.get(value) ?? []
