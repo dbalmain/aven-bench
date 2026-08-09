@@ -531,6 +531,20 @@ describe("opencode --format json", () => {
     expect(usage.touchedPaths).toEqual(["/home/dave/w/clex"]);
   });
 
+  test("shell commands that run the arm's interpreter are counted separately", () => {
+    const bash = (command: string): string =>
+      JSON.stringify({ type: "tool_use", part: { type: "tool", tool: "bash", state: { input: { command } } } });
+    const stream = [bash("ls"), bash("python3 solution.py"), bash("python3 -m unittest")].join("\n");
+    const usage = parseEvents(stream, "python");
+    expect(usage.shellCommands).toBe(3);
+    expect(usage.runtimeCommands).toBe(2);
+    // Same stream on another arm: the counter is about self-verification on
+    // *this* arm, not about interpreters in general.
+    expect(parseEvents(stream, "ruby").runtimeCommands).toBe(0);
+    // The liveness probe passes no arm and must not be attributed to one.
+    expect(parseEvents(stream).runtimeCommands).toBe(0);
+  });
+
   test("an error event is surfaced, which is how a bad model id is caught", () => {
     const usage = parseEvents(
       JSON.stringify({
@@ -558,6 +572,7 @@ function agentInvocation(dir: string, over: Partial<AgentInvocation> = {}): Agen
     env: {},
     sandbox: "none",
     avenBin: null,
+    languageRuntime: false,
     temperature: null,
     seed: null,
     ...over,
@@ -617,6 +632,22 @@ describe("codex --json", () => {
     expect(usage.reportedCostUsd).toBeNull();
     expect(usage.sessionRef).toBe("thread_1");
     expect(usage.assistantText).toBe("ok\n");
+  });
+
+  test("interpreter commands are counted once per command, not once per event", () => {
+    const execution = (id: string, command: string): string =>
+      JSON.stringify({ type: "item.completed", item: { id, type: "command_execution", command } });
+    const usage = parseCodexEvents(
+      [
+        execution("cmd_0", "ls"),
+        // Codex reports a command twice, started and completed; the id dedupes it.
+        execution("cmd_1", "ruby solution.rb"),
+        execution("cmd_1", "ruby solution.rb"),
+      ].join("\n"),
+      "ruby",
+    );
+    expect(usage.shellCommands).toBe(2);
+    expect(usage.runtimeCommands).toBe(1);
   });
 
   test("passes the prompt on stdin, pins the variant and reports unknown cost", async () => {
@@ -1892,6 +1923,79 @@ describe("work directory containment", () => {
 // --- bubblewrap filesystem boundary ---------------------------------------
 
 describe("bubblewrap filesystem boundary", () => {
+  /** The PATH the model's shell will actually see, from the built argv. */
+  function sandboxPath(language: string, languageRuntime: boolean, avenBin: string | null): string {
+    const work = mkdtempSync(join(tmpdir(), "aven-bench-path-"));
+    try {
+      const argv = bubblewrapCommand([realpathSync(Bun.which("bash")!), "-c", "true"], {
+        dir: work,
+        language,
+        avenBin,
+        languageRuntime,
+      });
+      const i = argv.lastIndexOf("PATH");
+      expect(argv[i - 1]).toBe("--setenv");
+      return argv[i + 1]!;
+    } finally {
+      rmSync(work, { recursive: true, force: true });
+    }
+  }
+
+  // The defect this matrix exists for: `python3` and `ruby` were on the model's
+  // PATH unconditionally while `aven` was gated on the policy, so `no-verify`
+  // meant "cannot check your own work" only on the Aven arm. Asserting the argv
+  // rather than the caller's intent is deliberate — the caller's grant was never
+  // the broken half.
+  const stubAvenBin = realpathSync(Bun.which("bash")!);
+  const runtimeOf: Record<string, string> = { python: "python3", ruby: "ruby", aven: "aven" };
+
+  test("no-verify puts no language runtime on any arm's PATH", () => {
+    for (const language of ["python", "ruby", "aven"]) {
+      const path = sandboxPath(language, false, language === "aven" ? null : stubAvenBin);
+      const dirs = path.split(":");
+      for (const dir of dirs) {
+        expect(existsSync(join(dir, runtimeOf[language]!))).toBe(false);
+      }
+    }
+  });
+
+  test("self-verify puts every arm's own runtime on its PATH", () => {
+    for (const language of ["python", "ruby"]) {
+      const dirs = sandboxPath(language, true, null).split(":");
+      expect(dirs.some((d) => existsSync(join(d, runtimeOf[language]!)))).toBe(true);
+      // Still only its own: the arms must not borrow each other's interpreter.
+      const other = language === "python" ? "ruby" : "python3";
+      expect(dirs.some((d) => existsSync(join(d, other)))).toBe(false);
+    }
+    // Aven is mounted by path rather than found by name, so its grant is
+    // `avenBin` and the runtime flag is a no-op on that arm.
+    expect(sandboxPath("aven", true, stubAvenBin)).toContain("/run/aven-bench/bin");
+    expect(sandboxPath("aven", true, null)).not.toContain("/run/aven-bench/bin");
+  });
+
+  test.skipIf(Bun.which("bwrap") === null)(
+    "a real no-verify namespace cannot run the arm's interpreter, and self-verify can",
+    async () => {
+      const work = mkdtempSync(join(tmpdir(), "aven-bench-runtime-"));
+      const bash = realpathSync(Bun.which("bash")!);
+      try {
+        const run = async (languageRuntime: boolean): Promise<string> => {
+          const argv = bubblewrapCommand(
+            [bash, "-c", "python3 -c 'print(1 + 1)' 2>/dev/null || echo denied"],
+            { dir: work, language: "python", avenBin: null, languageRuntime },
+          );
+          const proc = await runProcess(argv, { cwd: work, timeoutMs: 30_000 });
+          expect(proc.spawnError).toBeNull();
+          return proc.stdout.trim();
+        };
+        expect(await run(false)).toBe("denied");
+        expect(await run(true)).toBe("2");
+      } finally {
+        rmSync(work, { recursive: true, force: true });
+      }
+    },
+  );
+
   test("an unavailable bwrap is reported instead of becoming an unsandboxed fallback", async () => {
     const availability = await sandboxAvailability("/definitely/not/bwrap");
     expect(availability.ok).toBe(false);
@@ -1905,6 +2009,7 @@ describe("bubblewrap filesystem boundary", () => {
         dir: work,
         language: "python",
         avenBin: null,
+        languageRuntime: false,
         harness: "codex",
       });
       expect(existsSync(join(work, ".agent-state/codex"))).toBe(true);
@@ -1943,7 +2048,7 @@ describe("bubblewrap filesystem boundary", () => {
         join(REPO_ROOT, "corpus"),
         siblingSecret,
       ],
-      { dir: work, language: "python", avenBin: null },
+      { dir: work, language: "python", avenBin: null, languageRuntime: false },
     );
     const proc = await runProcess(command, { cwd: work, timeoutMs: 30_000 });
 
@@ -2039,6 +2144,7 @@ describe("agent registry", () => {
         env: {},
         sandbox: "none",
         avenBin: null,
+        languageRuntime: false,
         temperature: null,
         seed: null,
       });

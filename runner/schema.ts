@@ -152,9 +152,30 @@ import type { ContaminationHit, ContaminationTier } from "./contamination.ts";
  *   model (`runtime_error`). A non-null signal means the process was killed
  *   rather than exited: not a model fault, and not recoverable from the row
  *   without this field. Distinct verdict `"signal"`; outcome `harness_error`.
+ * - **13** — `modelRuntimeInvocations`, the control arms' self-verification
+ *   signal. `toolPolicy: "no-verify"` was only enforced on the Aven arm: the
+ *   compiler was mounted into the model sandbox under `self-verify` only, while
+ *   `python3` and `ruby` went onto its PATH unconditionally. A control-arm model
+ *   could therefore run its solution before submitting and an Aven one could
+ *   not — an uninstrumented capability in exactly the dimension the campaign
+ *   measures, and one that no field recorded. Now every arm's runtime is gated
+ *   on the policy, and each round counts the shell commands that named the
+ *   arm's interpreter (`runtime.ts`), null on the Aven arm where
+ *   `modelToolInvocations` is ground truth.
+ *
+ *   Rows written before this version had the ungated PATH, so their control-arm
+ *   `no-verify` results are a **lower bound** on Aven's relative standing rather
+ *   than a clean comparison; `schemaVersion < 13` is how to select them.
+ *   Deliberately **not** in the natural key, unlike `contractGeneration`: adding
+ *   a segment would re-buy every historical row and the sweep budget is real
+ *   money, so the call belongs to whoever is paying. The consequence is live —
+ *   resume reads every log under `data/runs/` and will treat a pre-13 control
+ *   row as completing a post-13 experiment — so re-measuring the controls under
+ *   the enforced policy means moving those logs aside first, and analysis that
+ *   pools the two must not read the union as one experiment.
  */
 
-export const SCHEMA_VERSION = 12 as const;
+export const SCHEMA_VERSION = 13 as const;
 
 /**
  * Generated task-contract policy embedded in every round-0 prompt.
@@ -395,6 +416,18 @@ export type RepairRound = {
    */
   modelToolInvocations: number | null;
   /**
+   * Shell commands this round that named the arm's interpreter; null on Aven.
+   *
+   * The control arms' counterpart to `modelToolInvocations`, and the weaker of
+   * the two: harness event streams report what was launched, never how it
+   * exited, so this counts *attempts* to self-verify. Read it with `sandbox` —
+   * under `bubblewrap` the interpreter is absent unless the policy granted it,
+   * so a nonzero count is a denied attempt; under `none` the host PATH has it
+   * and the attempt succeeded. Absent on rows before schema 13, when the
+   * interpreters were on the model's PATH regardless of policy.
+   */
+  modelRuntimeInvocations: number | null;
+  /**
    * Paths the harness touched outside the work directory.
    *
    * Not paranoia. On the first real sweep opencode resolved its project root to
@@ -410,9 +443,10 @@ export type RepairRound = {
    * Shell tool invocations the harness logged this round.
    *
    * Under sandboxed `no-verify` these are typically exploration (`ls`, `cat`)
-   * rather than a policy breach: the model cannot reach `aven`, and a hidden
-   * suite is not on disk. The contamination-grade signal is
-   * `modelToolInvocations` (or shell under `sandbox: "none"`).
+   * rather than a policy breach: the model cannot reach `aven` or its own
+   * interpreter, and a hidden suite is not on disk. The contamination-grade
+   * signals are `modelToolInvocations`, `modelRuntimeInvocations`, and shell
+   * under `sandbox: "none"`.
    */
   shellCommands: number;
   /**

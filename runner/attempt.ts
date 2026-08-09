@@ -322,6 +322,7 @@ function foldTurns(turns: readonly AgentResult[]) {
     reportedCostUsd: costs.length > 0 ? costs.reduce((a, b) => a + b, 0) : null,
     wallMs: sum((t) => t.wallMs),
     shellCommands: sum((t) => t.shellCommands),
+    runtimeCommands: sum((t) => t.runtimeCommands),
     touchedPaths: turns.flatMap((t) => t.touchedPaths),
     log: turns.map((t) => t.log).join("\n"),
   };
@@ -444,6 +445,13 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
           // no-verify the model must not find a compiler to loop on.
           avenBin:
             spec.language === "aven" && ctx.toolPolicy === "self-verify" ? ctx.avenBin : null,
+          // The same grant for the control arms, decided here rather than in the
+          // sandbox so one policy lives in one place. `python3`/`ruby` used to be
+          // mounted unconditionally, which let a control-arm model run its
+          // solution under `no-verify` while the Aven arm could not — the one
+          // dimension the campaign measures. The gate is unaffected: it spawns
+          // interpreters on the host, outside the namespace.
+          languageRuntime: ctx.toolPolicy === "self-verify",
           temperature: ctx.temperature,
           seed: ctx.seed,
         }),
@@ -520,6 +528,9 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
       agentWallMs: folded.wallMs,
       agentLogHash,
       modelToolInvocations: modelRunsThisRound,
+      // Null on the Aven arm: `modelToolInvocations` is ground truth there, and
+      // two counters of the same thing would only disagree.
+      modelRuntimeInvocations: spec.language === "aven" ? null : folded.runtimeCommands,
     };
 
     if (!agentResult.ok) {
@@ -724,8 +735,10 @@ export async function runAttempt(ctx: RunContext, spec: AttemptSpec): Promise<At
         sessionRef,
         env: agentEnv,
         sandbox: ctx.sandbox,
-        // Survey is not a solve turn; never hand it the compiler either.
+        // Survey is not a solve turn; never hand it the compiler or an
+        // interpreter either.
         avenBin: null,
+        languageRuntime: false,
         temperature: ctx.temperature,
         seed: ctx.seed,
       }),

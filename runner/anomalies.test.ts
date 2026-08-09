@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   policyAnomalyLines,
+  sumModelRuntimeInvocations,
   sumModelToolInvocations,
   type PolicyAnomalyRow,
 } from "./anomalies.ts";
@@ -29,6 +30,31 @@ describe("sumModelToolInvocations", () => {
         ],
       }),
     ).toBe(3);
+  });
+});
+
+/** A control-arm row: the interpreter counter carries the signal there. */
+function controlRow(
+  over: Partial<PolicyAnomalyRow> & Pick<PolicyAnomalyRow, "taskId">,
+): PolicyAnomalyRow {
+  return row({
+    language: "python",
+    repairRounds: [{ modelToolInvocations: null, modelRuntimeInvocations: 0 }],
+    ...over,
+  });
+}
+
+describe("sumModelRuntimeInvocations", () => {
+  test("sums rounds and treats null and pre-schema-13 absence as zero", () => {
+    expect(
+      sumModelRuntimeInvocations({
+        repairRounds: [
+          { modelToolInvocations: null, modelRuntimeInvocations: 2 },
+          { modelToolInvocations: null, modelRuntimeInvocations: null },
+          { modelToolInvocations: null },
+        ],
+      }),
+    ).toBe(2);
   });
 });
 
@@ -123,5 +149,67 @@ describe("policyAnomalyLines", () => {
 
   test("clean rows produce no policy lines", () => {
     expect(policyAnomalyLines([row({ taskId: "two-fer" })])).toEqual([]);
+  });
+
+  test("a sandboxed control row that named its interpreter is reported, quietly", () => {
+    const lines = policyAnomalyLines([
+      controlRow({
+        taskId: "bob",
+        shellCommands: 3,
+        repairRounds: [
+          { modelToolInvocations: null, modelRuntimeInvocations: 0 },
+          { modelToolInvocations: null, modelRuntimeInvocations: 2 },
+        ],
+      }),
+    ]);
+    const joined = lines.join("\n");
+    expect(joined).toContain("1 sandboxed row(s) named their language runtime under no-verify");
+    expect(joined).toContain("attempted, not run");
+    expect(joined).toContain("python bob s0: 2 command(s)");
+    for (const line of lines) expect(line.startsWith("  !!")).toBe(false);
+    // Reported once, by its strongest signal.
+    expect(joined).not.toContain("used the shell under no-verify");
+  });
+
+  test("an unsandboxed control row that ran its interpreter is a loud !! violation", () => {
+    const lines = policyAnomalyLines([
+      controlRow({
+        taskId: "hamming",
+        sandbox: "none",
+        shellCommands: 4,
+        repairRounds: [{ modelToolInvocations: null, modelRuntimeInvocations: 3 }],
+      }),
+    ]);
+    const joined = lines.join("\n");
+    expect(joined).toContain(
+      "!! 1 row(s) ran their language runtime under toolPolicy=no-verify",
+    );
+    expect(joined).toContain("actual self-verification");
+    expect(joined).toContain("python hamming s0: 3 command(s)");
+    expect(joined).not.toContain("ran shell commands under toolPolicy=no-verify");
+  });
+
+  test("self-verify control rows are not flagged for using their interpreter", () => {
+    const lines = policyAnomalyLines([
+      controlRow({
+        taskId: "grains",
+        toolPolicy: "self-verify",
+        shellCommands: 6,
+        repairRounds: [{ modelToolInvocations: null, modelRuntimeInvocations: 5 }],
+      }),
+    ]);
+    expect(lines.filter((l) => l.includes("no-verify"))).toEqual([]);
+  });
+
+  test("pre-schema-13 control rows keep their old reading rather than a new alarm", () => {
+    // Those rows had the interpreter on PATH whatever the policy said, and no
+    // field recorded whether it was used. Absent must not read as zero-and-fine
+    // nor as a violation; the row reports as shell activity, exactly as before.
+    const lines = policyAnomalyLines([
+      row({ taskId: "leap", language: "ruby", shellCommands: 2 }),
+    ]);
+    const joined = lines.join("\n");
+    expect(joined).toContain("1 sandboxed row(s) used the shell under no-verify");
+    expect(joined).not.toContain("language runtime");
   });
 });

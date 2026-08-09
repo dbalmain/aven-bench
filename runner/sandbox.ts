@@ -10,6 +10,7 @@ import { existsSync, mkdirSync, realpathSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, isAbsolute, join } from "node:path";
 import { runProcess } from "./proc.ts";
+import { runtimeExecutables } from "./runtime.ts";
 import type { SandboxMode } from "./schema.ts";
 
 const SANDBOX_HOME = "/home/agent";
@@ -20,6 +21,14 @@ export type SandboxCommandOptions = {
   dir: string;
   language: string;
   avenBin: string | null;
+  /**
+   * Expose this arm's language runtime (`python3`, `ruby`) on the model's PATH.
+   *
+   * The caller passes true only under `toolPolicy: "self-verify"`, exactly as it
+   * passes `avenBin` only then. Both grants are the caller's to make so that one
+   * policy decision lives in one place; this module only carries it out.
+   */
+  languageRuntime: boolean;
   /** Harness whose minimal state and credentials must exist in the namespace. */
   harness?: "opencode" | "codex";
 };
@@ -217,8 +226,16 @@ export function bubblewrapCommand(command: string[], options: SandboxCommandOpti
     dirname(command[0]!),
     ...["bash", "git", "ls", "find", "sed", "grep"].map((name) => dirname(executable(name))),
   ]);
-  if (options.language === "python") pathDirs.add(dirname(executable("python3")));
-  if (options.language === "ruby") pathDirs.add(dirname(executable("ruby")));
+  // Same gate as `avenBin` below, for the same reason: under no-verify no arm
+  // may check its own work. These were unconditional until 2026-08-09, which
+  // made `no-verify` mean one thing on the Aven arm and another on the controls.
+  // The gate itself is unaffected — it runs outside this namespace off the host
+  // PATH (`gate.ts` spawns `python3`/`ruby` through `runProcess` directly).
+  if (options.languageRuntime) {
+    for (const name of runtimeExecutables(options.language)) {
+      pathDirs.add(dirname(executable(name)));
+    }
+  }
 
   // Caller passes avenBin only under toolPolicy self-verify. Under no-verify the
   // model must not find a compiler; the trusted gate uses host AVEN_BIN outside

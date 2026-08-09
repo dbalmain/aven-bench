@@ -17,18 +17,18 @@ bun run bench --lang aven,python --intersect \
 
 ## Files
 
-| file                 | what it owns                                                          |
-| -------------------- | --------------------------------------------------------------------- |
-| `schema.ts`          | the attempt record (§3d) and the natural key resume uses              |
-| `run.ts`             | CLI, planning, resume, concurrency, the summary                       |
-| `attempt.ts`         | one attempt: rounds, prompts, gate, record assembly                   |
-| `gate.ts`            | the probes (`aven check`, `aven test`, `python`, `mypy`) and outcomes |
-| `prompt.ts`          | round-0 and repair prompts                                            |
-| `prices.ts`          | the local price table — list prices for `shadowCostUsd`               |
-| `store.ts`           | append-only JSONL, content-addressed artifacts, the resume index      |
-| `session.ts`         | `AVEN_SESSION_LOG` reader and the phase tagging scheme                |
-| `proc.ts`            | subprocess with a hard timeout; semaphores                            |
-| `tokens.ts`          | the size-metric estimator (`heuristic-v1`)                            |
+| file                 | what it owns                                                           |
+| -------------------- | ---------------------------------------------------------------------- |
+| `schema.ts`          | the attempt record (§3d) and the natural key resume uses               |
+| `run.ts`             | CLI, planning, resume, concurrency, the summary                        |
+| `attempt.ts`         | one attempt: rounds, prompts, gate, record assembly                    |
+| `gate.ts`            | the probes (`aven check`, `aven test`, `python`, `mypy`) and outcomes  |
+| `prompt.ts`          | round-0 and repair prompts                                             |
+| `prices.ts`          | the local price table — list prices for `shadowCostUsd`                |
+| `store.ts`           | append-only JSONL, content-addressed artifacts, the resume index       |
+| `session.ts`         | `AVEN_SESSION_LOG` reader and the phase tagging scheme                 |
+| `proc.ts`            | subprocess with a hard timeout; semaphores                             |
+| `tokens.ts`          | the size-metric estimator (`heuristic-v1`)                             |
 | `../adapters/agent/` | harness adapters: `opencode`/`codex` real; the other entries are stubs |
 
 ## The two metrics
@@ -43,13 +43,31 @@ alone.
 
 - **`toolPolicy`** (default `no-verify`) — the model is told not to run the
   compiler or the suite. An agent that loops on the compiler measures the
-  compiler, not the docs. Compliance is measured, not assumed: on the Aven arm
-  every `aven` the model runs itself lands in the session log and is counted as
-  `repairRounds[].modelToolInvocations` — that is the end-of-sweep
-  self-verification signal. `shellCommands` still records shell tool use
-  (often exploration under the sandbox) but is not treated as contamination by
-  itself. `--self-verify` flips the policy and mounts `aven` into the model
-  namespace when `AVEN_BIN` is set.
+  compiler, not the docs. The policy is enforced by the sandbox and it means the
+  same thing on every arm: under `no-verify` neither `aven` nor the control
+  arms' `python3`/`ruby` is on the model's PATH. `--self-verify` flips the
+  policy, mounting `aven` when `AVEN_BIN` is set and the arm's interpreter
+  otherwise. The gate is unaffected either way — it runs outside the namespace
+  and spawns host binaries.
+
+  Compliance is measured, not assumed. On the Aven arm every `aven` the model
+  runs itself lands in the session log and is counted as
+  `repairRounds[].modelToolInvocations`. The control arms have no such log, so
+  `repairRounds[].modelRuntimeInvocations` counts the shell commands that named
+  their interpreter: attempts, since the harness reports what was launched but
+  not how it exited. Read with `sandbox` — denied under `bubblewrap`, real under
+  `none` — that is the control arms' self-verification signal. `shellCommands`
+  still records shell tool use (often exploration under the sandbox) but is not
+  treated as contamination by itself.
+
+  > Until 2026-08-09 the interpreters were mounted regardless of policy while
+  > `aven` was gated, so on rows with `schemaVersion < 13` — including
+  > `phase3-holdout-02` and `-03`, which measured the campaign's headline
+  > cross-language deltas — a control-arm model could run its solution before
+  > submitting and an Aven one could not, with nothing recording whether it did.
+  > Those deltas are a **lower bound** on Aven's relative standing, not a clean
+  > comparison. The rows stay as written; only their reading carries the caveat.
+
 - **`suiteVisibility`** (default `hidden`) — in round 0 the generated suite is
   absent while the model works, then is written only for the trusted gate and
   removed again (including Python bytecode) before another model turn.
@@ -133,8 +151,8 @@ actually produces. Per-round charges are deltas that sum to the session total
 (verified), so adding them is exact.
 
 Codex bills against a subscription but emits no cost field. Its rows therefore
-record `costUsd: null` and `priceSource: "unknown"`; zero would incorrectly claim
-the harness was free. Token counts and `shadowCostUsd` remain available.
+record `costUsd: null` and `priceSource: "unknown"`; zero would incorrectly
+claim the harness was free. Token counts and `shadowCostUsd` remain available.
 
 `harnessSessionCostUsd` is the harness's own session total, read straight from
 its SQLite store — the figure its UI shows. It is computed independently of the
@@ -212,6 +230,10 @@ The default defence is now an OS filesystem sandbox:
   sibling attempts are absent. `--no-sandbox` is the explicit debugging opt-out;
   if bubblewrap is missing or cannot create a namespace, the default run refuses
   to start rather than falling back.
+- the model's PATH holds only the harness and a few file utilities. A language
+  runtime is added exactly when `toolPolicy` allows self-verification, on every
+  arm alike — see `runtime.ts` for the one table that decides it. The gate is
+  not affected: it spawns host binaries outside the namespace.
 - network is deliberately shared because the harness calls a cloud API. This is
   filesystem containment, not an exfiltration or retrieval boundary.
 - the work root still defaults to `~/.cache/aven-bench/work`, and each attempt
@@ -222,7 +244,8 @@ The default defence is now an OS filesystem sandbox:
   sample of `escapedPaths`. `shellCommands` counts shell tool invocations even
   when their filesystem effects cannot be reconstructed from the event stream.
   Under sandboxed `no-verify` the summary reports that as activity, not as a
-  contamination flag; `modelToolInvocations > 0` is what gets a loud warning.
+  contamination flag; a loud warning needs `modelToolInvocations > 0`, or
+  `modelRuntimeInvocations > 0` on a row that was not sandboxed.
 
 Every attempt records `sandbox: "bubblewrap" | "none"`, so containment is
 auditable per row. A nonzero escape count on a sandboxed row says the model
@@ -232,8 +255,8 @@ remains a contamination warning.
 ## Resume
 
 An attempt is identified by `attemptKey()`: task, language, model, harness,
-`docId`, aven commit, sample index, tool policy, suite visibility, sandbox
-mode, the generated-contract version, the nudge budget (when nonzero),
+`docId`, aven commit, sample index, tool policy, suite visibility, sandbox mode,
+the generated-contract version, the nudge budget (when nonzero),
 `diagnosticFormat` (when not the legacy `text` default), and `agentVariant`
 (when not null — provider default). Resume reads **every** log under
 `data/runs/`, so re-running the same experiment adds nothing while a policy or
@@ -250,19 +273,19 @@ deliberately; it appends a new row and leaves the old one alone.
 
 ## Failure handling
 
-| what happened                              | recorded as                          |
-| ------------------------------------------ | ------------------------------------ |
-| bad model id, provider error, opencode ≠ 0 | `harness_error`                      |
-| harness or tool exceeded its timeout       | `timeout`                            |
+| what happened                                 | recorded as                          |
+| --------------------------------------------- | ------------------------------------ |
+| bad model id, provider error, opencode ≠ 0    | `harness_error`                      |
+| harness or tool exceeded its timeout          | `timeout`                            |
 | gate process killed by a signal (not timeout) | `harness_error` (probe `signal` set) |
-| agent turn returned **no tokens at all**   | `harness_error` (`agent-no-tokens`)  |
-| model wrote no solution file, after nudges  | `refusal`                            |
-| gate tool could not be run at all          | `harness_error` (`gate-unavailable`) |
-| suite would not load / parse               | `parse_error`                        |
-| `aven check` rejected it                   | `check_error`                        |
-| a case raised                              | `runtime_error`                      |
-| a case asserted                            | `wrong_output`                       |
-| every gating probe green                   | `pass`                               |
+| agent turn returned **no tokens at all**      | `harness_error` (`agent-no-tokens`)  |
+| model wrote no solution file, after nudges    | `refusal`                            |
+| gate tool could not be run at all             | `harness_error` (`gate-unavailable`) |
+| suite would not load / parse                  | `parse_error`                        |
+| `aven check` rejected it                      | `check_error`                        |
+| a case raised                                 | `runtime_error`                      |
+| a case asserted                               | `wrong_output`                       |
+| every gating probe green                      | `pass`                               |
 
 A harness failure ends the attempt with whatever rounds already happened and is
 never folded into a model failure or retried in place.
@@ -271,27 +294,27 @@ never folded into a model failure or retried in place.
 `agent-no-tokens`, `agent-failed`, `gate-unavailable`, `runner-exception`.
 
 **A model that answers in chat is nudged, not scored as a refusal.** A turn that
-writes no file gets up to `--max-nudges` (default 2) deterministic re-asks naming
-the missing file, then the round proceeds normally; `nudges` on the row says it
-happened. This is not politeness — in `phase3-holdout-02` 37 of 213 rows were
-scored `refusal` and none were refusals: all 37 made zero tool calls and 36
+writes no file gets up to `--max-nudges` (default 2) deterministic re-asks
+naming the missing file, then the round proceeds normally; `nudges` on the row
+says it happened. This is not politeness — in `phase3-holdout-02` 37 of 213 rows
+were scored `refusal` and none were refusals: all 37 made zero tool calls and 36
 replied with the finished program in a fenced block, `hello-world` among them.
 The miss split 20 Aven / 11 Ruby / 6 Python, so a harness-contract failure was
-being read as a language gap of up to 31 points. The nudge says nothing about the
-task or the language, so a rescued solution is still the model's first shot and
-still scores `firstShotPass`; filter on `nudges` if you disagree. `--max-nudges 0`
-restores the old behaviour and resumes against the pre-schema-8 rows, because the
-nudge budget joins the natural key.
+being read as a language gap of up to 31 points. The nudge says nothing about
+the task or the language, so a rescued solution is still the model's first shot
+and still scores `firstShotPass`; filter on `nudges` if you disagree.
+`--max-nudges 0` restores the old behaviour and resumes against the pre-schema-8
+rows, because the nudge budget joins the natural key.
 
 **`--diagnostic-format text|agent` (default `text`) is an independent variable,
 not a convenience flag.** It chooses how Aven compiler diagnostics are rendered
 into the repair prompt: `text` is ariadne (box-drawing gutter, carets, `Note:`
 lines); `agent` is `aven check --format agent` (one line per diagnostic plus
 indented `in:` / `at:` / `help:`). The JSON gate probe is unchanged — only the
-text the model reads on a failed check differs. The field joins the natural
-key, so the arms never pool. It is Aven-only in effect: Python and Ruby rows
-always record `diagnosticFormat: "text"` (they never saw an Aven diagnostic),
-which keeps control rows shared across format arms instead of re-buying them.
+text the model reads on a failed check differs. The field joins the natural key,
+so the arms never pool. It is Aven-only in effect: Python and Ruby rows always
+record `diagnosticFormat: "text"` (they never saw an Aven diagnostic), which
+keeps control rows shared across format arms instead of re-buying them.
 Pre-schema-10 rows lack the field and resume as `text`.
 
 **A turn that billed nothing measured nothing.** Zero tokens in every category

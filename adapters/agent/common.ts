@@ -49,6 +49,14 @@ export type AgentInvocation = {
   sandbox: SandboxMode;
   /** Exact Aven binary to expose read-only on that arm, when configured. */
   avenBin: string | null;
+  /**
+   * Expose the arm's language runtime (`python3`, `ruby`) to the model.
+   *
+   * The runner sets this only under `toolPolicy: "self-verify"`, the same grant
+   * `avenBin` carries for the Aven arm. Under `no-verify` no arm gets one, so
+   * "cannot check its own work before submitting" means one thing everywhere.
+   */
+  languageRuntime: boolean;
   temperature: number | null;
   seed: number | null;
 };
@@ -90,6 +98,14 @@ export type AgentResult = {
    * example code. Recorded because an instruction nobody checks is not a control.
    */
   shellCommands: number;
+  /**
+   * Of those, the ones that named the arm's language runtime (`runtime.ts`).
+   *
+   * The control-arm counterpart to the Aven arm's `modelToolInvocations`: an
+   * attempt to self-verify, whether or not the sandbox let it through. Zero on
+   * the Aven arm, which is counted from the session log instead.
+   */
+  runtimeCommands: number;
 };
 
 /** A harness's own cumulative accounting for one session. */
@@ -180,6 +196,7 @@ export function emptyResult(overrides: Partial<AgentResult> = {}): AgentResult {
     assistantText: "",
     touchedPaths: [],
     shellCommands: 0,
+    runtimeCommands: 0,
     ...overrides,
   };
 }

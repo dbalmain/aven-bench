@@ -19,6 +19,7 @@ import { mkdtempSync, realpathSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { runProcess } from "../../runner/proc.ts";
+import { countRuntimeInvocations } from "../../runner/runtime.ts";
 import { bubblewrapCommand } from "../../runner/sandbox.ts";
 import {
   emptyResult,
@@ -67,6 +68,8 @@ export type CodexUsage = {
   events: number;
   touchedPaths: string[];
   shellCommands: number;
+  /** Of those, ones naming the arm's language runtime — see `runtime.ts`. */
+  runtimeCommands: number;
 };
 
 const MAX_TOUCHED_PATHS = 200;
@@ -81,8 +84,13 @@ function eventError(ev: Event): string {
   return ev.error?.message ?? ev.message ?? "unknown codex error";
 }
 
-/** Fold the Codex JSONL stream into the adapter's accounting fields. */
-export function parseCodexEvents(stdout: string): CodexUsage {
+/**
+ * Fold the Codex JSONL stream into the adapter's accounting fields.
+ *
+ * `language` names the arm whose runtime counts as self-verification. It is
+ * omitted for the liveness probe, which runs no tools and belongs to no arm.
+ */
+export function parseCodexEvents(stdout: string, language = ""): CodexUsage {
   const usage: CodexUsage = {
     promptTokens: 0,
     completionTokens: 0,
@@ -96,6 +104,7 @@ export function parseCodexEvents(stdout: string): CodexUsage {
     events: 0,
     touchedPaths: [],
     shellCommands: 0,
+    runtimeCommands: 0,
   };
   const seenPaths = new Set<string>();
   const seenCommands = new Set<string>();
@@ -129,6 +138,7 @@ export function parseCodexEvents(stdout: string): CodexUsage {
       if (!seenCommands.has(key)) {
         seenCommands.add(key);
         usage.shellCommands++;
+        usage.runtimeCommands += countRuntimeInvocations(language, item.command);
         for (const path of pathsInCommand(item.command)) addPath(path);
       }
     }
@@ -209,6 +219,7 @@ export const codexAdapter: AgentAdapter = {
               dir: inv.dir,
               language: inv.language,
               avenBin: inv.avenBin,
+              languageRuntime: inv.languageRuntime,
               harness: "codex",
             })
           : command;
@@ -229,7 +240,7 @@ export const codexAdapter: AgentAdapter = {
         log: proc.stderr,
       });
     }
-    const usage = parseCodexEvents(proc.stdout);
+    const usage = parseCodexEvents(proc.stdout, inv.language);
     const log = `# argv: ${argv.join(" ")} <prompt via stdin>\n# exit: ${proc.exitCode}\n${proc.stdout}\n--- stderr ---\n${proc.stderr}`;
 
     const failed = proc.timedOut || proc.exitCode !== 0 || usage.errors.length > 0;
@@ -255,6 +266,7 @@ export const codexAdapter: AgentAdapter = {
       assistantText: usage.assistantText.trim(),
       touchedPaths: usage.touchedPaths,
       shellCommands: usage.shellCommands,
+      runtimeCommands: usage.runtimeCommands,
     };
   },
 

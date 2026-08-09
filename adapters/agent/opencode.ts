@@ -36,6 +36,7 @@
 import { existsSync, mkdtempSync, realpathSync, rmSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
+import { countRuntimeInvocations } from "../../runner/runtime.ts";
 import { bubblewrapCommand } from "../../runner/sandbox.ts";
 import { runProcess } from "../../runner/proc.ts";
 import {
@@ -79,6 +80,8 @@ export type OpencodeUsage = {
   touchedPaths: string[];
   /** `bash` tool calls. A shell can reach anything, so it is counted separately. */
   shellCommands: number;
+  /** Of those, ones naming the arm's language runtime — see `runtime.ts`. */
+  runtimeCommands: number;
 };
 
 /** Tool inputs that name a filesystem location, across opencode's tool set. */
@@ -101,8 +104,13 @@ function pathsInCommand(command: string): string[] {
   return [...command.matchAll(/(?<![\w./-])\/[^\s"';|&()<>]+/g)].map((m) => m[0]);
 }
 
-/** Fold the event stream into usage. Exported for tests: this is the fiddly part. */
-export function parseEvents(stdout: string): OpencodeUsage {
+/**
+ * Fold the event stream into usage. Exported for tests: this is the fiddly part.
+ *
+ * `language` names the arm whose runtime counts as self-verification. It is
+ * omitted for the liveness probe, which runs no tools and belongs to no arm.
+ */
+export function parseEvents(stdout: string, language = ""): OpencodeUsage {
   const usage: OpencodeUsage = {
     promptTokens: 0,
     completionTokens: 0,
@@ -116,6 +124,7 @@ export function parseEvents(stdout: string): OpencodeUsage {
     events: 0,
     touchedPaths: [],
     shellCommands: 0,
+    runtimeCommands: 0,
   };
   const seenPaths = new Set<string>();
   let sawCost = false;
@@ -142,6 +151,7 @@ export function parseEvents(stdout: string): OpencodeUsage {
       if (ev.part?.tool === "bash" || typeof command === "string") {
         usage.shellCommands++;
         if (typeof command === "string") {
+          usage.runtimeCommands += countRuntimeInvocations(language, command);
           for (const p of pathsInCommand(command)) {
             if (seenPaths.has(p) || seenPaths.size >= MAX_TOUCHED_PATHS) continue;
             seenPaths.add(p);
@@ -262,6 +272,7 @@ export const opencodeAdapter: AgentAdapter = {
               dir: inv.dir,
               language: inv.language,
               avenBin: inv.avenBin,
+              languageRuntime: inv.languageRuntime,
               harness: "opencode",
             })
           : command;
@@ -281,7 +292,7 @@ export const opencodeAdapter: AgentAdapter = {
         log: proc.stderr,
       });
     }
-    const usage = parseEvents(proc.stdout);
+    const usage = parseEvents(proc.stdout, inv.language);
     const log = `# argv: ${argv.slice(0, -1).join(" ")} <prompt>\n# exit: ${proc.exitCode}\n${proc.stdout}\n--- stderr ---\n${proc.stderr}`;
 
     const failed = proc.timedOut || proc.exitCode !== 0 || usage.errors.length > 0;
@@ -307,6 +318,7 @@ export const opencodeAdapter: AgentAdapter = {
       assistantText: usage.assistantText.trim(),
       touchedPaths: usage.touchedPaths,
       shellCommands: usage.shellCommands,
+      runtimeCommands: usage.runtimeCommands,
     };
   },
 

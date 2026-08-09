@@ -328,7 +328,10 @@ console.log(
     "  a model whose coverage is below its peers needs re-running before its rate means\n" +
     "  anything. Both are recoverable — but only if noticed.\n" +
     "  shell>0 is sandboxed exploration activity under no-verify more often than not;\n" +
-    "  the self-verification signal is modelToolInvocations (see runner/anomalies.ts).",
+    "  the self-verification signals are modelToolInvocations on the Aven arm and\n" +
+    "  modelRuntimeInvocations on the controls (see runner/anomalies.ts). Control-arm\n" +
+    "  rows with schemaVersion<13 have neither: their interpreter was on PATH whatever\n" +
+    "  the policy said, so their Aven-vs-control delta is a lower bound.",
 );
 
 // --- the band --------------------------------------------------------------

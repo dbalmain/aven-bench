@@ -9,10 +9,10 @@
     "description": ""
   },
   "phase3-holdout-02": {
-    "description": "First full 3-arm holdout sweep (Aven vs Python vs Ruby, 71 tasks each) on minimax-m2.7 with skill doc v1. Establishes the cross-language delta the campaign exists to measure."
+    "description": "First full 3-arm holdout sweep (Aven vs Python vs Ruby, 71 tasks each) on minimax-m2.7 with skill doc v1. Establishes the cross-language delta the campaign exists to measure. CAVEAT: ran before the toolPolicy fix of 2026-08-09, so python3/ruby were on the model's sandbox PATH under no-verify while aven was not — the control arms could check their work before submitting and the Aven arm could not, with nothing recording whether they did (4 of 142 control rows ran any shell command at all; none of those passed). Read the Aven-vs-control delta as a lower bound, not a clean comparison."
   },
   "phase3-holdout-03": {
-    "description": "Same 3-arm holdout as -02 but on deepseek-v4-flash, with the nudge loop enabled (nudges<=2). Changes the model and adds nudging at once, so it is not a clean single-variable comparison against -02."
+    "description": "Same 3-arm holdout as -02 but on deepseek-v4-flash, with the nudge loop enabled (nudges<=2). Changes the model and adds nudging at once, so it is not a clean single-variable comparison against -02. CAVEAT: carries the same pre-2026-08-09 toolPolicy asymmetry as -02 — the control arms had an uninstrumented interpreter under no-verify (5 of 142 control rows ran a shell command, 3 of them passed), so the Aven-vs-control delta is a lower bound."
   },
   "phase3-holdout-04": {
     "description": "Aven arm only, on skill doc v2 and a compiler carrying the first round of benchmark-driven fixes (aven-lang e8a71f9). Drops the control arms to iterate faster on the Aven side."
