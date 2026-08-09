@@ -1,47 +1,27 @@
 # Reference solution, hand-written. Not shown to any model.
 # Proves the generated Aven suite for `complex-numbers` is satisfiable.
 #
-# Two Aven facts drive the shape of this program:
+# One Aven fact drives the shape of this program:
 #
-# 1. Parameters cannot be untagged `Int | Array(_)` *and* branch on which was
-#    passed — `|` is for literal/tagged unions, and there is no downcast. The
-#    suite calls `add([1,2], 5)` and `add(5, [1,2])` with bare values, so the
-#    only way to normalize is a runtime kind test. `x.encode(Json)` /
-#    `Json.decode` reifies the value into the tagged `Data` variant, which *is*
-#    matchable.
+# Parameters cannot be untagged `Int | Array(_)` *and* branch on which was
+# passed — `|` is for literal/tagged unions, and there is no downcast. The
+# suite calls `add([1,2], 5)` and `add(5, [1,2])` with bare values, so the
+# only way to normalize is a runtime kind test. `x.encode(Json)` /
+# `Json.decode` reifies the value into the tagged `Data` variant, which *is*
+# matchable.
 #
-# 2. `test.expectEq` is `(a, a) -> …` with structural `==`. Scalar `0 == 0.0`
-#    is true, but array equality is not numeric-promoting: `[0.5, 0.0] !=
-#    [0.5, 0]`. Division therefore cannot return a uniform `Array(Float)`;
-#    whole components must be re-packed as `Int` (via `"${f}"` + `.toInt()`)
-#    so the expected shapes pass.
+# Everything else stays in `Float`. Aven `==` compares Int and Float
+# numerically, elementwise through arrays and records alike, so `[0.5, 0.0]`
+# equals the suite's `[0.5, 0]` and computed components need no re-packing.
 #
 # Symbolic inputs (`"pi"`, `"ln(2)"`, …) and the expected `["e", 0]` come from
 # upstream canonical data and are left as strings by every language adapter.
 # Aven has no `Float.sin` / `.cos` / `.exp`, so `exp` tables the five suite
 # cases (still going through Json so the symbolic texts are handled).
 
-toWholeInt = (f) =>
-  s = "${f}"
-  s.endsWith(".0") ?>
-    true =>
-      n = s.length()
-      s.slice(0, n - 2).toInt() ?? 0
-    false => 0
+# expectEq compares numerically, so a Float pair needs no re-packing.
+packPair = (re, im) => [re, im]
 
-# Pack a computed (Float, Float) pair into the shape expectEq wants.
-packPair = (re, im) =>
-  reWhole = re == re.floor()
-  imWhole = im == im.floor()
-  reWhole && imWhole ?>
-    true => [toWholeInt(re), toWholeInt(im)]
-    false =>
-      im == 0.0 ?>
-        true => [re, 0]
-        false =>
-          re == 0.0 ?>
-            true => [0, im]
-            false => [re, im]
 
 numFromData = (d) =>
   d ?>
@@ -77,17 +57,9 @@ asPair = (x) =>
       { re: re, im: im }
     _ => { re: 0.0, im: 0.0 }
 
-real = (z) =>
-  p = asPair(z)
-  p.re == p.re.floor() ?>
-    true => toWholeInt(p.re)
-    false => p.re
+real = (z) => asPair(z).re
 
-imaginary = (z) =>
-  p = asPair(z)
-  p.im == p.im.floor() ?>
-    true => toWholeInt(p.im)
-    false => p.im
+imaginary = (z) => asPair(z).im
 
 add = (z1, z2) =>
   a = asPair(z1)
@@ -112,10 +84,7 @@ div = (z1, z2) =>
 
 abs = (z) =>
   p = asPair(z)
-  r = (p.re * p.re + p.im * p.im).sqrt()
-  r == r.floor() ?>
-    true => toWholeInt(r)
-    false => r
+  (p.re * p.re + p.im * p.im).sqrt()
 
 conjugate = (z) =>
   p = asPair(z)

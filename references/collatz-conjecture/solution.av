@@ -5,8 +5,8 @@ stepsGo = (n, acc) =>
   n == 1 ?>
     true => acc
     false =>
-      n.mod(2) == 0 ?>
-        true => stepsGo(n.div(2), acc + 1)
+      n % 2 == 0 ?>
+        true => stepsGo(n / 2, acc + 1)
         false => stepsGo(3 * n + 1, acc + 1)
 
 steps : (Int) -> Result(Int, Text)
