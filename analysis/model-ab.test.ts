@@ -10,11 +10,13 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+  ARM_A_FILE,
   ARM_A_MODEL,
   GREEN_EFFECT_BAR,
   aggregateByTask,
   analyzeModelAb,
   armSpend,
+  formatModelReport,
   pairTasks,
   type TaskArm,
 } from "./model-ab.ts";
@@ -309,5 +311,107 @@ describe("analyzeModelAb", () => {
     );
     expect(r.nPaired).toBe(1);
     expect(a.get("t")?.nSamples).toBe(2);
+  });
+});
+
+describe("selectable arm A (model-04)", () => {
+  const OTHER_A = "opencode-go/deepseek-v4-flash-vision-exp";
+
+  /** Two arm-A models in one log; only the selected one may reach the report. */
+  function twoModelArmA(): string {
+    const lines: string[] = [];
+    for (let i = 0; i < 6; i++) {
+      const taskId = `t${i}`;
+      // The default arm-A model passes everything.
+      lines.push(
+        line(row({ taskId, modelId: ARM_A_MODEL, sampleIndex: 0, outcome: "pass" }), {
+          costUsd: 0.01,
+        }),
+      );
+      // A different model in the same file fails everything.
+      lines.push(
+        line(
+          row({
+            taskId,
+            modelId: OTHER_A,
+            sampleIndex: 0,
+            outcome: "wrong_output",
+            roundsToGreen: null,
+            firstShotPass: false,
+          }),
+          { costUsd: 0.99 },
+        ),
+      );
+    }
+    return lines.join("\n");
+  }
+
+  const armB = (green: boolean): string =>
+    Array.from({ length: 6 }, (_, i) =>
+      line(
+        row({
+          taskId: `t${i}`,
+          sampleIndex: 0,
+          outcome: green ? "pass" : "wrong_output",
+          roundsToGreen: green ? 0 : null,
+          firstShotPass: green,
+        }),
+        { costUsd: 0 },
+      ),
+    ).join("\n");
+
+  test("armAModel selects which rows are arm A, and its spend", () => {
+    const a = twoModelArmA();
+    const dflt = analyzeModelAb(a, armB(false), ARM_B_MODEL, "fixture", 1);
+    expect(dflt.greenRate.a).toBe(1);
+    expect(dflt.spend.a.costUsd).toBeCloseTo(0.06, 10);
+
+    const other = analyzeModelAb(a, armB(false), ARM_B_MODEL, "fixture", 1, OTHER_A);
+    expect(other.armAModel).toBe(OTHER_A);
+    expect(other.greenRate.a).toBe(0);
+    expect(other.spend.a.costUsd).toBeCloseTo(5.94, 10);
+    // Both arms now fail everywhere, so the pairing is unchanged and tied.
+    expect(other.nPaired).toBe(6);
+    expect(other.greenRate.verdict).toBe("no-difference");
+  });
+
+  test("armAFile is recorded and defaults to the ladder's arm A", () => {
+    const a = twoModelArmA();
+    expect(analyzeModelAb(a, armB(true), ARM_B_MODEL, "fixture", 1).armAFile).toBe(ARM_A_FILE);
+    const named = analyzeModelAb(
+      a,
+      armB(true),
+      ARM_B_MODEL,
+      "fixture",
+      1,
+      ARM_A_MODEL,
+      "phase5-model-deepseek-head-01.jsonl",
+    );
+    expect(named.armAFile).toBe("phase5-model-deepseek-head-01.jsonl");
+    expect(formatModelReport(named)).toContain("phase5-model-deepseek-head-01.jsonl");
+    // A re-run arm A must not carry the reused arm's non-concurrency caveat.
+    expect(formatModelReport(named)).not.toContain("NOT run concurrently");
+    expect(formatModelReport(named)).not.toContain("(reused)");
+  });
+
+  test("selecting arm A changes no filtering: the agent-format row stays out", () => {
+    const aLines = [
+      line(row({ taskId: "t", modelId: OTHER_A, sampleIndex: 0 }), { costUsd: 0 }),
+      line(row({ taskId: "t", modelId: OTHER_A, sampleIndex: 1 }), { costUsd: 0 }),
+      line(row({ taskId: "t", modelId: OTHER_A, sampleIndex: 2, diagnosticFormat: "agent" }), {
+        costUsd: 0,
+      }),
+    ];
+    const bLines = [0, 1].map((s) => line(row({ taskId: "t", sampleIndex: s }), { costUsd: 0 }));
+    const r = analyzeModelAb(
+      aLines.join("\n"),
+      bLines.join("\n"),
+      ARM_B_MODEL,
+      "fixture",
+      2,
+      OTHER_A,
+    );
+    expect(r.nPaired).toBe(1);
+    expect(r.firstShot.a).toBeCloseTo(1, 10);
   });
 });

@@ -4,12 +4,22 @@
  * Spec: `analysis/prereg-model-01.md`. Written before any arm-B row was
  * analysed so the code cannot be tuned to the result.
  *
- * Arm A is always `phase4-diagfmt-text-01` restricted to
+ * Arm A defaults to `phase4-diagfmt-text-01` restricted to
  * `opencode-go/deepseek-v4-flash`. Arm B is named on the command line, so the
  * later hy3 / qwen3.7-plus rounds reuse this script against the same arm A
  * rather than growing a second copy of it.
  *
  *   bun run analysis/model-ab.ts --arm-b phase5-model-mimo-01 [--json]
+ *
+ * `model-04` re-runs the DeepSeek baseline instead of reusing it — the ladder's
+ * arm A is pinned to a compiler and skill doc that have both moved — so arm A is
+ * selectable too. The flags change only which rows are *selected*; no filter,
+ * exclusion rule or statistic differs between a reused and a re-run arm A.
+ *
+ *   bun run analysis/model-ab.ts --arm-a phase5-model-deepseek-head-01 \
+ *     --arm-a-model opencode-go/deepseek-v4-flash \
+ *     --arm-b phase5-model-glm53f-01 --model opencode-go/glm-5.3-flash \
+ *     --min-samples 1
  *
  * The statistics are imported from `diagfmt-ab.ts`, which has its own tests
  * (`diagfmt-ab.test.ts`, including a hand-worked tied-|d| Wilcoxon case).
@@ -41,7 +51,7 @@ import {
 
 const RUNS_DIR = new URL("../data/runs", import.meta.url).pathname;
 
-/** Arm A is fixed for the whole model axis. */
+/** Arm A for rounds 1-3, and the default when `--arm-a` is not given. */
 export const ARM_A_FILE = "phase4-diagfmt-text-01.jsonl";
 export const ARM_A_MODEL = "opencode-go/deepseek-v4-flash";
 
@@ -168,6 +178,8 @@ export type Verdict = "arm-b-better" | "arm-a-better" | "no-difference" | "below
 
 export type ModelAbReport = {
   armAModel: string;
+  /** Arm A's run log, as a file name. `ARM_A_FILE` unless `--arm-a` moved it. */
+  armAFile: string;
   armBModel: string;
   armBFile: string;
   /** Usable-sample threshold this report was built with. Recorded so a
@@ -227,12 +239,14 @@ export function analyzeModelAb(
   armBModel: string,
   armBFile: string,
   minSamples: number = MIN_SAMPLES,
+  armAModel: string = ARM_A_MODEL,
+  armAFile: string = ARM_A_FILE,
 ): ModelAbReport {
   const aLines = armAText.split("\n");
   const bLines = armBText.split("\n");
 
   const aRowsAll = parseJsonl(armAText).filter(
-    (r) => r.modelId === ARM_A_MODEL && r.language === "aven" && r.diagnosticFormat === "text",
+    (r) => r.modelId === armAModel && r.language === "aven" && r.diagnosticFormat === "text",
   );
   const bRowsAll = parseJsonl(armBText).filter(
     (r) => r.modelId === armBModel && r.language === "aven",
@@ -261,14 +275,15 @@ export function analyzeModelAb(
   const roundsB = mean(paired.map((p) => p.b.meanRounds));
 
   return {
-    armAModel: ARM_A_MODEL,
+    armAModel,
+    armAFile,
     armBModel,
     armBFile,
     minSamples,
     nPaired: paired.length,
     droppedTasks: dropped,
     exclusions: { a: a.excluded, b: b.excluded },
-    spend: { a: armSpend(aLines, ARM_A_MODEL), b: armSpend(bLines, armBModel) },
+    spend: { a: armSpend(aLines, armAModel), b: armSpend(bLines, armBModel) },
     greenRate: {
       a: greenA,
       b: greenB,
@@ -300,8 +315,9 @@ export function formatModelReport(r: ModelAbReport): string {
   const lines: string[] = [];
   lines.push(`# Model A/B — ${r.armBModel} vs ${r.armAModel}`);
   lines.push("");
-  lines.push(`Pre-registration: analysis/prereg-model-01.md`);
-  lines.push(`Arm A: ${ARM_A_FILE} (reused)   Arm B: ${r.armBFile}.jsonl`);
+  lines.push(`Pre-registration: analysis/prereg-model-*.md (this round's)`);
+  const reused = r.armAFile === ARM_A_FILE;
+  lines.push(`Arm A: ${r.armAFile}${reused ? " (reused)" : ""}   Arm B: ${r.armBFile}.jsonl`);
   lines.push(`Paired tasks: ${r.nPaired}`);
   if (r.droppedTasks.length > 0) {
     lines.push(`Dropped (<${r.minSamples} usable samples in an arm): ${r.droppedTasks.join(", ")}`);
@@ -330,8 +346,13 @@ export function formatModelReport(r: ModelAbReport): string {
   lines.push(`  arm A $${r.spend.a.costUsd.toFixed(2)} over ${r.spend.a.rows} rows, ${r.spend.a.wallHours.toFixed(1)}h agent time`);
   lines.push(`  arm B $${r.spend.b.costUsd.toFixed(2)} over ${r.spend.b.rows} rows, ${r.spend.b.wallHours.toFixed(1)}h agent time`);
   lines.push("");
-  lines.push("Arms were NOT run concurrently (see prereg, Threats to validity #1):");
-  lines.push("provider load and time-of-day are confounded with the arm.");
+  if (reused) {
+    lines.push("Arms were NOT run concurrently (see prereg, Threats to validity #1):");
+    lines.push("provider load and time-of-day are confounded with the arm.");
+  } else {
+    lines.push("Arm A was run for this round rather than reused; see the round's");
+    lines.push("pre-registration for whether the two arms ran concurrently.");
+  }
   return lines.join("\n");
 }
 
@@ -340,7 +361,8 @@ function main(): void {
   const armBIdx = argv.indexOf("--arm-b");
   if (armBIdx === -1 || !argv[armBIdx + 1]) {
     console.error(
-      "usage: bun run analysis/model-ab.ts --arm-b <run-id> [--model <id>] [--min-samples <n>] [--json]",
+      "usage: bun run analysis/model-ab.ts --arm-b <run-id> [--model <id>]\n" +
+        "         [--arm-a <run-id>] [--arm-a-model <id>] [--min-samples <n>] [--json]",
     );
     process.exit(2);
   }
@@ -357,7 +379,12 @@ function main(): void {
     process.exit(2);
   }
 
-  const aPath = join(RUNS_DIR, ARM_A_FILE);
+  const armAIdx = argv.indexOf("--arm-a");
+  const armAFile = armAIdx === -1 ? ARM_A_FILE : `${argv[armAIdx + 1] as string}.jsonl`;
+  const armAModelIdx = argv.indexOf("--arm-a-model");
+  const armAModel = armAModelIdx === -1 ? ARM_A_MODEL : (argv[armAModelIdx + 1] as string);
+
+  const aPath = join(RUNS_DIR, armAFile);
   const bPath = join(RUNS_DIR, `${armBFile}.jsonl`);
   for (const p of [aPath, bPath]) {
     if (!existsSync(p)) {
@@ -372,6 +399,8 @@ function main(): void {
     armBModel,
     armBFile,
     minSamples,
+    armAModel,
+    armAFile,
   );
 
   if (argv.includes("--json")) console.log(JSON.stringify(report, null, 2));
